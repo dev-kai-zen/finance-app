@@ -271,3 +271,58 @@ test('P2-11a: superseded async reads and blur cannot publish stale category snap
     assert.equal(h.render().categories[0].id,'new');
   } finally {h.blur();}
 });
+
+test("B06: deleteCategory safely reassigns split transaction entries, direct transactions, and presets without foreign-key constraint errors", async () => {
+  setupTestDb();
+  try {
+    const { deleteCategory } = require("../services/delete-category.service");
+    const now = Date.now();
+    // Insert system default 'cat_exp_others' and custom category 'cat_custom'
+    sqlite.exec(`
+      INSERT INTO categories (id, name, type, icon, is_system, sort_order, created_at, updated_at)
+      VALUES ('cat_exp_others', 'Other Expenses', 'expense', 'more-horizontal', 1, 99, ${now}, ${now}),
+             ('cat_custom', 'Custom Coffee', 'expense', 'coffee', 0, 1, ${now}, ${now});
+    `);
+
+    // Insert direct transaction with cat_custom
+    sqlite.exec(`
+      INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
+      VALUES ('tx_direct', 'acc_1', 'cat_custom', 'expense', -5000, 'Direct Coffee', ${now}, ${now}, ${now}),
+             ('tx_split', 'acc_1', NULL, 'expense', -15000, 'Split Groceries', ${now}, ${now}, ${now});
+    `);
+
+    // Insert split entry on tx_split referencing cat_custom
+    sqlite.exec(`
+      INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+      VALUES ('split_entry_1', 'tx_split', 'cat_custom', 5000, ${now}, ${now});
+    `);
+
+    // Insert a preset referencing cat_custom
+    sqlite.exec(`
+      INSERT INTO transaction_presets (id, transaction_name, type, account_id, category_id, amount_minor_units, currency_code, usage_count, sort_order, created_at, updated_at)
+      VALUES ('preset_1', 'Morning Coffee', 'expense', 'acc_1', 'cat_custom', 5000, 'PHP', 0, 0, ${now}, ${now});
+    `);
+
+    // Delete custom category
+    await deleteCategory("cat_custom", database);
+
+    // Verify category is deleted
+    const cat = sqlite.prepare("SELECT * FROM categories WHERE id = 'cat_custom'").get();
+    assert.equal(cat, undefined, "Custom category should be deleted");
+
+    // Verify direct transaction was reassigned to fallback (cat_exp_others)
+    const directTx = sqlite.prepare("SELECT category_id FROM transactions WHERE id = 'tx_direct'").get();
+    assert.equal(directTx.category_id, "cat_exp_others", "Direct transaction should be reassigned to cat_exp_others");
+
+    // Verify split entry was reassigned to fallback (cat_exp_others)
+    const splitEntry = sqlite.prepare("SELECT category_id FROM transaction_entries WHERE id = 'split_entry_1'").get();
+    assert.equal(splitEntry.category_id, "cat_exp_others", "Split entry should be reassigned to cat_exp_others");
+
+    // Verify preset was reassigned to fallback (cat_exp_others)
+    const preset = sqlite.prepare("SELECT category_id FROM transaction_presets WHERE id = 'preset_1'").get();
+    assert.equal(preset.category_id, "cat_exp_others", "Preset should be reassigned to cat_exp_others");
+  } finally {
+    sqlite.close();
+  }
+});
+

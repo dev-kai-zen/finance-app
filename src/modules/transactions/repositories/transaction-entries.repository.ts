@@ -63,6 +63,18 @@ export function replaceSplitEntries(
   }
 }
 
+export function reassignTransactionSplitEntriesCategoryRecords(
+  fromCategoryId: string,
+  toCategoryId: string,
+  context: DbContext = db,
+): void {
+  context
+    .update(transactionEntries)
+    .set({ categoryId: toCategoryId, updatedAt: new Date() })
+    .where(eq(transactionEntries.categoryId, fromCategoryId))
+    .run();
+}
+
 function normalizeCategoryColor(value: string | null): string | null {
   if (!value) return null;
   return value.startsWith("color_") ? value.replace("color_", "") : value;

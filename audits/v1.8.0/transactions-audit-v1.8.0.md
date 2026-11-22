@@ -302,7 +302,7 @@ R4 sources: [preset command construction](../../src/modules/transactions/service
 | Q5  | Generic edits/deletes can alter ledger entries linked to subscriptions/schedule postings. Exact renewal/history semantics have not been validated here.                   | Validate link, payment history, occurrence status and renewal after edit/delete/restore/permanent delete. Owning recurrence modules decide their rules. |
 | Q6  | Detail attachment actions, offscreen refreshes and Global Quick Entry may leave consumers temporarily stale.                                                              | Lifecycle test actual hooks and visible state, then native smoke test. A correct SQL result alone does not prove the rendered screen refreshed.         |
 
-Related carried finding: B06 category deletion can partially reassign ordinary transactions before a split foreign-key failure. The initiating use case belongs to Categories; Transactions must expose a safe capability for its owned references if needed. Track the shared regression here without silently fixing Categories during this audit.
+Related carried finding: **B06 — RESOLVED: category deletion reassigns split entries, direct transactions, and presets without foreign-key failures**. Transactions provides `reassignTransactionCategoryReferences`, which atomically reassigns `transactions`, `transaction_entries` (split items), and `transaction_presets` to the fallback category within the deletion transaction. `deleteCategory` in Categories invokes this domain service instead of directly mutating transaction tables. Automated regression test in `category-changes.test.cjs`.
 
 ## 7. What is necessary complexity, and what could be simpler?
 

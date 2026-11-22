@@ -1535,6 +1535,18 @@ export function findTransactionsByIds(
   return results;
 }
 
+export function reassignTransactionCategoryRecords(
+  fromCategoryId: string,
+  toCategoryId: string,
+  context: DbContext = db,
+): void {
+  context
+    .update(transactions)
+    .set({ categoryId: toCategoryId, updatedAt: new Date() })
+    .where(eq(transactions.categoryId, fromCategoryId))
+    .run();
+}
+
 export function findTransactionsByGroupId(
   groupId: string,
   context: DbContext = db,

@@ -86,6 +86,12 @@ export const reassignTransactionPresetCategory = deferFunction(
       .reassignTransactionPresetCategory,
 ) as typeof import("./services/reassign-transaction-preset-category.service").reassignTransactionPresetCategory;
 
+export const reassignTransactionCategoryReferences = deferFunction(
+  () =>
+    require("./services/reassign-transaction-category-references.service")
+      .reassignTransactionCategoryReferences,
+) as typeof import("./services/reassign-transaction-category-references.service").reassignTransactionCategoryReferences;
+
 export const createTransaction = deferFunction(
   () => require("./services/create-transaction.service").createTransaction,
 ) as typeof import("./services/create-transaction.service").createTransaction;

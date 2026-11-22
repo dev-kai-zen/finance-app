@@ -1,7 +1,5 @@
 import { notifyCategoryChanges } from "./category-changes.service";
-import { eq } from "drizzle-orm";
-import { db, type AppDatabase } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema/transactions";
+import { db, type AppDatabase, type DbContext } from "@/infrastructure/database/client";
 import {
   deleteCategory as repoDeleteCategory,
   getCategoryById,
@@ -9,7 +7,7 @@ import {
 } from "../repositories/categories.repository";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
-import { reassignTransactionPresetCategory } from "@/modules/transactions";
+import { reassignTransactionCategoryReferences } from "@/modules/transactions";
 
 export async function deleteCategory(
   id: string,
@@ -35,14 +33,9 @@ export async function deleteCategory(
     (existing.type === "income" ? "cat_inc_others" : "cat_exp_others");
 
   await client.transaction(async (tx) => {
-    // Subcategory transactions return to their parent group. Top-level group
-    // transactions return to the protected "Other" category.
-    await tx
-      .update(transactions)
-      .set({ categoryId: fallbackId, updatedAt: new Date() })
-      .where(eq(transactions.categoryId, id));
-
-    reassignTransactionPresetCategory(id, fallbackId, tx);
+    // Subcategory transactions and split entries return to their parent group.
+    // Top-level group transactions return to the protected "Other" category.
+    reassignTransactionCategoryReferences(id, fallbackId, tx as unknown as DbContext);
 
     const deleted = await repoDeleteCategory(tx, id);
     if (!deleted) {
