@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
+
+export type { DbContext };
 import {
   DEFAULT_BASE_CURRENCY,
   normalizeExchangeRateScaled,
@@ -1689,7 +1691,12 @@ export function softDeleteTransactionsByGroupId(
   context
     .update(transactions)
     .set({ deletedAt, updatedAt: new Date() })
-    .where(eq(transactions.transactionGroupId, groupId))
+    .where(
+      and(
+        eq(transactions.transactionGroupId, groupId),
+        isNull(transactions.deletedAt),
+      ),
+    )
     .run();
 }
 

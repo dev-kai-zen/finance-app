@@ -978,3 +978,151 @@ test("P3-05: CSV export skips balance hydration and preserves all CSV fields", (
     assert.deepEqual(exported.map(withoutBalances), baseline.map(withoutBalances));
   } finally { sqlite.close(); }
 });
+
+test("B08: fee and transfer restore scope respects independent deletion boundaries", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { createTransferInContext } = require("../services/create-transfer.service");
+    const { removeTransaction } = require("../services/delete-transaction.service");
+    const { restoreTransaction } = require("../services/restore-transaction.service");
+
+    const created = createTransferInContext(
+      {
+        fromAccountId: "acc_main",
+        toAccountId: "acc_save",
+        amountMinorUnits: 50000,
+        fee: {
+          accountId: "acc_main",
+          categoryId: "cat_food",
+          amountMinorUnits: 2500,
+        },
+        occurredAt: new Date(),
+      },
+      database,
+    );
+
+    const feeId = created.feeLeg.id;
+    const transferId = created.outLeg.id;
+
+    // 1. Delete fee independently at T1
+    removeTransaction(feeId, database);
+    let feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    let outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.ok(feeRow.deleted_at !== null, "Fee should be soft-deleted");
+    assert.equal(outRow.deleted_at, null, "Transfer leg should still be active");
+
+    const feeDeletedTime = feeRow.deleted_at;
+
+    // Wait a tick then delete transfer at T2
+    sqlite.prepare("UPDATE transactions SET deleted_at = ? WHERE id = ?").run(feeDeletedTime - 5000, feeId);
+    removeTransaction(transferId, database);
+
+    feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.ok(outRow.deleted_at !== null, "Transfer should be soft-deleted");
+    assert.ok(feeRow.deleted_at < outRow.deleted_at, "Fee must retain its earlier independent deletion timestamp");
+
+    // 2. Scenario A: Restore fee -> only fee is revived, transfer stays in Trash
+    restoreTransaction(feeId, database);
+    feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.equal(feeRow.deleted_at, null, "Fee must be restored to active ledger");
+    assert.ok(outRow.deleted_at !== null, "Transfer leg must remain in Trash");
+
+    // 3. Scenario B: Delete fee independently again, then restore transfer -> transfer is revived, fee stays in Trash
+    removeTransaction(feeId, database);
+    sqlite.prepare("UPDATE transactions SET deleted_at = ? WHERE id = ?").run(Date.now() - 5000, feeId);
+    restoreTransaction(transferId, database);
+
+    feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.equal(outRow.deleted_at, null, "Transfer leg must be restored");
+    assert.ok(feeRow.deleted_at !== null, "Independently deleted fee must remain in Trash");
+  } finally { sqlite.close(); }
+});
+
+test("B08: independently deleted fee can be permanently deleted without blocking or deleting active transfer", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { createTransferInContext } = require("../services/create-transfer.service");
+    const { removeTransaction } = require("../services/delete-transaction.service");
+    const { permanentlyDeleteTransaction } = require("../services/permanently-delete-transaction.service");
+
+    const created = createTransferInContext(
+      {
+        fromAccountId: "acc_main",
+        toAccountId: "acc_save",
+        amountMinorUnits: 50000,
+        fee: {
+          accountId: "acc_main",
+          categoryId: "cat_food",
+          amountMinorUnits: 2500,
+        },
+        occurredAt: new Date(),
+      },
+      database,
+    );
+
+    const feeId = created.feeLeg.id;
+    const transferId = created.outLeg.id;
+
+    // Delete fee independently while transfer is active
+    removeTransaction(feeId, database);
+
+    // Permanently delete fee — must NOT throw "This transfer must be fully moved to Trash..."
+    permanentlyDeleteTransaction(feeId, database);
+
+    const feeRow = sqlite.prepare("SELECT id FROM transactions WHERE id = ?").get(feeId);
+    const outRow = sqlite.prepare("SELECT id, deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.equal(feeRow, undefined, "Fee record must be permanently purged from database");
+    assert.ok(outRow, "Transfer leg must still exist");
+    assert.equal(outRow.deleted_at, null, "Transfer leg must remain active");
+  } finally { sqlite.close(); }
+});
+
+test("B08: deleting transfer with fee soft-deletes both, and restoring transfer revives both", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { createTransferInContext } = require("../services/create-transfer.service");
+    const { removeTransaction } = require("../services/delete-transaction.service");
+    const { restoreTransaction } = require("../services/restore-transaction.service");
+
+    const created = createTransferInContext(
+      {
+        fromAccountId: "acc_main",
+        toAccountId: "acc_save",
+        amountMinorUnits: 50000,
+        fee: {
+          accountId: "acc_main",
+          categoryId: "cat_food",
+          amountMinorUnits: 2500,
+        },
+        occurredAt: new Date(),
+      },
+      database,
+    );
+
+    const feeId = created.feeLeg.id;
+    const transferId = created.outLeg.id;
+
+    // Delete transfer -> soft-deletes both transfer and fee together
+    removeTransaction(transferId, database);
+
+    let feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    let outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.ok(feeRow.deleted_at !== null, "Fee should be soft-deleted with transfer");
+    assert.ok(outRow.deleted_at !== null, "Transfer leg should be soft-deleted");
+
+    // Restore transfer -> restores both transfer and co-deleted fee
+    restoreTransaction(transferId, database);
+
+    feeRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(feeId);
+    outRow = sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = ?").get(transferId);
+    assert.equal(feeRow.deleted_at, null, "Co-deleted fee must be restored with transfer");
+    assert.equal(outRow.deleted_at, null, "Transfer leg must be restored");
+  } finally { sqlite.close(); }
+});
+
