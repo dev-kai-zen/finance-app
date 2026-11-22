@@ -337,3 +337,87 @@ test("P2-08: statement-entry hydration chunks IDs at 500 while retaining date or
     assert.deepEqual(entries.map(entry => entry.id), ids.map((_, i) => 'entry_' + i));
   } finally { sqlite.close(); }
 });
+
+test("B03: reducing card payment creates adjustment releasing excess allocation and restores remaining statement balance", () => {
+  const f = fixture();
+  try {
+    f.charge("charge_1", -100000); // ₱1,000 billed charge
+    f.charge("payment_1", 100000, "transfer"); // ₱1,000 payment
+    f.reconcile();
+
+    // Statement should be fully paid (remaining = 0)
+    assert.equal(f.statement().issued_amount_minor_units, 100000);
+    assert.equal(f.monitor().billedMinorUnits, 0, "Billed remaining should be 0 when fully paid");
+
+    // Reduce payment from 100,000 to 50,000
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 50000 WHERE id = 'payment_1'");
+    f.reconcile();
+
+    // Now remaining billed amount must be 50,000!
+    assert.equal(f.statement().issued_amount_minor_units, 100000, "Issued charges remain 100,000");
+    assert.equal(f.monitor().billedMinorUnits, 50000, "Billed remaining must reflect the unpaid 50,000");
+
+    // Check statement entries:
+    // 1 charge (100,000), 1 payment (-100,000), 1 adjustment (+50,000)
+    const entries = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment_1'").all();
+    assert.equal(entries.length, 2, "Payment should have original entry and adjustment entry");
+    const adjustment = entries.find(e => e.entry_type === "adjustment");
+    assert.ok(adjustment, "Adjustment entry must be created");
+    assert.equal(adjustment.amount_minor_units, 50000, "Adjustment must release excess 50,000");
+
+    // Re-increase payment from 50,000 to 80,000
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 80000 WHERE id = 'payment_1'");
+    f.reconcile();
+    assert.equal(f.monitor().billedMinorUnits, 20000, "Remaining billed balance must decrease to 20,000");
+
+    // Repeat reconciliation must be idempotent
+    const entryCount = sqlite.prepare("SELECT count(*) as c FROM credit_card_statement_entries").get().c;
+    f.reconcile();
+    assert.equal(sqlite.prepare("SELECT count(*) as c FROM credit_card_statement_entries").get().c, entryCount, "Reconciliation must be idempotent");
+  } finally { sqlite.close(); }
+});
+
+test("B03: multi-statement payment reduction unwinds allocations LIFO from newest to oldest statement", () => {
+  const f = fixture();
+  try {
+    const oct5 = new Date(2026, 9, 5, 12).getTime();
+    const nov5 = new Date(2026, 10, 5, 12).getTime();
+
+    // Oct 10 statement charge: ₱400 (40,000 minor units)
+    sqlite.prepare("INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES ('charge_oct', 'card', 'cat_dining', 'expense', -40000, 'Oct Dinner', ?, ?, ?)")
+      .run(oct5, oct5, oct5);
+
+    // Nov 10 statement charge: ₱600 (60,000 minor units)
+    sqlite.prepare("INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES ('charge_nov', 'card', 'cat_dining', 'expense', -60000, 'Nov Groceries', ?, ?, ?)")
+      .run(nov5, nov5, nov5);
+
+    // Payment of ₱1,000 (100,000 minor units) on Nov 15
+    f.charge("payment_100k", 100000, "transfer");
+    f.reconcile();
+
+    // Verify both statements exist and are fully paid
+    const statements = sqlite.prepare("SELECT * FROM credit_card_statements WHERE account_id = 'card' AND kind = 'billing_cycle' ORDER BY statement_on ASC").all();
+    assert.equal(statements.length, 2, "Two statements should exist (Oct and Nov)");
+    assert.equal(f.monitor().billedMinorUnits, 0, "Both statements fully paid");
+
+    // Reduce payment from 100,000 to 50,000
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 50000 WHERE id = 'payment_100k'");
+    f.reconcile();
+
+    // Check each statement's remaining balance:
+    // Oct statement (older, 40,000) should remain 0 remaining (fully paid)
+    // Nov statement (newer, 60,000) should have released 50,000, so remaining is 50,000
+    const entries = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY created_at ASC").all();
+    const octEntries = entries.filter(e => e.statement_id === statements[0].id);
+    const novEntries = entries.filter(e => e.statement_id === statements[1].id);
+
+    const octRemaining = octEntries.reduce((sum, e) => sum + e.amount_minor_units, 0);
+    const novRemaining = novEntries.reduce((sum, e) => sum + e.amount_minor_units, 0);
+
+    assert.equal(octRemaining, 0, "Older Oct statement must remain fully paid");
+    assert.equal(novRemaining, 50000, "Newer Nov statement must have released 50,000 excess payment");
+    assert.equal(f.monitor().billedMinorUnits, 50000, "Total billed remaining across card must be 50,000");
+  } finally { sqlite.close(); }
+});
+
+

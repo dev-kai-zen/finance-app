@@ -260,46 +260,126 @@ function* reconcileAccount(
     group.push(entry);
     entriesByTransaction.set(entry.transactionId, group);
   }
+  const statementDateById = new Map(existingStatements.map((s) => [s.id, s.statementOn]));
+
   for (const transaction of allTransactions) {
     yield;
     const linkedEntries = entriesByTransaction.get(transaction.id) ?? [];
     if (linkedEntries.length === 0) continue;
-    const statementIds = [...new Set(linkedEntries.map((entry) => entry.statementId))];
-    for (const statementId of statementIds) {
-      yield;
-      const statementEntries = linkedEntries.filter(
-        (entry) => entry.statementId === statementId,
-      );
-      const base = statementEntries
-        .filter((entry) => entry.entryType !== "adjustment")
-        .reduce((sum, entry) => sum + entry.amountMinorUnits, 0);
-      const net = statementEntries.reduce(
-        (sum, entry) => sum + entry.amountMinorUnits,
+
+    const isCharge = linkedEntries.some((entry) => entry.entryType === "charge");
+
+    if (transaction.deletedAt) {
+      const statementIds = [...new Set(linkedEntries.map((entry) => entry.statementId))];
+      for (const statementId of statementIds) {
+        yield;
+        const statementEntries = linkedEntries.filter(
+          (entry) => entry.statementId === statementId,
+        );
+        const net = statementEntries.reduce(
+          (sum, entry) => sum + entry.amountMinorUnits,
+          0,
+        );
+        if (net === 0) continue;
+        insertStatementEntry(
+          {
+            id: newCreditCardBillingId(context),
+            statementId,
+            transactionId: transaction.id,
+            installmentId: null,
+            entryType: "adjustment",
+            amountMinorUnits: -net,
+            descriptionSnapshot: "Transaction removed",
+            occurredOnSnapshot: todayOn,
+            reversesEntryId: statementEntries.at(-1)?.id ?? null,
+            createdAt: new Date(),
+          },
+          context,
+        );
+      }
+      continue;
+    }
+
+    if (isCharge) {
+      const statementIds = [...new Set(linkedEntries.map((entry) => entry.statementId))];
+      for (const statementId of statementIds) {
+        yield;
+        const statementEntries = linkedEntries.filter(
+          (entry) => entry.statementId === statementId,
+        );
+        const net = statementEntries.reduce(
+          (sum, entry) => sum + entry.amountMinorUnits,
+          0,
+        );
+        const target = Math.max(0, -transaction.amountMinorUnits);
+        const difference = target - net;
+        if (difference === 0) continue;
+        insertStatementEntry(
+          {
+            id: newCreditCardBillingId(context),
+            statementId,
+            transactionId: transaction.id,
+            installmentId: null,
+            entryType: "adjustment",
+            amountMinorUnits: difference,
+            descriptionSnapshot:
+              net === 0 ? "Transaction restored" : "Transaction amount adjusted",
+            occurredOnSnapshot: todayOn,
+            reversesEntryId: statementEntries.at(-1)?.id ?? null,
+            createdAt: new Date(),
+          },
+          context,
+        );
+      }
+    } else {
+      const netAllocated = linkedEntries.reduce(
+        (sum, entry) => sum - entry.amountMinorUnits,
         0,
       );
-      const isCharge = statementEntries.some((entry) => entry.entryType === "charge");
-      const target = transaction.deletedAt ? 0 : isCharge
-        ? Math.max(0, -transaction.amountMinorUnits)
-        : base;
-      const difference = target - net;
-      if (difference === 0) continue;
-      insertStatementEntry(
-        {
-          id: newCreditCardBillingId(context),
-          statementId,
-          transactionId: transaction.id,
-          installmentId: null,
-          entryType: "adjustment",
-          amountMinorUnits: difference,
-          descriptionSnapshot: transaction.deletedAt
-            ? "Transaction removed"
-            : net === 0 ? "Transaction restored" : "Transaction amount adjusted",
-          occurredOnSnapshot: todayOn,
-          reversesEntryId: statementEntries.at(-1)?.id ?? null,
-          createdAt: new Date(),
-        },
-        context,
-      );
+      const targetAllocated = Math.max(0, transaction.amountMinorUnits);
+      if (netAllocated > targetAllocated) {
+        let excessToRelease = netAllocated - targetAllocated;
+        const linkedStatementIds = [
+          ...new Set(linkedEntries.map((e) => e.statementId)),
+        ].sort((a, b) => {
+          const dateA = statementDateById.get(a) ?? "";
+          const dateB = statementDateById.get(b) ?? "";
+          return dateB.localeCompare(dateA);
+        });
+
+        for (const statementId of linkedStatementIds) {
+          yield;
+          if (excessToRelease <= 0) break;
+          const statementEntries = linkedEntries.filter(
+            (e) => e.statementId === statementId,
+          );
+          const statementNetPayment = statementEntries.reduce(
+            (sum, e) => sum - e.amountMinorUnits,
+            0,
+          );
+          if (statementNetPayment <= 0) continue;
+
+          const releaseAmount = Math.min(excessToRelease, statementNetPayment);
+          if (releaseAmount > 0) {
+            insertStatementEntry(
+              {
+                id: newCreditCardBillingId(context),
+                statementId,
+                transactionId: transaction.id,
+                installmentId: null,
+                entryType: "adjustment",
+                amountMinorUnits: releaseAmount,
+                descriptionSnapshot: "Payment amount adjusted",
+                occurredOnSnapshot: todayOn,
+                reversesEntryId: statementEntries.at(-1)?.id ?? null,
+                createdAt: new Date(),
+              },
+              context,
+            );
+            excessToRelease -= releaseAmount;
+          }
+        }
+      }
     }
   }
 
@@ -319,12 +399,24 @@ function* reconcileAccount(
     );
   }
 
+  entriesByTransaction.clear();
+  for (const entry of entries) {
+    if (!entry.transactionId) continue;
+    const group = entriesByTransaction.get(entry.transactionId) ?? [];
+    group.push(entry);
+    entriesByTransaction.set(entry.transactionId, group);
+  }
+
   for (const transaction of activeTransactions) {
     yield;
     if (transaction.amountMinorUnits <= 0) continue;
-    const allocated = (entriesByTransaction.get(transaction.id) ?? [])
-      .filter((entry) => entry.amountMinorUnits < 0)
-      .reduce((sum, entry) => sum + Math.abs(entry.amountMinorUnits), 0);
+    const allocated = Math.max(
+      0,
+      (entriesByTransaction.get(transaction.id) ?? []).reduce(
+        (sum, entry) => sum - entry.amountMinorUnits,
+        0,
+      ),
+    );
     let available = transaction.amountMinorUnits - allocated;
     if (available <= 0) continue;
     const eligibleStatements = statements.filter(
@@ -366,16 +458,18 @@ function* reconcileAccount(
     statements.map((statement) => statement.id),
     context,
   );
-  // Payment reversals restore the remaining balance but do not increase issued charges.
-  const paymentTransactionIds = new Set(
-    entries.filter((entry) => entry.entryType === "payment").map((entry) => entry.transactionId),
+  // Payment and credit reversals restore the remaining balance but do not increase issued charges.
+  const creditTransactionIds = new Set(
+    entries
+      .filter((entry) => entry.entryType === "payment" || entry.entryType === "refund")
+      .map((entry) => entry.transactionId),
   );
   const issuedByStatement = new Map<string, number>();
   for (const entry of entries) {
     yield;
-    if (entry.entryType === "payment") continue;
+    if (entry.entryType === "payment" || entry.entryType === "refund") continue;
     if (entry.entryType === "adjustment" && entry.transactionId &&
-        paymentTransactionIds.has(entry.transactionId)) continue;
+        creditTransactionIds.has(entry.transactionId)) continue;
     issuedByStatement.set(entry.statementId,
       (issuedByStatement.get(entry.statementId) ?? 0) + entry.amountMinorUnits);
   }
