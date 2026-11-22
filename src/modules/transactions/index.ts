@@ -158,6 +158,12 @@ export const getAccountLedgerTransactions = deferFunction(
       .getAccountLedgerTransactions,
 ) as typeof import("./services/get-account-ledger-transactions.service").getAccountLedgerTransactions;
 
+export const getTransactionsByIds = deferFunction(
+  () =>
+    require("./services/get-transactions-by-ids.service")
+      .getTransactionsByIds,
+) as typeof import("./services/get-transactions-by-ids.service").getTransactionsByIds;
+
 export const getPocketTransactionBalanceDeltas = deferFunction(
   () =>
     require("./services/get-pocket-transaction-balance-deltas.service")

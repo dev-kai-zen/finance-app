@@ -420,4 +420,51 @@ test("B03: multi-statement payment reduction unwinds allocations LIFO from newes
   } finally { sqlite.close(); }
 });
 
+test("B04: moving billed charge from credit card to cash reverses charge from old statement", () => {
+  const f = fixture();
+  try {
+    f.charge("charge_stay", -30000); // ₱300 that stays
+    f.charge("charge_move", -70000); // ₱700 that will move to cash ('acc_1')
+    f.reconcile();
+
+    // Statement issued amount should be 100,000 (30k + 70k)
+    assert.equal(f.statement().issued_amount_minor_units, 100000);
+    assert.equal(f.monitor().billedMinorUnits, 100000);
+
+    // Now edit charge_move to change its account to Cash ('acc_1')
+    sqlite.exec("UPDATE transactions SET account_id = 'acc_1' WHERE id = 'charge_move'");
+    f.reconcile();
+
+    // The old card statement must now only bill 30,000!
+    assert.equal(f.statement().issued_amount_minor_units, 30000, "Old statement must adjust down to 30,000");
+    assert.equal(f.monitor().billedMinorUnits, 30000, "Card monitor billed amount must be 30,000");
+
+    // The moved charge should not appear in the card's billed items
+    const billedItems = f.monitor().billedItems;
+    assert.equal(billedItems.length, 1, "Only charge_stay should remain in billed items");
+    assert.equal(billedItems[0].description, "charge_stay");
+
+    // Moving it back to the card restores it on the statement
+    sqlite.exec("UPDATE transactions SET account_id = 'card' WHERE id = 'charge_move'");
+    f.reconcile();
+    assert.equal(f.statement().issued_amount_minor_units, 100000, "Moving back restores charge on statement");
+    assert.equal(f.monitor().billedMinorUnits, 100000);
+
+    // Moving from Card 1 to Card 2:
+    sqlite.prepare("INSERT INTO accounts (id, account_type_id, name, currency_code, opening_balance_minor_units, opening_balance_at, created_at, updated_at) VALUES ('card_2', 'system:liability:credit-card', 'Test Card 2', 'PHP', 0, ?, ?, ?)").run(f.occurred, f.occurred, f.occurred);
+    sqlite.exec("INSERT INTO credit_card_details (account_id, credit_limit_minor_units, statement_day, payment_due_day) VALUES ('card_2', 5000000, 10, 25)");
+
+    sqlite.exec("UPDATE transactions SET account_id = 'card_2' WHERE id = 'charge_move'");
+    f.reconcile();
+
+    // Card 1 statement must only bill 30,000
+    assert.equal(f.statement().issued_amount_minor_units, 30000, "Card 1 statement must adjust down to 30,000");
+    // Card 2 statement must now bill 70,000
+    const card2Statement = sqlite.prepare("SELECT * FROM credit_card_statements WHERE account_id = 'card_2' AND kind = 'billing_cycle'").get();
+    assert.ok(card2Statement, "Card 2 statement should be created");
+    assert.equal(card2Statement.issued_amount_minor_units, 70000, "Card 2 statement must bill the moved 70,000");
+  } finally { sqlite.close(); }
+});
+
+
 

@@ -2,7 +2,10 @@ import type { DbContext } from "@/infrastructure/database/client";
 import { db } from "@/infrastructure/database/client";
 import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import { getAccountsWithBalances } from "@/modules/accounts";
-import { getAccountLedgerTransactions } from "@/modules/transactions";
+import {
+  getAccountLedgerTransactions,
+  getTransactionsByIds,
+} from "@/modules/transactions";
 import {
   findEntryForInstallment,
   findInstallmentPlanByTransactionId,
@@ -260,16 +263,34 @@ function* reconcileAccount(
     group.push(entry);
     entriesByTransaction.set(entry.transactionId, group);
   }
-  const statementDateById = new Map(existingStatements.map((s) => [s.id, s.statementOn]));
 
-  for (const transaction of allTransactions) {
+  const missingTxIds = [...entriesByTransaction.keys()].filter(
+    (txId) => !transactionById.has(txId),
+  );
+  if (missingTxIds.length > 0) {
+    const externalTransactions = getTransactionsByIds(missingTxIds, context);
+    for (const tx of externalTransactions) {
+      transactionById.set(tx.id, tx);
+    }
+  }
+
+  const statementDateById = new Map(existingStatements.map((s) => [s.id, s.statementOn]));
+  const relevantTransactionIds = new Set([
+    ...allTransactions.map((t) => t.id),
+    ...entriesByTransaction.keys(),
+  ]);
+
+  for (const txId of relevantTransactionIds) {
     yield;
-    const linkedEntries = entriesByTransaction.get(transaction.id) ?? [];
+    const linkedEntries = entriesByTransaction.get(txId) ?? [];
     if (linkedEntries.length === 0) continue;
 
+    const transaction = transactionById.get(txId);
     const isCharge = linkedEntries.some((entry) => entry.entryType === "charge");
+    const isRemovedFromCard =
+      !transaction || Boolean(transaction.deletedAt) || transaction.accountId !== account.id;
 
-    if (transaction.deletedAt) {
+    if (isRemovedFromCard) {
       const statementIds = [...new Set(linkedEntries.map((entry) => entry.statementId))];
       for (const statementId of statementIds) {
         yield;
@@ -285,7 +306,7 @@ function* reconcileAccount(
           {
             id: newCreditCardBillingId(context),
             statementId,
-            transactionId: transaction.id,
+            transactionId: txId,
             installmentId: null,
             entryType: "adjustment",
             amountMinorUnits: -net,
@@ -318,7 +339,7 @@ function* reconcileAccount(
           {
             id: newCreditCardBillingId(context),
             statementId,
-            transactionId: transaction.id,
+            transactionId: txId,
             installmentId: null,
             entryType: "adjustment",
             amountMinorUnits: difference,
@@ -365,7 +386,7 @@ function* reconcileAccount(
               {
                 id: newCreditCardBillingId(context),
                 statementId,
-                transactionId: transaction.id,
+                transactionId: txId,
                 installmentId: null,
                 entryType: "adjustment",
                 amountMinorUnits: releaseAmount,

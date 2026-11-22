@@ -1511,6 +1511,30 @@ export function findTransactionById(
   };
 }
 
+export function findTransactionsByIds(
+  ids: string[],
+  context: DbContext = db,
+): Transaction[] {
+  if (ids.length === 0) return [];
+  const CHUNK_SIZE = 500;
+  const results: Transaction[] = [];
+  for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + CHUNK_SIZE);
+    const rows = context
+      .select()
+      .from(transactions)
+      .where(inArray(transactions.id, chunk))
+      .all();
+    for (const row of rows) {
+      results.push({
+        ...row,
+        type: row.type as Transaction["type"],
+      });
+    }
+  }
+  return results;
+}
+
 export function findTransactionsByGroupId(
   groupId: string,
   context: DbContext = db,
