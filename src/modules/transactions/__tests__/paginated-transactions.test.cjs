@@ -48,6 +48,33 @@ Module._load = function (request, ...args) {
   if (request.includes("drizzle/migrations") || request.endsWith("migrations")) {
     return {};
   }
+  if (request === "expo-crypto") {
+    return { randomUUID: () => require("node:crypto").randomUUID() };
+  }
+  if (request === "expo-file-system") {
+    class MockFile {
+      constructor(dir, name) {
+        this.uri = typeof dir === "string" ? dir : (dir?.uri || "file:///mock/") + (name || "");
+        this.exists = true;
+        this.size = 100;
+      }
+      delete() {}
+      copy() {}
+    }
+    class MockDirectory {
+      constructor(base, name) {
+        this.uri = (base?.uri || "file:///mock/") + (name || "");
+        this.exists = true;
+      }
+      create() {}
+      delete() {}
+    }
+    return {
+      File: MockFile,
+      Directory: MockDirectory,
+      Paths: { document: { uri: "file:///mock/doc/" }, availableDiskSpace: 100000000 },
+    };
+  }
   if (
     request.startsWith("expo") ||
     request.startsWith("@expo") ||
@@ -1125,4 +1152,178 @@ test("B08: deleting transfer with fee soft-deletes both, and restoring transfer 
     assert.equal(outRow.deleted_at, null, "Transfer leg must be restored");
   } finally { sqlite.close(); }
 });
+
+test("B07: post-commit old-file cleanup failure does not discard newly committed files or fail update", async () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { updateTransaction } = require("../services/update-transaction.service");
+    const attachmentService = require("../services/transaction-attachments.service");
+
+    const originalFinalize = attachmentService.finalizeRemovedAttachmentFiles;
+    const originalDiscard = attachmentService.discardPreparedAttachmentChanges;
+    const originalPrepare = attachmentService.prepareAttachmentChanges;
+
+    let discardCalled = false;
+    let finalizeAttempted = false;
+
+    // Spy on discardPreparedAttachmentChanges to verify it is NEVER called when SQL commits
+    attachmentService.discardPreparedAttachmentChanges = async (changes) => {
+      discardCalled = true;
+      return originalDiscard(changes);
+    };
+
+    // Inject failure into finalizeRemovedAttachmentFiles to simulate disk cleanup error on old files
+    attachmentService.finalizeRemovedAttachmentFiles = (removed) => {
+      finalizeAttempted = true;
+      throw new Error("Disk cleanup failure: file locked by background process");
+    };
+
+    // Mock prepareAttachmentChanges to stage a mock added attachment
+    attachmentService.prepareAttachmentChanges = async (changes) => {
+      return {
+        added: [
+          {
+            localUri: "file:///mock/new_receipt.jpg",
+            record: {
+              id: "att_new_receipt",
+              originalName: "new_receipt.jpg",
+              storageKey: "att_new_receipt.jpg",
+              mimeType: "image/jpeg",
+              sizeBytes: 12345,
+              sha256: "mocksha256",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+        ],
+        removedIds: changes?.removedIds ?? [],
+      };
+    };
+
+    try {
+      // Seed an existing attachment on tx_01 to be removed
+      sqlite
+        .prepare(
+          "INSERT INTO transaction_attachments (id, transaction_id, original_name, storage_key, mime_type, size_bytes, sha256, sync_status, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)",
+        )
+        .run("att_old", "tx_01", "old_receipt.jpg", "old_receipt.jpg", "image/jpeg", 500, "h_old", Date.now(), Date.now(), null);
+
+      // Execute updateTransaction with existing tx_01, removing old attachment and adding new one
+      await updateTransaction(
+        "tx_01",
+        {
+          accountId: "acc_main",
+          categoryId: "cat_food",
+          type: "expense",
+          amountMinorUnits: -1500,
+          occurredAt: new Date(),
+          name: "Updated Grocery with Receipt",
+        },
+        {
+          added: [{ uri: "mock_uri", name: "new_receipt.jpg", mimeType: "image/jpeg" }],
+          removedIds: ["att_old"],
+        },
+        database,
+      );
+
+      // Assert post-commit cleanup was reached
+      assert.ok(finalizeAttempted, "finalizeRemovedAttachmentFiles must be called post-commit");
+
+      // Assert newly committed files were NOT discarded
+      assert.equal(discardCalled, false, "Committed attachments must NEVER be discarded on post-commit cleanup failure");
+
+      // Assert database transaction committed successfully
+      const txRow = sqlite.prepare("SELECT name, amount_minor_units FROM transactions WHERE id = ?").get("tx_01");
+      assert.equal(txRow.name, "Updated Grocery with Receipt");
+      assert.equal(txRow.amount_minor_units, -1500);
+
+      // Assert new attachment is in SQLite
+      const newAtt = sqlite.prepare("SELECT id, original_name FROM transaction_attachments WHERE id = ?").get("att_new_receipt");
+      assert.ok(newAtt, "New attachment record must exist in database");
+      assert.equal(newAtt.original_name, "new_receipt.jpg");
+
+      // Assert old attachment was soft-deleted in SQLite
+      const oldAtt = sqlite.prepare("SELECT deleted_at FROM transaction_attachments WHERE id = ?").get("att_old");
+      assert.ok(oldAtt.deleted_at !== null, "Old attachment must be soft-deleted in database");
+    } finally {
+      attachmentService.finalizeRemovedAttachmentFiles = originalFinalize;
+      attachmentService.discardPreparedAttachmentChanges = originalDiscard;
+      attachmentService.prepareAttachmentChanges = originalPrepare;
+    }
+  } finally { sqlite.close(); }
+});
+
+test("B07: pre-commit SQL failure DOES discard uncommitted prepared files", async () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { updateTransaction } = require("../services/update-transaction.service");
+    const attachmentService = require("../services/transaction-attachments.service");
+
+    const originalDiscard = attachmentService.discardPreparedAttachmentChanges;
+    const originalPrepare = attachmentService.prepareAttachmentChanges;
+
+    let discardCalled = false;
+
+    attachmentService.discardPreparedAttachmentChanges = async (changes) => {
+      discardCalled = true;
+      return originalDiscard(changes);
+    };
+
+    attachmentService.prepareAttachmentChanges = async (changes) => {
+      return {
+        added: [
+          {
+            localUri: "file:///mock/uncommitted.jpg",
+            record: {
+              id: "att_uncommitted",
+              originalName: "uncommitted.jpg",
+              storageKey: "att_uncommitted.jpg",
+              mimeType: "image/jpeg",
+              sizeBytes: 12345,
+              sha256: "mocksha256",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+        ],
+        removedIds: [],
+      };
+    };
+
+    try {
+      // Pass non-existent account to trigger pre-commit failure
+      await assert.rejects(
+        () =>
+          updateTransaction(
+            "tx_01",
+            {
+              accountId: "non_existent_account",
+              categoryId: "cat_food",
+              type: "expense",
+              amountMinorUnits: -1500,
+              occurredAt: new Date(),
+            },
+            {
+              added: [{ uri: "mock_uri", name: "uncommitted.jpg" }],
+            },
+            database,
+          ),
+        /This account no longer exists/,
+      );
+
+      // Pre-commit failure MUST discard staged files
+      assert.equal(discardCalled, true, "Uncommitted staged attachments must be discarded on pre-commit failure");
+
+      // Assert attachment was NOT inserted into SQLite
+      const attRow = sqlite.prepare("SELECT id FROM transaction_attachments WHERE id = ?").get("att_uncommitted");
+      assert.equal(attRow, undefined, "Uncommitted attachment must not be saved to database");
+    } finally {
+      attachmentService.discardPreparedAttachmentChanges = originalDiscard;
+      attachmentService.prepareAttachmentChanges = originalPrepare;
+    }
+  } finally { sqlite.close(); }
+});
+
 

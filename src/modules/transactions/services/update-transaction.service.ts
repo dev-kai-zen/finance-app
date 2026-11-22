@@ -30,19 +30,38 @@ export async function updateTransaction(
   id: string,
   input: CreateTransactionInput,
   attachmentChanges?: TransactionAttachmentChanges,
+  context: DbContext = db,
 ): Promise<void> {
   const prepared = await prepareAttachmentChanges(attachmentChanges);
+  let removed: readonly ReturnType<typeof applyAttachmentChangesInContext>[number][] = [];
+
   try {
-    const removed = db.transaction((tx) => {
+    const executeDb = (tx: DbContext) => {
       updateTransactionInContext(id, input, tx);
       return applyAttachmentChangesInContext(id, prepared, tx);
-    });
-    finalizeRemovedAttachmentFiles(removed);
-    triggerTransactionAttachmentSync();
+    };
+
+    if ("transaction" in context && typeof context.transaction === "function") {
+      removed = context.transaction(executeDb);
+    } else {
+      removed = executeDb(context);
+    }
   } catch (error) {
+    // Only discard newly prepared files if the database write failed to commit
     await discardPreparedAttachmentChanges(prepared);
     throw error;
   }
+
+  // Once the database transaction has committed, the new attachment records and transaction
+  // updates are durable. A subsequent cleanup failure on old files MUST NOT discard
+  // newly committed files or fail the successful database update.
+  try {
+    finalizeRemovedAttachmentFiles(removed);
+  } catch (cleanupError) {
+    console.error("Failed to finalize removed attachment files:", cleanupError);
+  }
+
+  triggerTransactionAttachmentSync();
 }
 
 export function updateTransactionInContext(

@@ -125,7 +125,14 @@ export function finalizeRemovedAttachmentFiles(
   removed: readonly TransactionAttachment[],
 ): void {
   for (const attachment of removed) {
-    deleteTransactionAttachmentLocalFile(attachment.storageKey);
+    try {
+      deleteTransactionAttachmentLocalFile(attachment.storageKey);
+    } catch (error) {
+      console.error(
+        `Failed to delete local attachment file ${attachment.storageKey}:`,
+        error,
+      );
+    }
   }
 }
 

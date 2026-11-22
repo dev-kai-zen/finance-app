@@ -52,10 +52,16 @@ export function recordTransaction(
 export async function recordTransaction(
   command: RecordTransactionCommand,
   attachmentChanges?: TransactionAttachmentChanges,
+  context: DbContext = db,
 ): Promise<Transaction | TransferResult> {
   const prepared = await prepareAttachmentChanges(attachmentChanges);
+  let committed: {
+    result: Transaction | TransferResult;
+    removed: readonly ReturnType<typeof applyAttachmentChangesInContext>[number][];
+  };
+
   try {
-    const committed = db.transaction((tx) => {
+    const executeDb = (tx: DbContext) => {
       const result = recordTransactionCommandInContext(command, tx);
       const ownerId =
         command.kind === "transaction"
@@ -63,44 +69,57 @@ export async function recordTransaction(
           : (result as TransferResult).outLeg.id;
       const removed = applyAttachmentChangesInContext(ownerId, prepared, tx);
       return { result, removed };
-    });
-    finalizeRemovedAttachmentFiles(committed.removed);
-    triggerTransactionAttachmentSync();
+    };
 
-    if (command.kind === "transaction") {
-      const tx = committed.result as Transaction;
-      if (tx.categoryId) {
-        void checkAndNotifyBudgetThreshold({
-          categoryId: tx.categoryId,
-          occurredAt: tx.occurredAt,
-        });
-      }
-      if (tx.accountId) {
-        void checkAndNotifyCreditLimit(tx.accountId);
-      }
-      void checkAndNotifyGoalMilestones();
+    if ("transaction" in context && typeof context.transaction === "function") {
+      committed = context.transaction(executeDb);
+    } else {
+      committed = executeDb(context);
     }
-
-    logTelemetryEvent("transaction_created", {
-      type: command.kind === "transfer" ? "transfer" : command.input.type,
-      has_category:
-        command.kind === "transaction" ? Boolean(command.input.categoryId) : false,
-      has_labels:
-        command.kind === "transaction"
-          ? Boolean(command.input.labelIds?.length)
-          : false,
-      has_attachments: Boolean(attachmentChanges?.added?.length),
-      is_split:
-        command.kind === "transaction"
-          ? Boolean(command.input.splitEntries?.length)
-          : false,
-    });
-
-    return committed.result;
   } catch (error) {
+    // Only rollback newly prepared files if the database write failed to commit
     await discardPreparedAttachmentChanges(prepared);
     throw error;
   }
+
+  // Database transaction committed. Post-commit cleanup:
+  try {
+    finalizeRemovedAttachmentFiles(committed.removed);
+  } catch (cleanupError) {
+    console.error("Failed to finalize removed attachment files:", cleanupError);
+  }
+  triggerTransactionAttachmentSync();
+
+  if (command.kind === "transaction") {
+    const tx = committed.result as Transaction;
+    if (tx.categoryId) {
+      void checkAndNotifyBudgetThreshold({
+        categoryId: tx.categoryId,
+        occurredAt: tx.occurredAt,
+      });
+    }
+    if (tx.accountId) {
+      void checkAndNotifyCreditLimit(tx.accountId);
+    }
+    void checkAndNotifyGoalMilestones();
+  }
+
+  logTelemetryEvent("transaction_created", {
+    type: command.kind === "transfer" ? "transfer" : command.input.type,
+    has_category:
+      command.kind === "transaction" ? Boolean(command.input.categoryId) : false,
+    has_labels:
+      command.kind === "transaction"
+        ? Boolean(command.input.labelIds?.length)
+        : false,
+    has_attachments: Boolean(attachmentChanges?.added?.length),
+    is_split:
+      command.kind === "transaction"
+        ? Boolean(command.input.splitEntries?.length)
+        : false,
+  });
+
+  return committed.result;
 }
 
 export function recordTransactionInContext(
