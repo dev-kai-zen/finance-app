@@ -1417,13 +1417,20 @@ function TransactionFormModalInner({
     );
   }, [appliedPresetId, name, presets]);
 
-  const canSaveAsQuickPreset = Boolean(name.trim()) && !pending;
+  const isSplitActive = Boolean(splitEnabled && canUseSplit);
+  const isUnsupportedTransferForPreset = Boolean(isTransferCrossCurrency);
+
+  const canSaveAsQuickPreset =
+    Boolean(name.trim()) &&
+    !pending &&
+    !isSplitActive &&
+    !isUnsupportedTransferForPreset;
 
   useEffect(() => {
-    if (!name.trim()) {
+    if (!canSaveAsQuickPreset && saveAsQuickPreset) {
       setSaveAsQuickPreset(false);
     }
-  }, [name]);
+  }, [canSaveAsQuickPreset, saveAsQuickPreset]);
 
   const selectedCategory = useMemo(() => {
     for (const cat of categories) {
@@ -3138,7 +3145,6 @@ function TransactionFormModalInner({
 
             {!isEditing && !appliedPresetId && showQuickPresetsUi ? (
               <View
-                pointerEvents={canSaveAsQuickPreset ? "auto" : "none"}
                 style={[
                   styles.quickPresetSavePanel,
                   !canSaveAsQuickPreset && styles.quickPresetSavePanelDisabled,
@@ -3168,6 +3174,28 @@ function TransactionFormModalInner({
                       value={includePresetAmount}
                     />
                   </Host>
+                ) : null}
+                {isSplitActive ? (
+                  <Text style={styles.quickPresetHelp}>
+                    {t("transactions.quickPresetNoSplits", {
+                      defaultValue:
+                        "Quick Presets do not support split transactions.",
+                    })}
+                  </Text>
+                ) : isUnsupportedTransferForPreset ? (
+                  <Text style={styles.quickPresetHelp}>
+                    {t("transactions.quickPresetNoCrossCurrency", {
+                      defaultValue:
+                        "Quick Presets do not support cross-currency transfers.",
+                    })}
+                  </Text>
+                ) : saveAsQuickPreset && isCrossCurrencyEntry && includePresetAmount ? (
+                  <Text style={styles.quickPresetHelp}>
+                    {t("transactions.quickPresetAccountCurrencyNote", {
+                      currency: accountCurrencyCode,
+                      defaultValue: `Preset amount will be saved in account currency (${accountCurrencyCode}).`,
+                    })}
+                  </Text>
                 ) : null}
               </View>
             ) : appliedPresetId ? (

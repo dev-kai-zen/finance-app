@@ -2991,6 +2991,12 @@ export const fil = {
     transferReceivedEstimatedHint: "Tantiya ayon sa market rate • Pindutin para i-edit",
     transferReceivedEditButton: "I-edit",
     transferReceivedResetRate: "I-reset",
+    quickPresetNoSplits:
+      "Hindi sinusuportahan ng Quick Presets ang mga split na transaksyon.",
+    quickPresetNoCrossCurrency:
+      "Hindi sinusuportahan ng Quick Presets ang transfer na magkaiba ang currency.",
+    quickPresetAccountCurrencyNote:
+      "Maitatala ang halaga ng preset sa currency ng account (%{currency}).",
   },
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",

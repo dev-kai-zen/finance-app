@@ -155,41 +155,57 @@ function recordTransactionCommandInContext(
     if (command.kind === "transaction") {
       const input = command.input;
       const transactionName = input.name?.trim() ?? "";
-      saveTransactionPresetInContext(
-          {
-            transactionName,
-            type: input.type,
-            accountId: input.accountId,
-            pocketId: input.pocketId ?? null,
-            categoryId: input.categoryId,
-            toAccountId: null,
-            toPocketId: null,
-            amountMinorUnits: saveRequest.includeAmount ? input.amountMinorUnits : null,
-            note: input.note ?? null,
-          },
-          saveRequest.existingPresetId ?? undefined,
-        context,
-      );
+      const txResult = result as Transaction;
+      if (txResult.categoryId) {
+        try {
+          saveTransactionPresetInContext(
+            {
+              transactionName,
+              type: input.type,
+              accountId: input.accountId,
+              pocketId: input.pocketId ?? null,
+              categoryId: txResult.categoryId,
+              toAccountId: null,
+              toPocketId: null,
+              amountMinorUnits: saveRequest.includeAmount
+                ? Math.abs(txResult.amountMinorUnits)
+                : null,
+              note: input.note ?? null,
+            },
+            saveRequest.existingPresetId ?? undefined,
+            context,
+          );
+        } catch (presetError) {
+          console.warn("Failed to save optional quick preset:", presetError);
+        }
+      }
     } else {
       const input = command.input;
       const transactionName = input.name?.trim() ?? "";
-      saveTransactionPresetInContext(
-          {
-            transactionName,
-            type: "transfer",
-            accountId: input.fromAccountId,
-            pocketId: input.fromPocketId ?? null,
-            categoryId: null,
-            toAccountId: input.toAccountId,
-            toPocketId: input.toPocketId ?? null,
-            amountMinorUnits: saveRequest.includeAmount
-              ? Math.abs(input.amountMinorUnits)
-              : null,
-            note: input.note ?? null,
-          },
-          saveRequest.existingPresetId ?? undefined,
-        context,
-      );
+      const trResult = result as TransferResult;
+      if (trResult.outLeg.currencyCode === trResult.inLeg.currencyCode) {
+        try {
+          saveTransactionPresetInContext(
+            {
+              transactionName,
+              type: "transfer",
+              accountId: input.fromAccountId,
+              pocketId: input.fromPocketId ?? null,
+              categoryId: null,
+              toAccountId: input.toAccountId,
+              toPocketId: input.toPocketId ?? null,
+              amountMinorUnits: saveRequest.includeAmount
+                ? Math.abs(input.amountMinorUnits)
+                : null,
+              note: input.note ?? null,
+            },
+            saveRequest.existingPresetId ?? undefined,
+            context,
+          );
+        } catch (presetError) {
+          console.warn("Failed to save optional quick preset:", presetError);
+        }
+      }
     }
   } else if (command.preset?.appliedPresetId) {
     const preset = findTransactionPresetById(

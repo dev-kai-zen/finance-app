@@ -2943,6 +2943,11 @@ export const en = {
     transferReceivedEstimatedHint: "Estimated by market rate • Tap to edit",
     transferReceivedEditButton: "Edit",
     transferReceivedResetRate: "Reset",
+    quickPresetNoSplits: "Quick Presets do not support split transactions.",
+    quickPresetNoCrossCurrency:
+      "Quick Presets do not support cross-currency transfers.",
+    quickPresetAccountCurrencyNote:
+      "Preset amount will be saved in account currency (%{currency}).",
   },
   chatWithKai: {
     modalTitle: "Chat with Kai",

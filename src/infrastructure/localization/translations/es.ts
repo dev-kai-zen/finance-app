@@ -2975,6 +2975,12 @@ export const es = {
     transferReceivedEstimatedHint: "Estimado según tasa de mercado • Toca para editar",
     transferReceivedEditButton: "Editar",
     transferReceivedResetRate: "Restablecer",
+    quickPresetNoSplits:
+      "Las plantillas rápidas no admiten transacciones divididas.",
+    quickPresetNoCrossCurrency:
+      "Las plantillas rápidas no admiten transferencias entre distintas monedas.",
+    quickPresetAccountCurrencyNote:
+      "El monto de la plantilla se guardará en la moneda de la cuenta (%{currency}).",
   },
   chatWithKai: {
     modalTitle: "Chatear con Kai",

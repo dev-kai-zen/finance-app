@@ -1380,5 +1380,119 @@ test("R2: transfer fee currency code is hydrated and formatted with fee currency
   } finally { sqlite.close(); }
 });
 
+test("R4: optional preset handles foreign-currency typed amount and safely ignores split or cross-currency transfer", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { recordTransactionInContext } = require("../services/record-transaction.service");
+
+    // 1. Cross-currency typed expense: Account is PHP (acc_main).
+    // Typed in USD: 1000 minor units ($10.00), exchangeRateScaled = 5600000000 (56.00000000 with 8-decimal scale).
+    // Account amount resolves to 56,000 minor units (₱560.00).
+    // Preset saved with includeAmount: true must store amount 56000 and currency PHP (not raw 1000).
+    const tx = recordTransactionInContext(
+      {
+        kind: "transaction",
+        input: {
+          accountId: "acc_main",
+          categoryId: "cat_food",
+          type: "expense",
+          amountMinorUnits: 1000,
+          currencyCode: "USD",
+          exchangeRateScaled: 5600000000,
+          name: "Tokyo Ramen Foreign",
+          occurredAt: new Date(),
+        },
+        preset: {
+          saveRequest: {
+            includeAmount: true,
+          },
+        },
+      },
+      database,
+    );
+    assert.ok(tx.id, "Transaction must record successfully");
+
+    const presetRow = sqlite
+      .prepare("SELECT * FROM transaction_presets WHERE transaction_name = ?")
+      .get("Tokyo Ramen Foreign");
+    assert.ok(presetRow, "Preset row must be created");
+    assert.equal(presetRow.currency_code, "PHP", "Preset currency must match account currency");
+    assert.equal(
+      presetRow.amount_minor_units,
+      56000,
+      "Preset amount must be stored in resolved account minor units (56000 PHP, not 1000 USD)",
+    );
+
+    // 2. Split transaction with preset saveRequest:
+    // Split transaction has categoryId: null on parent; preset creation must safely be skipped
+    // without throwing or rolling back the transaction.
+    const splitTx = recordTransactionInContext(
+      {
+        kind: "transaction",
+        input: {
+          accountId: "acc_main",
+          categoryId: null,
+          type: "expense",
+          amountMinorUnits: 20000,
+          name: "Split Groceries",
+          occurredAt: new Date(),
+          splitEntries: [
+            { categoryId: "cat_food", amountMinorUnits: 12000 },
+            { categoryId: "cat_coffee", amountMinorUnits: 8000 },
+          ],
+        },
+        preset: {
+          saveRequest: {
+            includeAmount: true,
+          },
+        },
+      },
+      database,
+    );
+    assert.ok(splitTx.id, "Split transaction must succeed even with preset saveRequest");
+    const splitPresetRow = sqlite
+      .prepare("SELECT * FROM transaction_presets WHERE transaction_name = ?")
+      .get("Split Groceries");
+    assert.equal(splitPresetRow, undefined, "Split transaction must not create invalid preset");
+
+    // 3. Cross-currency transfer with preset saveRequest:
+    // Create USD account
+    const typeId = sqlite.prepare("SELECT id FROM account_types LIMIT 1").get().id;
+    sqlite
+      .prepare(
+        "INSERT INTO accounts (id, name, account_type_id, currency_code, opening_balance_minor_units, opening_balance_at, is_archived, sort_order, hide_from_selection, hide_from_reports, pocket_enabled, created_at, updated_at) VALUES (?, ?, ?, 'USD', 1000000, ?, 0, 0, 0, 0, 0, ?, ?)",
+      )
+      .run("acc_usd_r4", "US Bank R4", typeId, Date.now(), Date.now(), Date.now());
+
+    const fxTransfer = recordTransactionInContext(
+      {
+        kind: "transfer",
+        input: {
+          fromAccountId: "acc_usd_r4",
+          toAccountId: "acc_main",
+          amountMinorUnits: 10000,
+          destinationAmountMinorUnits: 580000,
+          name: "USD to PHP Transfer",
+          occurredAt: new Date(),
+        },
+        preset: {
+          saveRequest: {
+            includeAmount: true,
+          },
+        },
+      },
+      database,
+    );
+    assert.ok(fxTransfer.transactionGroupId, "Cross-currency transfer must succeed even with preset saveRequest");
+    const fxPresetRow = sqlite
+      .prepare("SELECT * FROM transaction_presets WHERE transaction_name = ?")
+      .get("USD to PHP Transfer");
+    assert.equal(fxPresetRow, undefined, "Cross-currency transfer must not create unsupported preset");
+  } finally {
+    sqlite.close();
+  }
+});
+
 
 
