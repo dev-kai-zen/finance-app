@@ -136,6 +136,7 @@ export function listSplitEntryBreakdownRows(
       categoryIcon: categories.icon,
       accountCurrencyCode: accounts.currencyCode,
       amountMinorUnits: transactionEntries.amountMinorUnits,
+      parentAmountMinorUnits: transactions.amountMinorUnits,
     })
     .from(transactionEntries)
     .innerJoin(
@@ -186,7 +187,7 @@ export function listExpenseEntryTotalsByCategory(
       .select({
         categoryId: transactionEntries.categoryId,
         currencyCode: accounts.currencyCode,
-        total: sql<number>`coalesce(sum(${transactionEntries.amountMinorUnits}), 0)`.as(
+        total: sql<number>`coalesce(sum(case when ${transactions.amountMinorUnits} < 0 then ${transactionEntries.amountMinorUnits} else -${transactionEntries.amountMinorUnits} end), 0)`.as(
           "total",
         ),
       })

@@ -115,8 +115,10 @@ export function getCategoryBreakdown(
     const catName = cat?.name ?? "Uncategorized";
     const catColor = cat?.hexColorsId ?? null;
     const catIcon = cat?.icon ?? (query.type === "income" ? "wallet" : "tag");
+    const signedMagnitude =
+      query.type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits;
     const amount = convertCurrencyMinorUnits(
-      Math.abs(tx.amountMinorUnits),
+      signedMagnitude,
       accountCurrencyCode,
       homeCurrency,
       ratesMap,
@@ -131,8 +133,12 @@ export function getCategoryBreakdown(
     const catColor = row.categoryColor;
     const catIcon =
       row.categoryIcon ?? (query.type === "income" ? "wallet" : "tag");
+    const signedMagnitude =
+      query.type === "expense"
+        ? (row.parentAmountMinorUnits < 0 ? row.amountMinorUnits : -row.amountMinorUnits)
+        : (row.parentAmountMinorUnits > 0 ? row.amountMinorUnits : -row.amountMinorUnits);
     const amount = convertCurrencyMinorUnits(
-      Math.abs(row.amountMinorUnits),
+      signedMagnitude,
       row.accountCurrencyCode,
       homeCurrency,
       ratesMap,
@@ -145,7 +151,7 @@ export function getCategoryBreakdown(
 
   for (const [id, data] of map.entries()) {
     const percentage =
-      overallTotal > 0 ? (data.total / overallTotal) * 100 : 0;
+      overallTotal > 0 && data.total > 0 ? (data.total / overallTotal) * 100 : 0;
 
     items.push({
       categoryId: id,

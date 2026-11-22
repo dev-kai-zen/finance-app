@@ -307,7 +307,7 @@ test("P2-04: SQL aggregation has a fixed statement count and indexed split probe
     getCategorySpendingBreakdown(f.db, f.date);
     const initialCount = queries.length;
     assert.ok(initialCount <= 6, "No per-category/transaction queries: " + initialCount);
-    const aggregate = queries.find(query => query.includes('sum(abs('));
+    const aggregate = queries.find(query => query.includes('sum(-') || query.includes('sum(abs('));
     assert.ok(aggregate);
     assert.ok(!aggregate.includes('"transactions"."id",'), "Hydrate aggregates, not ledger rows");
     const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + aggregate).all("expense", new Date(2026, 10, 1).getTime(), new Date(2026, 11, 1).getTime() - 1);

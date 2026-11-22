@@ -20,7 +20,7 @@ export function listUnsplitExpenseTotals(
       .select({
         categoryId: query.groupByCategory === false ? sql<null>`null` : transactions.categoryId,
         currencyCode: accounts.currencyCode,
-        total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as("total"),
+        total: sql<number>`coalesce(sum(-${transactions.amountMinorUnits}), 0)`.as("total"),
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))

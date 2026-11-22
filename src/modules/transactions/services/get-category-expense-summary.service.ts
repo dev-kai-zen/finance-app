@@ -38,7 +38,7 @@ export function getCategoryExpenseTotal(
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
-      Math.abs(Number(row.total) || 0),
+      Number(row.total) || 0,
     );
   }
 
@@ -55,7 +55,7 @@ export function getCategoryExpenseTotal(
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
-      Math.abs(Number(row.total) || 0),
+      Number(row.total) || 0,
     );
   }
 
@@ -112,7 +112,7 @@ export function getCategoryExpenseTotalsGrouped(
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
-      Math.abs(Number(row.total) || 0),
+      Number(row.total) || 0,
     );
     bucketsByCategory.set(categoryId, buckets);
   }
@@ -123,7 +123,7 @@ export function getCategoryExpenseTotalsGrouped(
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
-      Math.abs(Number(row.total) || 0),
+      Number(row.total) || 0,
     );
     bucketsByCategory.set(row.categoryId, buckets);
   }
