@@ -401,6 +401,7 @@ When modifying this project, AI agents must:
 13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).
 14. **Version History & Semantic Versioning Rule**: Follow the Version History and Semantic Versioning (`MAJOR.MINOR.PATCH`) guidelines in Section 18 when updating or adding release notes. Whenever a new feature (`MINOR`), bug fix/polish (`PATCH`), or breaking change (`MAJOR`) is implemented, proactively ask the user whether to bump the version across `package.json`, `app.json`, `android/app/build.gradle`, and `RELEASE_NOTES`.
 15. **Mandatory Performance Assessment & 60–120fps Standard**: Every new feature, refactor, bug fix, or architectural/thought discussion ("asking for thoughts") must explicitly evaluate runtime performance impact and strictly follow the 60–120fps engineering rules in Section 19.
+16. **Mandatory Pre-Change 4-Question Gate**: Before changing any production code (especially during audits, bug fixes, or refactors), AI agents must explicitly answer the four mandatory pre-change questions in Section 20 to prevent unnecessary code sprawl and maintain full codebase clarity.
 
 ---
 
@@ -519,5 +520,24 @@ All development, code reviews, refactors, and design discussions must target a s
 10. **Performance Regression Verification**:
     - **Automated SQL & Parity Tests**: For performance-critical queries/services, add real in-memory SQLite tests (`node --test`) asserting bounded SQL statement counts, `EXPLAIN QUERY PLAN` index usage (zero temp B-tree sorts), and field-by-field equivalence against the baseline (covering transfers, fees, splits, tied timestamps, wildcards, and historical balances).
     - **Visual & Device Checks**: Verify row/form re-renders in React Native DevTools (**Highlight updates** + **Profiler**) and validate cold start, scrolling, and idle stability on release builds (`npm run android:apk:release`) with large fixtures (1k–10k+ rows).
+
+---
+
+# 20. Mandatory Pre-Change Investigation Gate (Audit & Bug Fix Protocol)
+
+Before letting AI change any production code (especially during audit findings remediation, bug fixing, or refactoring), the AI agent must explicitly answer four questions:
+
+1. **What is the actual problem?**
+   Demonstrate it with a failing test, reproduction, or concrete evidence.
+2. **Why does the current implementation cause it?**
+   Show the specific function and execution path.
+3. **What is the smallest reasonable fix?**
+   Explain why a new abstraction or file is necessary, if one is proposed.
+4. **How will we prove the fix does not break other features?**
+   Specify the regression tests.
+
+### Guarding Against Audit Code Sprawl
+During audits and remediation, AI agents must not rewrite surrounding logic, restructure unrelated modules, or introduce cascading abstractions that make the application logic harder to understand. Every fix must remain surgical, adhere strictly to the Minimal Diff Principle (Section 17), and preserve complete clarity for the developer.
+
 
 
