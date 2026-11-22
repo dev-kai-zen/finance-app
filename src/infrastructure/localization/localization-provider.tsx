@@ -1,6 +1,7 @@
 import React, {
   createContext,
   useCallback,
+  useContext,
   useMemo,
   useState,
   type PropsWithChildren,
@@ -93,5 +94,5 @@ export function LocalizationProvider({ children }: PropsWithChildren) {
 }
 
 export function useLocalization(): LocalizationContextValue {
-  return React.use(LocalizationContext);
+  return useContext(LocalizationContext);
 }

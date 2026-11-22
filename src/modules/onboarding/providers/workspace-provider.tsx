@@ -99,7 +99,7 @@ export function WorkspaceProvider({ children }: React.PropsWithChildren) {
 }
 
 export function useWorkspace(): WorkspaceContextValue {
-  const value = React.use(WorkspaceContext);
+  const value = React.useContext(WorkspaceContext);
   if (!value) {
     throw new Error("useWorkspace must be used inside WorkspaceProvider.");
   }

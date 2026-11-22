@@ -67,8 +67,6 @@ export function ActionBottomSheet({
     });
   }, [dragStartY, onClose, translateY]);
 
-  if (!visible) return null;
-
   const dragGesture = useMemo(
     () =>
       Gesture.Pan()
