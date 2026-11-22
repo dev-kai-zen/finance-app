@@ -1,6 +1,7 @@
 import { and, asc, isNull, lte, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { transactions } from "@/infrastructure/database/schema";
+import { findAccountTransactionDelta } from "../repositories/transactions.repository";
 
 /**
  * Calculates the net transaction balance delta in minor units (cents)
@@ -94,4 +95,17 @@ export function getAccountBalanceDeltasAtDate(
   context: DbContext = db,
 ): Record<string, number> {
   return getAccountBalanceDeltasAtDates([cutoffDate], context)[0] ?? {};
+}
+
+/**
+ * Calculates the net transaction balance delta in minor units (cents)
+ * for a single account using native SQLite scalar aggregation.
+ * Supports excluding a specific transaction (e.g. during transaction edits).
+ */
+export function getAccountTransactionDelta(
+  accountId: string,
+  context: DbContext = db,
+  options?: { excludeTransactionId?: string | null },
+): number {
+  return findAccountTransactionDelta(accountId, context, options);
 }

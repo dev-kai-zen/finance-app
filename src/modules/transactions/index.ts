@@ -153,6 +153,12 @@ export const getAccountBalanceDeltasAtDate = deferFunction(
       .getAccountBalanceDeltasAtDate,
 ) as typeof import("./services/get-account-balance-deltas.service").getAccountBalanceDeltasAtDate;
 
+export const getAccountTransactionDelta = deferFunction(
+  () =>
+    require("./services/get-account-balance-deltas.service")
+      .getAccountTransactionDelta,
+) as typeof import("./services/get-account-balance-deltas.service").getAccountTransactionDelta;
+
 export const getRecentTransactions = deferFunction(
   () =>
     require("./services/get-recent-transactions.service").getRecentTransactions,

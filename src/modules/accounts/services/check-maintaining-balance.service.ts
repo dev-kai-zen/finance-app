@@ -1,6 +1,6 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { findAccountById } from "../repositories/accounts.repository";
-import { getAccountLedgerTransactions } from "@/modules/transactions";
+import { getAccountTransactionDelta } from "@/modules/transactions";
 
 export interface CheckMaintainingBalanceInput {
   accountId: string;
@@ -63,10 +63,9 @@ export function checkMaintainingBalance(
     };
   }
 
-  const ledger = getAccountLedgerTransactions(accountId, context);
-  const delta = ledger
-    .filter((tx) => !excludeTransactionId || tx.id !== excludeTransactionId)
-    .reduce((sum, tx) => sum + tx.amountMinorUnits, 0);
+  const delta = getAccountTransactionDelta(accountId, context, {
+    excludeTransactionId,
+  });
 
   const currentBalance = account.openingBalanceMinorUnits + delta;
   const additional = Math.abs(expenseAmountMinorUnits);

@@ -240,13 +240,13 @@ flowchart TD
 | **P1-22 — RESOLVED** | Android share sheet was deleting temporary export files before receiving app finished reading them. | `shareAccountsCsv` keeps active cache file intact and prunes stale files older than 15 minutes on subsequent calls. Unit test in `accounts-csv.test.cjs`. |
 | **A-F04 — RESOLVED** | Archiving an account or pocket retains its setting key while `resolveAccountLocation` and `TransactionFormModal` automatically fall back to Available/None. If the account or pocket is later restored, the user's default setting is seamlessly preserved without manual reconfiguration. | Tested and confirmed: runtime resolution gracefully guards against archived accounts and pockets by design, while preserving configured defaults upon restore. |
 | **A-F02 — RESOLVED** | `saveAccount` called `reconcileCreditCardBillingInContext` unconditionally on every account save, causing unnecessary SQLite scans across all credit cards and statements on cash/bank saves. | **Resolved** in `save-account.service.ts`. Inspects `wasCreditCard` and `isCreditCard`; only deletes credit card details when changing type away from card (`wasCreditCard && !isCreditCard`), and only invokes `reconcileCreditCardBillingInContext` when `isCreditCard || wasCreditCard`. Regression test in `accounts.test.cjs`. |
+| **A-F03 — RESOLVED** | `checkMaintainingBalance` called `getAccountLedgerTransactions(accountId, context)`, materializing and sorting all historical active transaction objects into JS heap memory before calculating the balance in JS. | **Resolved**: Added native SQLite scalar aggregate query `findAccountTransactionDelta` in `transactions.repository.ts` (`coalesce(sum(amount_minor_units), 0)` with optional `excludeTransactionId`), exposed via `getAccountTransactionDelta` service in `transactions` module's public boundary. Replaced ledger hydration in `check-maintaining-balance.service.ts` with direct scalar delta. Tests in `account-balance-deltas.test.cjs` and `accounts.test.cjs`. |
 
 ### Source findings requiring Stage 2 validation
 
 | ID / Priority | Finding and Evidence | Minimal Direction if Confirmed | Regression Proof |
 |---|---|---|---|
 | **A-F01 — Medium** | **Cross-group Fund Group Parent-Child Overlap**<br>While `saveFundGroup` prohibits selecting both an account and its pocket within the *same* group, it does not prevent Group 1 containing Account A while Group 2 contains Pocket X of Account A. Because Account A's balance includes Pocket X's balance, the same money is counted across multiple fund groups. | In `saveFundGroup`, verify that no pocket belonging to an account in another fund group can be added, and that adding an account does not overlap with existing pocket memberships in other groups. | Create Group 1 with Account A; attempt to create Group 2 with Pocket of Account A. Assert validation error. |
-| **A-F03 — Low / Performance** | **Maintaining Balance $O(N)$ Ledger Transaction Scan**<br>`checkMaintainingBalance` calls `getAccountLedgerTransactions(accountId, context)`, which materializes and orders *all* historical active transaction objects for that account into JS memory before reducing their sum. | Replace full ledger transaction hydration with a bounded SQL aggregate query: `SELECT COALESCE(SUM(amount_minor_units), 0) FROM transactions WHERE account_id = ? AND deleted_at IS NULL`. | Assert memory and statement count for an account with 5,000 transactions; verify identical balance check result. |
 
 ### Architectural questions and policy decisions
 
@@ -341,7 +341,7 @@ Before writing or modifying any production code, AI agents and developers must a
 - [ ] Core accounting guarantees (derived balances, currency immutability, starting balance locking) verified by repeatable tests.
 - [ ] Finding A-F01 (Fund Groups cross-group parent-child overlap) reviewed and decided with team.
 - [x] Finding A-F02 (Credit card reconciliation scoping on cash saves) resolved: scoped to credit card additions, modifications, and removals; covered by automated unit test.
-- [ ] Finding A-F03 (Maintaining balance aggregate query optimization) evaluated for performance impact.
+- [x] Finding A-F03 (Maintaining balance aggregate query optimization) resolved: replaced $O(N)$ ledger hydration with native SQLite $O(1)$ scalar aggregate `getAccountTransactionDelta`. Covered by unit and integration tests.
 - [x] Finding A-F04 resolved: confirmed graceful fallback via `resolveAccountLocation` and setting preservation on unarchive.
 - [ ] All 16 Stage 2 regression cases (`ACCT-V01` through `ACCT-V16`) implemented and passing.
 - [ ] TypeScript (`npx tsc --noEmit`) passes with zero errors.

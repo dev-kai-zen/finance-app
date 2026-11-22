@@ -83,6 +83,7 @@ const {
   reorderAccountsList,
   reorderAccountTypesList,
 } = require("@/modules/accounts/services/reorder-accounts.service");
+const { checkMaintainingBalance } = require("@/modules/accounts/services/check-maintaining-balance.service");
 const input = require("@/modules/accounts/utils/account-input");
 const { openingSummary, formatOpeningTotal } = require("@/modules/accounts/utils/opening-summary");
 const { accountColor, accountIcon } = require("@/modules/accounts/constants/account-appearance.constants");
@@ -953,5 +954,60 @@ test("account linked to a transaction preset with 0 transactions (P1-15) marks i
   assert.ok(item);
   assert.equal(item.isDeletable, false);
   assert.equal(item.canChangeCurrency, true);
+});
+
+test("A-F03: checkMaintainingBalance uses native scalar aggregate without full ledger scan", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Maintaining Savings", "1000.00"),
+    maintainingAmount: "500.00",
+  });
+
+  const now = Date.now();
+  // Insert active transactions directly
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_active_1', ?, 'expense', -20000, ?, ?, ?)",
+    )
+    .run(accountId, now, now, now); // -₱200
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_to_edit', ?, 'expense', -40000, ?, ?, ?)",
+    )
+    .run(accountId, now, now, now); // -₱400
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at, deleted_at) VALUES ('tx_deleted', ?, 'expense', -90000, ?, ?, ?, ?)",
+    )
+    .run(accountId, now, now, now, now); // deleted should be ignored
+
+  // Opening = 100,000 (₱1,000). Active delta = -20,000 + -40,000 = -60,000. Current balance = 40,000.
+  // 1. Without exclusion: additional expense ₱100 (-10,000)
+  // Projected = 40,000 - 10,000 = 30,000 < maintaining (50,000) -> isUnderMaintaining: true, shortfall: 20,000 (₱200)
+  const result1 = checkMaintainingBalance({
+    accountId,
+    expenseAmountMinorUnits: 10000,
+    context: database,
+  });
+  assert.equal(result1.hasMaintainingBalance, true);
+  assert.equal(result1.currentBalanceMinorUnits, 40000);
+  assert.equal(result1.projectedBalanceMinorUnits, 30000);
+  assert.equal(result1.isUnderMaintaining, true);
+  assert.equal(result1.shortfallMinorUnits, 20000);
+
+  // 2. With exclusion of tx_to_edit:
+  // Delta without tx_to_edit = -20,000. Current balance = 100,000 - 20,000 = 80,000.
+  // Proposed new amount for tx_to_edit = ₱250 (-25,000)
+  // Projected = 80,000 - 25,000 = 55,000 >= 50,000 -> isUnderMaintaining: false, shortfall: 0
+  const result2 = checkMaintainingBalance({
+    accountId,
+    expenseAmountMinorUnits: 25000,
+    excludeTransactionId: "tx_to_edit",
+    context: database,
+  });
+  assert.equal(result2.hasMaintainingBalance, true);
+  assert.equal(result2.currentBalanceMinorUnits, 80000);
+  assert.equal(result2.projectedBalanceMinorUnits, 55000);
+  assert.equal(result2.isUnderMaintaining, false);
+  assert.equal(result2.shortfallMinorUnits, 0);
 });
 

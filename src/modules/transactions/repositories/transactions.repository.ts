@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 
 export type { DbContext };
@@ -1797,6 +1797,30 @@ export function hasTransactionsForAccount(
       .limit(1)
       .get(),
   );
+}
+
+export function findAccountTransactionDelta(
+  accountId: string,
+  context: DbContext = db,
+  options?: { excludeTransactionId?: string | null },
+): number {
+  const conditions = [
+    eq(transactions.accountId, accountId),
+    isNull(transactions.deletedAt),
+  ];
+  if (options?.excludeTransactionId) {
+    conditions.push(ne(transactions.id, options.excludeTransactionId));
+  }
+
+  const row = context
+    .select({
+      delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
+    })
+    .from(transactions)
+    .where(and(...conditions))
+    .get();
+
+  return Number(row?.delta) || 0;
 }
 
 export function getAccountIdsWithTransactions(

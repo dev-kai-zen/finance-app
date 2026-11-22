@@ -127,6 +127,7 @@ const schema = require("@/infrastructure/database/schema");
 const {
   getAccountBalanceDeltasAtDates,
   getAccountBalanceDeltasAtDate,
+  getAccountTransactionDelta,
 } = require("../services/get-account-balance-deltas.service");
 
 function setupTestDb() {
@@ -276,4 +277,34 @@ test("getAccountBalanceDeltasAtDates: ignores deleted transactions and handles e
 
   const single = getAccountBalanceDeltasAtDate(new Date(2026, 0, 15), db);
   assert.deepEqual(single, { acc_1: 8000 });
+});
+
+test("getAccountTransactionDelta: computes native aggregate delta with optional exclusion and ignores deleted rows", () => {
+  const db = setupTestDb();
+  const insert = sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at, deleted_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const t1 = new Date(2026, 0, 10).getTime();
+  insert.run("tx_1", "acc_1", "income", 50000, t1, t1, t1, null);
+  insert.run("tx_2", "acc_1", "expense", -15000, t1, t1, t1, null);
+  insert.run("tx_3", "acc_1", "expense", -5000, t1, t1, t1, null);
+  insert.run("tx_del", "acc_1", "expense", -20000, t1, t1, t1, t1); // deleted
+  insert.run("tx_other", "acc_2", "income", 99999, t1, t1, t1, null); // other account
+
+  // 1. Account with no transactions returns 0
+  assert.equal(getAccountTransactionDelta("acc_nonexistent", db), 0);
+
+  // 2. Net sum for acc_1 without exclusions: 50000 - 15000 - 5000 = 30000
+  assert.equal(getAccountTransactionDelta("acc_1", db), 30000);
+
+  // 3. Net sum excluding tx_2: 50000 - 5000 = 45000
+  assert.equal(getAccountTransactionDelta("acc_1", db, { excludeTransactionId: "tx_2" }), 45000);
+
+  // 4. Net sum excluding non-existent ID remains 30000
+  assert.equal(getAccountTransactionDelta("acc_1", db, { excludeTransactionId: "tx_unknown" }), 30000);
+
+  // 5. Net sum for acc_2 is isolated: 99999
+  assert.equal(getAccountTransactionDelta("acc_2", db), 99999);
 });
