@@ -49,5 +49,8 @@ export const transactions = sqliteTable(
     index("transactions_active_feed_index")
       .on(table.occurredAt, table.createdAt, table.id)
       .where(sql`${table.deletedAt} IS NULL`),
+    index("transactions_active_import_comparison_index")
+      .on(table.accountId, table.type, table.amountMinorUnits, table.occurredAt, table.id)
+      .where(sql`${table.deletedAt} IS NULL`),
   ],
 );

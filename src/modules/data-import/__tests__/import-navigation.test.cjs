@@ -39,7 +39,7 @@ Module._load = function (request, ...args) {
   if (request === "../hooks/use-data-import") return { useDataImport: () => state };
   if (request === "@/modules/walkthrough") return { DraggableTourChip: "DraggableTourChip", DataImportWalkthroughOverlay: "DataImportWalkthroughOverlay", useDataImportWalkthrough: () => ({ isWalkthroughActive: false, startWalkthrough: () => {} }), WalkthroughRegistryProvider: ({ children }) => children, WalkthroughTarget: "WalkthroughTarget", useWalkthroughTarget: () => ({ current: null }) };
   if (request.startsWith("@/components/")) {
-    const names = { "app-button": "AppButton", "confirm-modal": "ConfirmModal", "info-modal": "InfoModal", "modal-screen-header": "ModalScreenHeader", "full-screen-form-modal": "FullScreenFormModal", "keyboard-aware-form": "KeyboardAwareForm", "date-picker-modal": "DatePickerModal", "screen-title-with-help": "HelpIconButton" };
+    const names = { "page-container": "PageLoadingState", "app-button": "AppButton", "confirm-modal": "ConfirmModal", "info-modal": "InfoModal", "modal-screen-header": "ModalScreenHeader", "full-screen-form-modal": "FullScreenFormModal", "keyboard-aware-form": "KeyboardAwareForm", "date-picker-modal": "DatePickerModal", "screen-title-with-help": "HelpIconButton" };
     const name = names[request.split("/").pop()]; return { [name]: name };
   }
   if (request.endsWith("/import-controls")) return { ImportInput: "ImportInput", ImportSelect: "ImportSelect", ImportAction: "ImportAction", ImportChoice: "ImportChoice", ImportChip: "ImportChip", ImportDateField: "ImportDateField", ImportFieldButton: "ImportFieldButton", ImportTypePicker: "ImportTypePicker" };

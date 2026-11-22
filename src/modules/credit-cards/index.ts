@@ -36,6 +36,10 @@ export const reconcileCreditCardBillingInContext = deferFunction(
       .reconcileCreditCardBillingInContext,
 ) as typeof import("./services/reconcile-credit-card-billing.service").reconcileCreditCardBillingInContext;
 
+export const reconcileImportedCreditCardBillingWork = deferFunction(
+  () => require("./services/reconcile-credit-card-billing.service").reconcileImportedCreditCardBillingWork,
+) as typeof import("./services/reconcile-credit-card-billing.service").reconcileImportedCreditCardBillingWork;
+
 export const getInstallmentPlanForTransaction = deferFunction(
   () =>
     require("./services/get-installment-plan.service")

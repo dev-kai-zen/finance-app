@@ -4,8 +4,8 @@ import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { appLockLifecycle } from "@/modules/security";
 import { MAX_IMPORT_BYTES, type ImportKind } from "../types/import.types";
-import { ImportValidationError, parseCsv } from "../utils/csv";
-import { importDigest } from "../utils/import-preview";
+import { ImportValidationError, parseCsvAsync } from "../utils/csv";
+import { importDigestAsync } from "../utils/import-preview";
 
 export async function pickImportFile() {
   const picked = await appLockLifecycle.withLockSuspended(async () => {
@@ -21,7 +21,7 @@ export async function pickImportFile() {
     if (!/\.(csv|tsv|txt)$/i.test(asset.name)) throw new ImportValidationError("fileType");
     if ((asset.size ?? new File(asset.uri).size) > MAX_IMPORT_BYTES) throw new ImportValidationError("fileSize");
     const text = await new File(asset.uri).text();
-    return { name: asset.name, document: parseCsv(text), hash: importDigest(text), text };
+    return { name: asset.name, document: await parseCsvAsync(text), hash: await importDigestAsync(text), text };
   } finally {
     // DocumentPicker made a disposable cache copy; the source remains untouched.
     if (process.env.EXPO_OS !== "web" && asset.uri.startsWith(Paths.cache.uri)) {

@@ -59,7 +59,7 @@ function ensureStatement(
   );
 }
 
-function reconcileAccount(
+function* reconcileAccount(
   account: ReturnType<typeof getAccountsWithBalances>[number],
   today: Date,
   context: DbContext,
@@ -145,6 +145,7 @@ function reconcileAccount(
 
   const plans = listInstallmentPlansForAccount(account.id, context);
   for (const plan of plans) {
+    yield;
     const purchase = transactionById.get(plan.purchaseTransactionId);
     if (purchase?.deletedAt && plan.status === "active") {
       updateInstallmentPlanStatus(plan.id, "cancelled", context);
@@ -172,6 +173,7 @@ function reconcileAccount(
   );
 
   for (const transaction of activeTransactions) {
+    yield;
     if (transaction.amountMinorUnits >= 0) continue;
     if (activePlanTransactionIds.has(transaction.id)) continue;
     const statementOn = statementDateForTransaction(
@@ -210,6 +212,7 @@ function reconcileAccount(
   );
   const planById = new Map(plans.map((plan) => [plan.id, plan]));
   for (const installment of installments) {
+    yield;
     if (installment.scheduledStatementOn > todayOn) continue;
     if (findEntryForInstallment(installment.id, context)) continue;
     const plan = planById.get(installment.planId);
@@ -251,16 +254,19 @@ function reconcileAccount(
 
   const entriesByTransaction = new Map<string, typeof entries>();
   for (const entry of entries) {
+    yield;
     if (!entry.transactionId) continue;
     const group = entriesByTransaction.get(entry.transactionId) ?? [];
     group.push(entry);
     entriesByTransaction.set(entry.transactionId, group);
   }
   for (const transaction of allTransactions) {
+    yield;
     const linkedEntries = entriesByTransaction.get(transaction.id) ?? [];
     if (linkedEntries.length === 0) continue;
     const statementIds = [...new Set(linkedEntries.map((entry) => entry.statementId))];
     for (const statementId of statementIds) {
+      yield;
       const statementEntries = linkedEntries.filter(
         (entry) => entry.statementId === statementId,
       );
@@ -306,6 +312,7 @@ function reconcileAccount(
   const remainingByStatementId = new Map<string, number>();
   for (const statement of statements) remainingByStatementId.set(statement.id, 0);
   for (const entry of entries) {
+    yield;
     remainingByStatementId.set(
       entry.statementId,
       (remainingByStatementId.get(entry.statementId) ?? 0) + entry.amountMinorUnits,
@@ -313,6 +320,7 @@ function reconcileAccount(
   }
 
   for (const transaction of activeTransactions) {
+    yield;
     if (transaction.amountMinorUnits <= 0) continue;
     const allocated = (entriesByTransaction.get(transaction.id) ?? [])
       .filter((entry) => entry.amountMinorUnits < 0)
@@ -324,6 +332,7 @@ function reconcileAccount(
         (remainingByStatementId.get(statement.id) ?? 0) > 0,
     );
     for (const statement of eligibleStatements) {
+      yield;
       if (available <= 0) break;
       const remaining = Math.max(
         0,
@@ -363,6 +372,7 @@ function reconcileAccount(
   );
   const issuedByStatement = new Map<string, number>();
   for (const entry of entries) {
+    yield;
     if (entry.entryType === "payment") continue;
     if (entry.entryType === "adjustment" && entry.transactionId &&
         paymentTransactionIds.has(entry.transactionId)) continue;
@@ -370,6 +380,7 @@ function reconcileAccount(
       (issuedByStatement.get(entry.statementId) ?? 0) + entry.amountMinorUnits);
   }
   for (const statement of statements) {
+    yield;
     const nextIssuedAmount = Math.max(0, issuedByStatement.get(statement.id) ?? 0);
     if (nextIssuedAmount !== statement.issuedAmountMinorUnits) {
       updateStatementIssuedAmount(statement.id, nextIssuedAmount, context);
@@ -392,7 +403,11 @@ export function reconcileCreditCardBillingInContext(
   const cards = getAccountsWithBalances(context).filter(
     (account) => account.creditCardDetails,
   );
-  for (const card of cards) reconcileAccount(card, today, context);
+  // Existing callers drain the work synchronously inside their transaction.
+  for (const card of cards) {
+    const work = reconcileAccount(card, today, context);
+    while (!work.next().done) { /* Continue reconciliation. */ }
+  }
   lastReconciledCalendarDate = toCalendarDate(today);
   lastReconciledDb = db;
 }
@@ -407,4 +422,18 @@ export function ensureCreditCardBillingReconciled(today = new Date()): void {
     return;
   }
   reconcileCreditCardBilling(today);
+}
+
+/** Stage only affected cards; do not update live reconciliation caches before publication. */
+export function* reconcileImportedCreditCardBillingWork(
+  accountIds: string[], today: Date, context: DbContext,
+): Generator<void> {
+  const ids = new Set(accountIds);
+  const cards = getAccountsWithBalances(context, { includeManagementFlags: false }).filter(
+    (account) => ids.has(account.id) && account.creditCardDetails,
+  );
+  for (const card of cards) {
+    yield;
+    yield* reconcileAccount(card, today, context);
+  }
 }

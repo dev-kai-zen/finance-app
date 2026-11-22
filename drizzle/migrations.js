@@ -49,6 +49,7 @@ import m0046 from './0046_add_subscriptions_hub.sql';
 import m0047 from './0047_add_subscription_pocket_and_schedule_link.sql';
 import m0048 from './0048_add_transactions_active_feed_index.sql';
 import m0049 from './0049_fix_subscription_schedule_payment_sign.sql';
+import m0050 from './0050_add_import_comparison_index.sql';
 
   export default {
     journal,
@@ -102,7 +103,8 @@ m0045,
 m0046,
 m0047,
 m0048,
-m0049
+m0049,
+m0050
     }
   }
   

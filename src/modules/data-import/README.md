@@ -83,6 +83,18 @@ the workspace, including later edits. Selective import undo is not included.
 
 ## Verification
 
+Preview preparation and file-wide wizard summaries run outside render in cancellable
+work slices, after a 150 ms input debounce. Transfer matching uses account/date/time/
+amount indexes and retains the previous ambiguity rules. Incoming source keys are
+queried in batches of 500; duplicate candidates use indexed, 500-row keyset pages.
+
+Saving prepares domain writes on an isolated SQLite snapshot, then publishes bound
+SQL statements in one asynchronous native transaction. Any intervening database
+commit invalidates the staged import. Errors discard or roll back the complete
+batch. WAL readers see no partial import. Competing saves during final publication
+fail promptly with a busy error and can be retried. Snapshot memory grows with the
+database size; release-device frame times and memory still need profiling.
+
 Run `node --test src/modules/data-import/__tests__/*.test.cjs` and
 `npx tsc --noEmit`. Commit tests use actual SQLite and production Drizzle services;
 only native bridges and safety backup I/O are substituted. Test migration upgrades,

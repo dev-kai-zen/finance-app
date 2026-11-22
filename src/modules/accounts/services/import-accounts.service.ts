@@ -10,7 +10,7 @@ import { parseBillingDay, parseCreditLimit, parseOpeningAmount, parseOpeningDate
 
 export function getAccountImportCatalog(context: DbContext = db) {
   return {
-    accounts: getAccountsWithBalances(context).map((a) => ({
+    accounts: getAccountsWithBalances(context, { includeManagementFlags: false }).map((a) => ({
       ...a, creditCard: isCreditCardAccountType(a.accountTypeId, a.accountType?.name ?? ""),
     })),
     accountTypes: listAccountTypes(context).map((t) => ({ ...t, creditCard: isCreditCardAccountType(t.id, t.name) })),

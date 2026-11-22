@@ -353,6 +353,10 @@ export const getTransactionImportCatalog = deferFunction(
 export const createImportedTransactions = deferFunction(
   () => require("./services/import-transactions.service").createImportedTransactions,
 ) as typeof import("./services/import-transactions.service").createImportedTransactions;
+
+export const createImportedTransactionsWork = deferFunction(
+  () => require("./services/import-transactions.service").createImportedTransactionsWork,
+) as typeof import("./services/import-transactions.service").createImportedTransactionsWork;
 export type { ImportedTransactionCommand } from "./services/import-transactions.service";
 
 export const getTransactionBackupAttachments = deferFunction(

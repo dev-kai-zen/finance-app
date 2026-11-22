@@ -4,16 +4,11 @@ import { DEFAULT_OTHERS_CATEGORY_IDS, getCategoryImportCatalog } from "@/modules
 import { getCategoryKeywordMapSync } from "@/modules/chat-with-kai";
 import { getImportCurrencies } from "@/modules/currencies";
 import { isSampleWorkspace } from "@/modules/onboarding";
-import { getTransactionImportCatalog } from "@/modules/transactions";
-import { listImportedSourceKeys } from "../repositories/imports.repository";
 import type { ImportCatalog } from "../types/import.types";
-import { transactionFingerprint } from "../utils/csv";
 
 export function getImportCatalog(
   context: DbContext = db,
-  options?: { includeFingerprints?: boolean },
 ): ImportCatalog {
-  const includeFingerprints = options?.includeFingerprints !== false;
   const sampleMode = isSampleWorkspace(context);
   const accountCatalog = getAccountImportCatalog(context);
   const accounts = sampleMode ? [] : accountCatalog.accounts;
@@ -36,19 +31,7 @@ export function getImportCatalog(
     categoryKeywordsMap,
     fallbackCategoryIds: DEFAULT_OTHERS_CATEGORY_IDS,
     currencies: getImportCurrencies(context),
-    sourceKeys: sampleMode ? [] : listImportedSourceKeys(context),
-    fingerprints:
-      !sampleMode && includeFingerprints
-        ? getTransactionImportCatalog(context).map((t) =>
-            transactionFingerprint(
-              t.type,
-              t.accountId,
-              t.toAccountId,
-              t.date,
-              t.amount,
-              t.name,
-            ),
-          )
-        : [],
+    sourceKeys: [],
+    fingerprints: [],
   };
 }

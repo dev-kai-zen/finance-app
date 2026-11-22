@@ -1,11 +1,23 @@
 import { getCurrencyMinorUnitExponent } from "@/utils/currency";
 import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS, type CsvDocument, type ImportField, type ImportOptions } from "../types/import.types";
+import { runImportWork, type ImportWorkOptions } from "./import-work";
 
 export class ImportValidationError extends Error {
   constructor(public readonly code: string) { super(code); }
 }
 
 export function parseCsv(input: string, separator?: string): CsvDocument {
+  const work = parseCsvWork(input, separator);
+  let result = work.next();
+  while (!result.done) result = work.next();
+  return result.value;
+}
+
+export function parseCsvAsync(input: string, separator?: string, workOptions?: ImportWorkOptions): Promise<CsvDocument> {
+  return runImportWork(parseCsvWork(input, separator), workOptions);
+}
+
+function* parseCsvWork(input: string, separator?: string): Generator<void, CsvDocument> {
   if (new TextEncoder().encode(input).length > MAX_IMPORT_BYTES) throw new ImportValidationError("fileSize");
   const text = input.replace(/^\uFEFF/, "");
   if (text.includes("\u0000") || text.includes("\uFFFD")) throw new ImportValidationError("encoding");
@@ -13,6 +25,7 @@ export function parseCsv(input: string, separator?: string): CsvDocument {
   let quoted = false;
   const counts = new Map([[",", 0], [";", 0], ["\t", 0]]);
   for (let i = 0; i < text.length; i++) {
+    if (i % 2048 === 0) yield;
     if (text[i] === '"') {
       if (quoted && text[i + 1] === '"') { i++; continue; }
       quoted = !quoted;
@@ -30,6 +43,7 @@ export function parseCsv(input: string, separator?: string): CsvDocument {
     if (records.length > MAX_IMPORT_ROWS + 1) throw new ImportValidationError("rowLimit");
   };
   for (let i = 0; i < text.length; i++) {
+    if (i % 2048 === 0) yield;
     const char = text[i];
     if (inQuote) {
       if (char === '"') {

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -15,6 +14,7 @@ import { useNavigation, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareForm } from "@/components/keyboard-aware-form";
 import { DeferredScreenBody } from "@/components/deferred-screen-body";
+import { PageLoadingState } from "@/components/page-container";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { ModalScreenHeader } from "@/components/modal-screen-header";
@@ -61,16 +61,13 @@ import { validateColumnSample } from "../utils/validate-column-sample";
 import { cellValue } from "../utils/import-preview";
 import {
   filterReviewRows,
-  importDateValidation,
   importFieldRequired,
   reviewGroupCounts,
 } from "../utils/import-review";
 import {
-  importTypeValues,
   importSteps,
   previousImportStep,
   requiredImportColumns,
-  transferFileSummary,
 } from "../utils/import-wizard";
 import { getCurrencyMinorUnitExponent } from "@/utils/currency";
 
@@ -168,17 +165,12 @@ export function DataImportScreenContent({
   const counts = reviewGroupCounts(state.preview?.rows ?? []);
   const activeGroup =
     reviewFilter ?? (counts.attention ? "attention" : "ready");
-  const types =
-    state.file && state.options.kind === "transactions"
-      ? importTypeValues(state.file.document, state.options)
-      : [];
+  const types = state.analysis?.types ?? [];
   const unknownTypes = types.filter(
     (entry) =>
       !["expense", "income", "transfer", "exclude"].includes(entry.mapped),
   );
-  const dates = state.file
-    ? importDateValidation(state.file.document, state.options)
-    : null;
+  const dates = state.analysis?.dates ?? null;
   const [showOptional, setShowOptional] = useState(false);
   const [pendingBack, setPendingBack] = useState<(() => void) | null>(null);
   const dirty = !!state.file && state.step !== "done";
@@ -254,9 +246,7 @@ export function DataImportScreenContent({
       state.options.columns.amount === undefined &&
       (state.options.columns.debit !== undefined ||
         state.options.columns.credit !== undefined));
-  const transfer = state.file
-    ? transferFileSummary(state.file.document, state.options)
-    : { count: 0, outgoing: 0, incoming: 0 };
+  const transfer = state.analysis?.transfer ?? { count: 0, outgoing: 0, incoming: 0 };
   const basicFields: ImportField[] =
     state.options.kind === "accounts"
       ? [
@@ -672,7 +662,6 @@ export function DataImportScreenContent({
           />
         </View>
       )}
-      {state.loading && <ActivityIndicator color={theme.colors.primary} />}
       {state.busy && (
         <Text accessibilityLiveRegion="polite" style={styles.body}>
           {t("dataImport.working")}
@@ -1222,6 +1211,9 @@ export function DataImportScreenContent({
           />
         </>
       )}
+      {(state.loading || state.previewPending || state.busy) && (
+        <PageLoadingState message={t("dataImport.working")} variant="list" />
+      )}
     </View>
   );
   const footer =
@@ -1250,6 +1242,7 @@ export function DataImportScreenContent({
               onPress={state.matching}
               disabled={
                 state.busy ||
+                state.previewPending ||
                 missingColumns.length > 0 ||
                 unknownTypes.length > 0
               }

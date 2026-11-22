@@ -4,13 +4,23 @@ const { DatabaseSync } = require("node:sqlite");
 const fs = require("node:fs"), path = require("node:path"), Module = require("node:module"), ts = require("typescript");
 const root = path.resolve(__dirname, "../../..");
 let sqlite, database, backupCalls, backupAction, proEnabled = false;
+let nativeMain, testDirectory, livePath, bridgeOptions, statements;
+const { nativeSqlite } = require("../../../infrastructure/database/__tests__/helpers/native-sqlite.cjs");
 const resolve = Module._resolveFilename, load = Module._load;
 Module._resolveFilename = function (request, parent, ...args) {
   return resolve.call(this, request.startsWith("@/") ? path.join(root, request.slice(2)) : request, parent, ...args);
 };
 const mock = () => new Proxy(() => mock(), { get: (_, key) => key === "create" ? (value) => value : key === Symbol.toPrimitive ? () => "" : mock() });
 Module._load = function (request, ...args) {
-  if (request === "@/infrastructure/database/client") return { get db() { return database; } };
+  if (request === "@/infrastructure/database/client" || request === "./client" && args[0]?.filename.includes(path.join("infrastructure", "database"))) return { DATABASE_NAME: "finance.db", get db() { return database; }, get sqliteDatabase() { return nativeMain; } };
+  if (request === "expo-sqlite") return {
+    openDatabaseAsync: async () => nativeSqlite(livePath, bridgeOptions),
+    deserializeDatabaseAsync: async (bytes) => {
+      const filename = path.join(testDirectory, require("node:crypto").randomUUID() + ".db");
+      fs.writeFileSync(filename, bytes);
+      return nativeSqlite(filename);
+    },
+  };
   if (request === "@/modules/local-backup") return { createLocalBackup: async () => { backupCalls++; await backupAction(); } };
   if (request === "@/modules/pro") return { PRO_LIMITS: { FREE_MAX_ACCOUNTS: 5 }, getCurrentProStatus: () => ({ isPro: proEnabled }) };
   if (request === "expo-crypto") return { randomUUID: require("node:crypto").randomUUID };
@@ -27,7 +37,8 @@ const schema = require("@/infrastructure/database/schema");
 const { commitImport } = require("../services/commit-import.service.ts");
 const { getImportCatalog } = require("../services/import-catalog.service.ts");
 const { parseCsv, suggestColumns, categoryMappingKey } = require("../utils/csv.ts");
-const { buildImportPreview, importDigest } = require("../utils/import-preview.ts");
+const { importDigest } = require("../utils/import-preview.ts");
+const { prepareImportPreview: buildImportPreview } = require("../services/prepare-import-preview.service.ts");
 const { getAccountsWithBalances } = require("@/modules/accounts/services/get-accounts-with-balances.service");
 const journal = require("../../../../drizzle/meta/_journal.json");
 const migrations = journal.entries.map((entry) => ({ sql: fs.readFileSync(path.join(root, "../drizzle", entry.tag + ".sql"), "utf8").split("--> statement-breakpoint"), folderMillis: entry.when, hash: "", bps: true }));
@@ -101,6 +112,7 @@ function connect(filename = ":memory:") {
           return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
         },
         executeForRawResultSync(params) {
+          statements?.push({ query, params });
           const stmt = sqlite.prepare(aliasSelectColumns(query));
           const rows = stmt.all(...params);
           return { getAllSync: () => rows.map((row) => Object.values(row)) };
@@ -111,13 +123,19 @@ function connect(filename = ":memory:") {
 }
 
 beforeEach(() => {
-  connect(); database.dialect.migrate(migrations, database.session);
+  testDirectory = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "finance-import-"));
+  livePath = path.join(testDirectory, "live.db");
+  connect(livePath); sqlite.exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;");
+  nativeMain = { execSync: (query) => sqlite.exec(query), getFirstSync: (query) => sqlite.prepare(query).get() };
+  bridgeOptions = {};
+  statements = [];
+  database.dialect.migrate(migrations, database.session);
   sqlite.exec("INSERT OR IGNORE INTO currencies (code,name,symbol,minor_unit_exponent,is_active,created_at,updated_at) VALUES ('PHP','Peso','PHP',2,1,0,0)");
   sqlite.exec("INSERT OR REPLACE INTO settings (key,value,updated_at) VALUES ('onboarding.status','completed',0),('workspace.mode','personal',0)");
   backupCalls = 0; backupAction = async () => {}; proEnabled = false;
   sqlite.prepare("INSERT INTO account_types (id,name,account_group,sort_order,is_system,created_at,updated_at) VALUES ('wallet','Wallet','asset',0,0,0,0)").run();
 });
-afterEach(() => sqlite.close());
+afterEach(() => { sqlite.close(); fs.rmSync(testDirectory, { recursive: true, force: true }); });
 function draft(csv = "Date,Type,Amount,Account,Category,Name,Labels,Source ID\n2026-01-02,expense,150,Cash,Food,Lunch,Personal,old-1") {
   const document = parseCsv(csv), hash = importDigest(csv);
   const options = { kind: "transactions", source: "Old app", columns: suggestColumns(document.headers), dateFormat: "ymd", decimal: ".", defaultCurrency: "PHP", defaultAccount: "", transferMode: "single", decisions: {},
@@ -457,3 +475,108 @@ test("V2-05: signed debit/credit refunds and reversals commit with preview parit
   assert.deepEqual(sqlite.prepare("SELECT amount_minor_units FROM transactions ORDER BY occurred_at,id").all().map(r=>r.amount_minor_units),[10000,-2500]);
   assert.equal(getAccountsWithBalances().find(a=>a.name==="Cash").currentBalanceMinorUnits,p.balances[0].after);
 });
+
+test("V2-08: concurrent edits during staging reject publication and preserve the other edit", async () => {
+  const d = draft();
+  bridgeOptions.beforeExec = async (query) => {
+    if (query === "BEGIN IMMEDIATE;") sqlite.exec("INSERT INTO settings VALUES ('concurrent-edit','keep',0)");
+  };
+  await assert.rejects(d.save(), /changed/);
+  assert.equal(count("accounts"), 0); assert.equal(count("import_records"), 0);
+  assert.equal(sqlite.prepare("SELECT value FROM settings WHERE key='concurrent-edit'").get().value, "keep");
+  assert.equal(sqlite.prepare("PRAGMA busy_timeout").get().timeout, 5000);
+});
+
+test("V2-08: failed native publication rolls back staged writes and restores connection settings", async () => {
+  const d = draft();
+  bridgeOptions.beforeRun = async (query) => { if (/insert into "import_records"/i.test(query)) throw new Error("native write failed"); };
+  await assert.rejects(d.save(), /native write failed/);
+  for (const table of ["accounts", "transactions", "labels", "import_batches", "import_records"]) assert.equal(count(table), 0);
+  assert.equal(sqlite.prepare("PRAGMA busy_timeout").get().timeout, 5000);
+  bridgeOptions = {}; await d.save(); assert.equal(count("transactions"), 1);
+});
+
+test("V2-08: live readers see no partial import and competing synchronous writes fail promptly", async () => {
+  const d = draft(); let inspected = false;
+  bridgeOptions.beforeRun = async (query) => {
+    if (!/insert into "transactions"/i.test(query)) return;
+    inspected = true;
+    assert.equal(count("accounts"), 0); assert.equal(count("transactions"), 0);
+    assert.throws(() => sqlite.exec("INSERT INTO settings VALUES ('competing','write',0)"), /locked/);
+  };
+  await d.save(); assert.equal(inspected, true); assert.equal(count("accounts"), 1); assert.equal(count("transactions"), 1);
+});
+
+test("V2-08: comparison SQL is candidate-bounded with a 10k ledger, exact Unicode names and transfer direction", async () => {
+  const d = draft(); await d.save();
+  const cash = getAccountsWithBalances().find((a) => a.name === "Cash");
+  const insert = sqlite.prepare("INSERT INTO transactions(id,account_id,type,currency_code,amount_minor_units,name,occurred_at,created_at,updated_at) VALUES (?,?,'expense','PHP',-777,?,0,0,0)");
+  sqlite.exec("BEGIN");
+  for (let i = 0; i < 10000; i++) insert.run("noise-" + i, cash.id, "Noise " + i);
+  sqlite.exec("COMMIT");
+  d.options.accounts.cash.existingId = cash.id; d.options.source = "different source";
+  d.options.rowEdits = { 2: ["2026-01-02", "expense", "150", "Cash", "Food", "Ｌｕｎｃｈ", "Personal", "other-id"] };
+  statements.length = 0;
+  const p = d.preview(); assert.equal(p.rows[0].issue, "duplicate");
+  const comparisons = statements.filter((s) => /from "transactions"/i.test(s.query) && /limit \?/i.test(s.query));
+  assert.equal(comparisons.length, 1);
+  for (const { query, params } of comparisons) {
+    assert.ok(params.length <= 500);
+    const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + query).all(...params).map((r) => r.detail).join("\n");
+    assert.match(plan, /transactions_active_import_comparison_index/);
+    assert.doesNotMatch(plan, /TEMP B-TREE/);
+    assert.equal(sqlite.prepare(query).all(...params).length, 1);
+  }
+  const keys = require("../repositories/imports.repository.ts").listImportedSourceKeys;
+  statements.length = 0;
+  assert.deepEqual(keys([]), []); assert.equal(statements.length, 0);
+  keys(Array.from({ length: 1001 }, (_, i) => "key-" + i));
+  assert.equal(statements.length, 3);
+  assert.ok(statements.every((s) => s.params.length <= 500 && /where "import_records"."source_key" in/.test(s.query)));
+});
+
+test("V2-08: tied duplicate candidates page at 500 without omissions or temporary sorting", async () => {
+  const d = draft(); await d.save();
+  const cash = getAccountsWithBalances().find((a) => a.name === "Cash");
+  const insert = sqlite.prepare("INSERT INTO transactions(id,account_id,type,currency_code,amount_minor_units,name,occurred_at,created_at,updated_at) VALUES (?,?,'expense','PHP',-123,?,?,0,0)");
+  sqlite.exec("BEGIN");
+  for (let i = 0; i < 1001; i++) insert.run("tie-" + String(i).padStart(4, "0"), cash.id, "Name " + i, new Date(2026, 0, 3).getTime());
+  sqlite.exec("COMMIT");
+  statements.length = 0;
+  const pages = [...require("@/modules/transactions").getTransactionImportCatalog([
+    { type: "expense", accountId: cash.id, amount: -123, date: new Date(2026, 0, 3) },
+  ])];
+  assert.deepEqual(pages.map((page) => page.length), [500, 500, 1]);
+  assert.equal(new Set(pages.flat().map((r) => r.name)).size, 1001);
+  assert.equal(statements.length, 3);
+  for (const { query, params } of statements) {
+    const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + query).all(...params).map((r) => r.detail).join("\n");
+    assert.match(plan, /transactions_active_import_comparison_index/); assert.doesNotMatch(plan, /TEMP B-TREE/);
+  }
+});
+
+test("V2-08: existing legacy account IDs are compared without reserving an ID prefix", () => {
+  sqlite.exec("INSERT INTO accounts(id,name,account_type_id,currency_code,opening_balance_minor_units,opening_balance_at,created_at,updated_at) VALUES ('new:legacy','Cash','wallet','PHP',100000,0,0,0)");
+  sqlite.prepare("INSERT INTO transactions(id,account_id,type,currency_code,amount_minor_units,name,occurred_at,created_at,updated_at) VALUES ('legacy-tx','new:legacy','expense','PHP',-15000,'Lunch',?,0,0)").run(new Date(2026, 0, 2).getTime());
+  const d = draft(); d.options.accounts.cash.existingId = "new:legacy";
+  assert.equal(d.preview().rows[0].issue, "duplicate");
+});
+
+for (const size of [100, 500, 1000]) {
+  test(`V2-08: ${size} rows stage cooperatively and publish as one atomic import`, async () => {
+    const d = draft("Date,Type,Amount,Account,Category,Name\n" + Array.from({ length: size }, (_, i) =>
+      `2026-01-02,expense,1,Cash,Food,Item ${i}`).join("\n"));
+    let checks = 0;
+    bridgeOptions.beforeRun = async () => {
+      checks++;
+      if (checks % 100 === 0) {
+        assert.equal(count("accounts"), 0); assert.equal(count("transactions"), 0); assert.equal(count("import_records"), 0);
+        await new Promise(setImmediate);
+      }
+    };
+    const saved = await d.save();
+    assert.equal(saved.imported, size); assert.equal(count("transactions"), size); assert.equal(count("import_records"), size);
+    assert.equal(getAccountsWithBalances().find((a) => a.name === "Cash").currentBalanceMinorUnits, 100000 - size * 100);
+    assert.ok(checks >= size);
+  });
+}

@@ -14,6 +14,8 @@ require.extensions[".ts"] = (module, filename) => module._compile(ts.transpileMo
 }).outputText, filename);
 const { parseCsv, parseImportAmount, parseImportDate, suggestColumns, categoryMappingKey, transactionFingerprint } = require("../utils/csv.ts");
 const { buildImportPreview, importDigest } = require("../utils/import-preview.ts");
+const { buildImportPreviewAsync } = require("../utils/import-preview.ts");
+const { runImportWork, ImportWorkCancelled } = require("../utils/import-work.ts");
 
 const catalog = () => ({
   accounts: ["Cash", "Savings"].map((name, index) => ({ id: `a${index}`, name, accountTypeId: "wallet", currencyCode: "PHP", openingBalanceMinorUnits: 100000, openingBalanceAt: new Date(2026, 0, 1), currentBalanceMinorUnits: 100000, isArchived: false, creditCard: false })),
@@ -460,4 +462,75 @@ test("V2-05: only the full app export signature defaults to signed, with an expl
   assert.equal(resolveAmountInterpretation(["Date","Type","Amount","Transaction ID"],s.options),"unsigned");
   s.options.amountInterpretation="unsigned";
   assert.equal(s.preview().rows[0].transaction.amount,-10000);
+});
+
+for (const [size, baseline] of [
+  [100, "66cbecdcd3aea299115f9480adb0edd702786e826c356e7c19de4b7c44c9cdd5"],
+  [500, "68d27b2cd3a47b5704a4c2d408fbc538bf5750f90e512f8f6ff206d0d6162471"],
+  [1000, "f6065fd763d4e9cae71d437fc518946d9b55d13e5803821b8ca744ef3f975859"],
+]) {
+  test(`V2-08: ${size} inferred transfer rows preserve every baseline preview field and yield`, async () => {
+    const csv = "Date,Time,Type,Amount,Account\n" + Array.from({ length: size }, (_, i) =>
+      `2026-01-02,09:00,transfer,${i % 2 === 0 ? "-" : ""}${Math.floor(i / 2) + 1},${i % 2 === 0 ? "Cash" : "Savings"}`).join("\n");
+    const s = setup(csv); s.options.transferMode = "paired";
+    let yields = 0;
+    const p = await buildImportPreviewAsync(s.document, s.options, s.data, importDigest(csv), undefined, {
+      yieldControl: async () => { yields++; },
+    });
+    // Captured from the pre-fix implementation. The signature covers all fields and row ordering.
+    assert.equal(p.signature, baseline);
+    assert.equal(p.accepted, size / 2);
+    assert.ok(yields > 0);
+    assert.deepEqual(p, s.preview());
+    s.options.rowEdits = { 2: ["2026-01-02", "09:00", "transfer", "-9999", "Cash"] };
+    const edited = await buildImportPreviewAsync(s.document, s.options, s.data, importDigest(csv));
+    assert.equal(edited.rows[0].issue, "transfer");
+    assert.equal(edited.rows[1].issue, "transfer");
+    assert.equal(edited.accepted, size / 2 - 1);
+  });
+}
+
+test("V2-08: cancellation stops cooperative work and closes its generator", async () => {
+  let cancelled = false, steps = 0, closed = false;
+  function* work() {
+    try { while (steps < 10000) { steps++; yield; } return "stale"; }
+    finally { closed = true; }
+  }
+  await assert.rejects(runImportWork(work(), {
+    isCancelled: () => cancelled,
+    yieldControl: async () => { cancelled = true; },
+  }), ImportWorkCancelled);
+  assert.ok(steps < 10000);
+  assert.equal(closed, true);
+});
+
+test("V2-08: cooperative file parsing, hashing, summaries and mapping keep existing results", async () => {
+  const { parseCsvAsync } = require("../utils/csv.ts");
+  const { importDigestAsync, sourceAccountNames, sourceCategories } = require("../utils/import-preview.ts");
+  const { analyzeImportAsync } = require("../utils/import-analysis.ts");
+  const { importTypeValues, transferFileSummary } = require("../utils/import-wizard.ts");
+  const { importDateValidation } = require("../utils/import-review.ts");
+  const { prepareImportMappings, prepareImportMappingsAsync } = require("../utils/prepare-import-mappings.ts");
+  const csv = "Date,Time,Type,Amount,Account,To Account,Category,Note\r\n" + Array.from({ length: 1000 }, (_, i) =>
+    `2026-01-02,09:00,expense,1,Cash,,Food,"${"😀 café ".repeat(20)}"`).join("\r\n");
+  const s = setup(csv);
+  assert.deepEqual(await parseCsvAsync(csv), s.document);
+  assert.equal(await importDigestAsync(csv), importDigest(csv));
+  s.options.rowEdits = { 2: ["2026-01-03", "09:00", "transfer", "2", "Cash", "Savings", "", "edited"] };
+  const summary = await analyzeImportAsync(s.document, s.options);
+  assert.deepEqual(summary.accountNames, sourceAccountNames(s.document, s.options));
+  assert.deepEqual(summary.categoryNames, sourceCategories(s.document, s.options));
+  assert.deepEqual(summary.types, importTypeValues(s.document, s.options));
+  assert.deepEqual(summary.transfer, transferFileSummary(s.document, s.options));
+  assert.deepEqual(summary.dates, importDateValidation(s.document, s.options));
+  assert.deepEqual(await prepareImportMappingsAsync(s.document, s.options, s.data), prepareImportMappings(s.document, s.options, s.data));
+});
+
+test("V2-08: streamed identities and signatures preserve Unicode across chunk boundaries", async () => {
+  const identity = "a".repeat(4095) + "😀" + "b".repeat(9000) + "\ud800";
+  const s = setup("Date,Type,Amount,Account,Category,Source ID\n2026-01-02,expense,1,Cash,Food," + identity);
+  const p = await buildImportPreviewAsync(s.document, s.options, s.data, "file-hash");
+  assert.equal(p.rows[0].sourceKey, importDigest(JSON.stringify(["transactions", "old app", "cash", identity])));
+  const { signature, ...content } = p;
+  assert.equal(signature, importDigest(JSON.stringify(content)));
 });

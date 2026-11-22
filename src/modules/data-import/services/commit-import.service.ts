@@ -1,8 +1,9 @@
 import { randomUUID } from "expo-crypto";
 import { db } from "@/infrastructure/database/client";
+import { StagedDatabaseChangedError, withStagedDatabaseTransaction } from "@/infrastructure/database/staged-transaction";
 import { createImportedAccount } from "@/modules/accounts";
 import { resolveImportedCategory } from "@/modules/categories";
-import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
+import { reconcileImportedCreditCardBillingWork } from "@/modules/credit-cards";
 import { resolveImportLabels } from "@/modules/labels";
 import { createLocalBackup } from "@/modules/local-backup";
 import {
@@ -11,12 +12,14 @@ import {
   markOnboardingPendingInContext,
 } from "@/modules/onboarding";
 import { getCurrentProStatus, PRO_LIMITS } from "@/modules/pro";
-import { createImportedTransactions, type ImportedTransactionCommand } from "@/modules/transactions";
+import { createImportedTransactionsWork, type ImportedTransactionCommand } from "@/modules/transactions";
 import { insertImportBatch, insertImportRecord } from "../repositories/imports.repository";
 import type { CsvDocument, ImportOptions } from "../types/import.types";
 import { ImportValidationError, normalizeImportName } from "../utils/csv";
-import { buildImportPreview, cellValue } from "../utils/import-preview";
+import { cellValue } from "../utils/import-preview";
 import { getImportCatalog } from "./import-catalog.service";
+import { prepareImportPreviewWork, prepareImportPreviewAsync } from "./prepare-import-preview.service";
+import { runImportWork } from "../utils/import-work";
 import { getCurrencyMinorUnitExponent } from "@/utils/currency";
 import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
@@ -44,18 +47,18 @@ export async function commitImport(
     if (!canImportWorkspaceData(db, { allowOnboarding })) throw new ImportValidationError("workspace");
     const isPro = getCurrentProStatus().isPro;
     const previewConstraints = { isPro, maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS };
-    const preview = buildImportPreview(document, draft, getImportCatalog(), fileHash, previewConstraints);
+    const preview = await prepareImportPreviewAsync(document, draft, getImportCatalog(), fileHash, previewConstraints);
     if (!preview.ready || preview.signature !== signature) throw new ImportValidationError("changed");
     try { await createLocalBackup(null, "safety"); }
     catch { throw new ImportValidationError("backup"); }
-    const committed = db.transaction((tx) => {
+    const committed = await withStagedDatabaseTransaction(async (tx) => runImportWork((function* () {
       if (!canImportWorkspaceData(tx, { allowOnboarding })) throw new ImportValidationError("workspace");
       clearSampleWorkspaceIfNeeded(tx, { preserveAccountTypes: true });
       if (allowOnboarding) {
         markOnboardingPendingInContext(tx, draft.defaultCurrency);
       }
       const freshCatalog = getImportCatalog(tx);
-      const fresh = buildImportPreview(document, draft, freshCatalog, fileHash, previewConstraints);
+      const fresh = yield* prepareImportPreviewWork(document, draft, freshCatalog, fileHash, previewConstraints, tx);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");
       if (!isPro) {
         const existingActiveCount = freshCatalog.accounts.filter((a) => !a.isArchived).length;
@@ -66,8 +69,8 @@ export async function commitImport(
       }
       const batchId = randomUUID(), accountIds = new Map<string, string>();
       const newAccounts: string[] = [], categoryIds = new Map<string, string>();
-      let createdCreditCard = false;
       for (const account of fresh.accounts) {
+        yield;
         const id = account.id ?? createImportedAccount({
           name: account.name, accountTypeId: account.accountTypeId, currencyCode: account.currency,
           openingAmount: decimalAmount(account.openingBalance, account.currency), openingDate: dateInput(account.balanceDate),
@@ -84,12 +87,12 @@ export async function commitImport(
         accountIds.set(account.key, id);
         if (!account.id) {
           newAccounts.push(id);
-          if (account.creditCardDetails) createdCreditCard = true;
         }
       }
       const rows = fresh.rows.filter((r) => !r.skip && !r.issue && !r.secondary);
       const commands: ImportedTransactionCommand[] = [];
       for (const row of rows) {
+        yield;
         const item = row.transaction;
         if (!item) continue;
         const labelIds = resolveImportLabels(item.labels, tx);
@@ -105,10 +108,8 @@ export async function commitImport(
           commands.push({ kind: "transaction", input: { accountId: accountIds.get(item.accountKey)!, categoryId, type: item.type, amountMinorUnits: item.amount, occurredAt: item.date, name: item.name, note: item.note, labelIds } });
         }
       }
-      const recordIds = commands.length ? createImportedTransactions(commands, tx) : [];
-      if (createdCreditCard && !commands.length) {
-        reconcileCreditCardBillingInContext(new Date(), tx);
-      }
+      const recordIds = yield* createImportedTransactionsWork(commands, tx);
+      yield* reconcileImportedCreditCardBillingWork([...new Set(accountIds.values())], new Date(), tx);
       const summary = {
         accounts: fresh.balances.map((b) => ({ name: b.name, currency: b.currency, balance: b.after })),
         newAccounts, dateFrom: fresh.dateFrom, dateTo: fresh.dateTo,
@@ -116,7 +117,9 @@ export async function commitImport(
       };
       insertImportBatch({ id: batchId, fileName, kind: draft.kind, source: draft.source.trim() || "CSV", importedCount: fresh.accepted, skippedCount: fresh.skipped, summaryJson: JSON.stringify(summary), createdAt: new Date() }, tx);
       const rowsByNumber = new Map(fresh.rows.map((r) => [r.number, r]));
-      rows.forEach((row, index) => {
+      for (let index = 0; index < rows.length; index++) {
+        yield;
+        const row = rows[index];
         const sourceAccount = normalizeImportName(cellValue(row.cells, draft, "account") || draft.defaultAccount);
         const ids = draft.kind === "transactions" ? recordIds[index] : [accountIds.get(sourceAccount)!];
         insertImportRecord({ id: randomUUID(), batchId, sourceKey: row.sourceKey, rowNumber: row.number, recordIdsJson: JSON.stringify(ids) }, tx);
@@ -124,9 +127,9 @@ export async function commitImport(
           const other = rowsByNumber.get(row.companion)!;
           insertImportRecord({ id: randomUUID(), batchId, sourceKey: other.sourceKey, rowNumber: other.number, recordIdsJson: JSON.stringify(ids) }, tx);
         }
-      });
+      }
       return { imported: fresh.accepted, skipped: fresh.skipped, batchId };
-    });
+    })()));
 
     const bracket =
       committed.imported < 100
@@ -136,6 +139,9 @@ export async function commitImport(
           : "over_1000";
     logTelemetryEvent("csv_import_completed", { bracket, success: true });
     return committed;
+  } catch (error) {
+    if (error instanceof StagedDatabaseChangedError) throw new ImportValidationError("changed");
+    throw error;
   } finally {
     importing = false;
   }

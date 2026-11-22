@@ -1,19 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { DeviceEventEmitter } from "react-native";
 import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, useProStatus } from "@/modules/pro";
 import { getImportCatalog } from "../services/import-catalog.service";
+import { prepareImportPreviewAsync } from "../services/prepare-import-preview.service";
 import { commitImport } from "../services/commit-import.service";
 import { downloadImportTemplate, pickImportFile, shareImportTemplate } from "../services/import-files.service";
 import { listImportHistory } from "../repositories/imports.repository";
 import type { AccountMapping, ImportCatalog, ImportKind, ImportOptions, ImportStep, ImportTransactionType } from "../types/import.types";
 import { ImportValidationError, parseImportDate, suggestColumns } from "../utils/csv";
-import { buildImportPreview, sourceAccountNames, sourceCategories } from "../utils/import-preview";
+import { analyzeImportAsync } from "../utils/import-analysis";
+import { ImportWorkCancelled } from "../utils/import-work";
 
-import { prepareImportMappings } from "../utils/prepare-import-mappings";
+import { prepareImportMappingsAsync } from "../utils/prepare-import-mappings";
 
 const defaults = (kind: ImportKind, defaultCurrency: string): ImportOptions => ({ kind, source: "", columns: {}, dateFormat: "ymd", decimal: ".", defaultCurrency, defaultAccount: "", transferMode: "single", accounts: {}, categories: {}, decisions: {} });
+let nextImportHookId = 1;
 export function useDataImport(
   initialKind: ImportKind = "transactions",
   hookOptions?: { allowOnboarding?: boolean; defaultCurrency?: string },
@@ -42,64 +47,110 @@ export function useDataImport(
   const [savedTemplate, setSavedTemplate] = useState<string | null>(null);
   const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
   const locked = useRef(false);
-  const refresh = (includeFingerprints = false) => {
-    setCatalog(getImportCatalog(undefined, { includeFingerprints }));
+  const sourceId = useRef<string | null>(null);
+  if (sourceId.current === null) sourceId.current = `data-import-${nextImportHookId++}`;
+  const refresh = () => {
+    setCatalog(getImportCatalog());
     setHistory(listImportHistory());
   };
   useEffect(() => {
-    scheduleAfterPaint(() => {
-      try {
-        refresh(false);
-      } catch {
-        setError("load");
-      } finally {
-        setLoading(false);
-      }
-    });
-    return subscribeToDatabaseReplacement(() => {
+    let cancel = () => {};
+    const load = () => {
+      cancel();
+      setLoading(true);
+      cancel = scheduleAfterPaint(() => {
+        try {
+          refresh();
+        } catch {
+          setError("load");
+        } finally {
+          setLoading(false);
+        }
+      });
+    };
+    load();
+    const unsubscribe = subscribeToDatabaseReplacement(() => {
       setFile(null);
       setStep("file");
       setResult(null);
-      try {
-        refresh(false);
-      } catch {
-        setError("load");
-      }
+      load();
     });
+    return () => { cancel(); unsubscribe(); };
   }, []);
   const run = async (operation: () => Promise<void>) => {
     if (locked.current) return;
     locked.current = true; setBusy(true); setError(null); setSavedTemplate(null);
-    try { await operation(); }
-    catch (e) { setError(e instanceof ImportValidationError ? e.code : "failed"); }
+    try {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      await operation();
+    }
+    catch (e) { if (!(e instanceof ImportWorkCancelled)) setError(e instanceof ImportValidationError ? e.code : "failed"); }
     finally { locked.current = false; setBusy(false); }
   };
   const patch = (value: Partial<ImportOptions>) => { if (!locked.current) setOptions((previous) => ({ ...previous, ...value })); };
-  const preview = useMemo(
-    () =>
-      file && catalog
-        ? buildImportPreview(file.document, options, catalog, file.hash, {
-            isPro,
-            maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS,
-          })
-        : null,
-    [file, options, catalog, isPro],
-  );
-  const matching = () => {
+  const [resolved, setResolved] = useState<{
+    file: NonNullable<typeof file>; options: ImportOptions; catalog: ImportCatalog; isPro: boolean;
+    preview: Awaited<ReturnType<typeof prepareImportPreviewAsync>>;
+    analysis: Awaited<ReturnType<typeof analyzeImportAsync>>;
+  } | null>(null);
+  useEffect(() => { setResolved((previous) => previous?.file === file ? previous : null); }, [file]);
+  const requestId = useRef(0);
+  const latestInputs = useRef({ file, options, catalog, isPro });
+  latestInputs.current = { file, options, catalog, isPro };
+  const current = resolved?.file === file && resolved?.options === options && resolved?.catalog === catalog && resolved?.isPro === isPro;
+  const preview = current ? resolved.preview : null;
+  const [previewError, setPreviewError] = useState<typeof latestInputs.current | null>(null);
+  const failed = previewError?.file === file && previewError?.options === options && previewError?.catalog === catalog && previewError?.isPro === isPro;
+  const previewPending = Boolean(file && catalog && !current && !failed);
+  const latestResolved = useRef(resolved);
+  latestResolved.current = resolved;
+  useFocusEffect(useCallback(() => {
+    const id = ++requestId.current;
     if (!file || !catalog) return;
-    patch(prepareImportMappings(file.document, options, catalog)); setStep("matching");
-  };
+    const previous = latestResolved.current;
+    if (previous?.file === file && previous.options === options && previous.catalog === catalog && previous.isPro === isPro) return;
+    let cancelScheduled = () => {};
+    const isCancelled = () => {
+      const latest = latestInputs.current;
+      return id !== requestId.current || latest.file !== file || latest.options !== options || latest.catalog !== catalog || latest.isPro !== isPro;
+    };
+    // Mapping text stays responsive; clear stale review data in the input's own render.
+    const timer = setTimeout(() => {
+      cancelScheduled = scheduleAfterPaint(() => {
+        void prepareImportPreviewAsync(file.document, options, catalog, file.hash, {
+          isPro, maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+        }, { isCancelled }).then(async (next) => {
+          const analysis = await analyzeImportAsync(file.document, options, { isCancelled });
+          if (isCancelled()) return;
+          setResolved({ file, options, catalog, isPro, preview: next, analysis });
+          setPreviewError(null);
+        }).catch((e) => {
+          if (isCancelled() || e instanceof ImportWorkCancelled) return;
+          setPreviewError({ file, options, catalog, isPro }); setError("load");
+        });
+      });
+    }, 150);
+    return () => { requestId.current++; clearTimeout(timer); cancelScheduled(); };
+  }, [file, options, catalog, isPro]));
+  const matching = () => run(async () => {
+    if (!file || !catalog) return;
+    const prepared = await prepareImportMappingsAsync(file.document, options, catalog, {
+      isCancelled: () => latestInputs.current.file !== file || latestInputs.current.options !== options,
+    });
+    setOptions(prepared); setStep("matching");
+  });
   return {
-    catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, patch, isPro,
+    catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, previewPending,
+    analysis: current ? resolved.analysis : null, patch, isPro,
     reload: () =>
       run(async () => {
-        refresh(Boolean(file));
+        refresh();
       }),
     chooseKind: (kind: ImportKind) => { if (!busy) { setOptions(defaults(kind, defaultCurrency)); setFile(null); } },
     pick: () => run(async () => {
       const picked = await pickImportFile();
       if (picked) {
-        refresh(true);
+        refresh();
         setFile(picked);
         const columns = suggestColumns(picked.document.headers);
         let dateFormat: "ymd" | "dmy" | "mdy" = "ymd";
@@ -122,18 +173,20 @@ export function useDataImport(
     matching,
     updateRow: (number: number, cells: string[], corrections?: { accounts?: Record<string, AccountMapping>; categories?: Record<string, string>; defaultAccount?: string; type?: ImportTransactionType }) => {
       if (locked.current || !file || !catalog) return;
-      setOptions((previous) => {
+      void run(async () => {
+        const previous = options;
         const decisions = { ...previous.decisions };
         const row = preview?.rows.find((r) => r.number === number);
         delete decisions[number];
         if (row?.companion) delete decisions[row.companion];
-        return prepareImportMappings(file.document, {
+        const prepared = await prepareImportMappingsAsync(file.document, {
           ...previous, decisions, rowEdits: { ...previous.rowEdits, [number]: cells },
           accounts: { ...previous.accounts, ...corrections?.accounts },
           categories: { ...previous.categories, ...corrections?.categories },
           defaultAccount: corrections?.defaultAccount ?? previous.defaultAccount,
           rowTypes: corrections?.type ? { ...previous.rowTypes, [number]: corrections.type } : previous.rowTypes,
-        }, catalog);
+        }, catalog, { isCancelled: () => latestInputs.current.file !== file || latestInputs.current.options !== previous });
+        setOptions(prepared);
       });
     },
     account: (key: string, value: Partial<AccountMapping>) => patch({ accounts: { ...options.accounts, [key]: { ...options.accounts[key], ...value } } }),
@@ -155,16 +208,17 @@ export function useDataImport(
         preview.signature,
         { allowOnboarding },
       );
+      DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED", { sourceId: sourceId.current });
       setResult(saved); setStep("done"); setFile(null);
       // Saving succeeded even if refreshing a presentation query subsequently fails.
       try {
-        refresh(false);
+        refresh();
       } catch {
         setError("load");
       }
     }),
     restart: () => { if (!busy) { setFile(null); setResult(null); setOptions(defaults(options.kind, defaultCurrency)); setStep("file"); setError(null); } },
-    accountNames: file ? sourceAccountNames(file.document, options) : [],
-    categoryNames: file ? sourceCategories(file.document, options) : [],
+    accountNames: resolved?.file === file ? resolved.analysis.accountNames : [],
+    categoryNames: resolved?.file === file ? resolved.analysis.categoryNames : [],
   };
 }

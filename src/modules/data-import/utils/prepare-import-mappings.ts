@@ -2,29 +2,65 @@ import type { AccountMapping, CsvDocument, ImportCatalog, ImportOptions } from "
 import { normalizeImportName, parseImportDate } from "./csv";
 import { applyImportEdits, cellValue, sourceAccountNames, sourceCategories } from "./import-preview";
 import { matchCategoryWithKnowledge } from "@/modules/chat-with-kai";
+import { runImportWork, type ImportWorkOptions } from "./import-work";
 
 /** Prepare suggestions only; all new records still require review before saving. */
 export function prepareImportMappings(document: CsvDocument, options: ImportOptions, catalog: ImportCatalog): ImportOptions {
+  const work = prepareImportMappingsWork(document, options, catalog);
+  let result = work.next();
+  while (!result.done) result = work.next();
+  return result.value;
+}
+
+export function prepareImportMappingsAsync(document: CsvDocument, options: ImportOptions, catalog: ImportCatalog, workOptions?: ImportWorkOptions) {
+  return runImportWork(prepareImportMappingsWork(document, options, catalog), workOptions);
+}
+
+function* prepareImportMappingsWork(document: CsvDocument, options: ImportOptions, catalog: ImportCatalog): Generator<void, ImportOptions> {
   document = applyImportEdits(document, options);
+  const firstRows = new Map<string, CsvDocument["rows"][number]>();
+  const earliestDates = new Map<string, string>();
+  for (const row of document.rows) {
+    yield;
+    const account = normalizeImportName(cellValue(row.cells, options, "account") || options.defaultAccount);
+    if (!firstRows.has(account)) firstRows.set(account, row);
+    try {
+      const date = parseImportDate(cellValue(row.cells, options, "date"), options.dateFormat);
+      const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      for (const key of [account, normalizeImportName(cellValue(row.cells, options, "toAccount"))]) {
+        if (!earliestDates.has(key) || formatted < earliestDates.get(key)!) earliestDates.set(key, formatted);
+      }
+    } catch { /* Invalid dates are presented during review. */ }
+  }
+  const types = new Map<string, ImportCatalog["accountTypes"][number]>();
+  for (const type of catalog.accountTypes) {
+    const key = normalizeImportName(type.name);
+    if (!types.has(key)) types.set(key, type);
+  }
+  const existingAccounts = new Map<string, typeof catalog.accounts>();
+  for (const account of catalog.accounts) {
+    const key = JSON.stringify([normalizeImportName(account.name), account.currencyCode]);
+    const entries = existingAccounts.get(key) ?? [];
+    entries.push(account); existingAccounts.set(key, entries);
+  }
+  const categoryIndex = new Map<string, typeof catalog.categories>();
+  for (const category of catalog.categories) {
+    const key = JSON.stringify([category.type, category.parentId, normalizeImportName(category.name)]);
+    const entries = categoryIndex.get(key) ?? [];
+    entries.push(category); categoryIndex.set(key, entries);
+  }
   const accounts: Record<string, AccountMapping> = Object.assign(Object.create(null), options.accounts);
   for (const name of sourceAccountNames(document, options)) {
+    yield;
     const key = normalizeImportName(name);
     if (Object.hasOwn(accounts, key)) continue;
-    const row = document.rows.find((r) => normalizeImportName(cellValue(r.cells, options, "account") || options.defaultAccount) === key);
+    const row = firstRows.get(key);
     const get = (field: Parameters<typeof cellValue>[2]) => row ? cellValue(row.cells, options, field) : "";
     const currency = get("currency").toUpperCase() || options.defaultCurrency;
     const typeName = get("accountType");
-    const type = catalog.accountTypes.find((t) => normalizeImportName(t.name) === normalizeImportName(typeName));
-    const existing = catalog.accounts.filter((a) => (options.kind === "accounts" || !a.isArchived) && normalizeImportName(a.name) === key && a.currencyCode === currency && (!typeName || a.accountTypeId === type?.id));
-    let earliest = "";
-    for (const source of document.rows) {
-      if (![cellValue(source.cells, options, "account") || options.defaultAccount, cellValue(source.cells, options, "toAccount")].some((n) => normalizeImportName(n) === key)) continue;
-      try {
-        const date = parseImportDate(cellValue(source.cells, options, "date"), options.dateFormat);
-        const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-        if (!earliest || formatted < earliest) earliest = formatted;
-      } catch { /* Invalid dates are presented during review. */ }
-    }
+    const type = types.get(normalizeImportName(typeName));
+    const existing = (existingAccounts.get(JSON.stringify([key, currency])) ?? []).filter((a) => (options.kind === "accounts" || !a.isArchived) && (!typeName || a.accountTypeId === type?.id));
+    const earliest = earliestDates.get(key) ?? "";
     let balanceDate = get("balanceDate");
     if (options.kind === "accounts" && balanceDate) {
       try {
@@ -47,9 +83,10 @@ export function prepareImportMappings(document: CsvDocument, options: ImportOpti
   }
   const categories = { ...options.categories };
   for (const category of sourceCategories(document, options)) {
+    yield;
     if (categories[category.key] !== undefined) continue;
-    const parent = catalog.categories.find((c) => !c.parentId && c.type === category.type && normalizeImportName(c.name) === normalizeImportName(category.parent));
-    const matches = catalog.categories.filter((c) => c.type === category.type && normalizeImportName(c.name) === normalizeImportName(category.name) && c.parentId === (category.parent ? parent?.id : null));
+    const parent = categoryIndex.get(JSON.stringify([category.type, null, normalizeImportName(category.parent)]))?.[0];
+    const matches = category.parent && !parent ? [] : categoryIndex.get(JSON.stringify([category.type, category.parent ? parent?.id : null, normalizeImportName(category.name)])) ?? [];
     if (matches.length === 1) {
       categories[category.key] = matches[0].id;
       continue;
