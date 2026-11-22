@@ -637,3 +637,24 @@ for (const size of [100, 500, 1000]) {
     assert.ok(checks >= size);
   });
 }
+
+
+test("V2-10: protected transaction names and notes survive preview and committed SQLite import", async () => {
+  const { buildTransactionsCsv } = require("../../transactions/utils/transactions-csv.ts");
+  const text = ["=1+1", "+SUM(1,2)", "-formula", "@value", "'=literal", "'ordinary", 'plain, "quoted"\nnext line'];
+  const csv = buildTransactionsCsv(text.map((value, index) => ({
+    id: "protected-" + index, type: "expense", amountMinorUnits: -100,
+    currencyCode: "PHP", accountCurrency: "PHP", accountName: "Cash", categoryName: "Food",
+    name: value, note: value, occurredAt: new Date(2026, 0, 2, 12, index),
+  })));
+  const d = draft(csv);
+  const preview = d.preview();
+  assert.equal(preview.ready, true);
+  assert.deepEqual(preview.rows.map((row) => row.transaction.name), text);
+  assert.deepEqual(preview.rows.map((row) => row.transaction.note), text);
+  await d.save();
+  const rows = sqlite.prepare("SELECT name, note, amount_minor_units FROM transactions ORDER BY occurred_at,id").all();
+  assert.deepEqual(rows.map((row) => row.name), text);
+  assert.deepEqual(rows.map((row) => row.note), text);
+  assert.deepEqual(rows.map((row) => row.amount_minor_units), text.map(() => -100));
+});

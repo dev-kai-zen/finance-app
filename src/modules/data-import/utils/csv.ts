@@ -37,8 +37,8 @@ function* parseCsvWork(input: string, separator?: string): Generator<void, CsvDo
   const records: CsvDocument["rows"] = [];
   let cells: string[] = [], cell = "", inQuote = false, closed = false, line = 1, start = 1;
   const endRecord = () => {
-    cells.push(cell.trim());
-    if (cells.some(Boolean)) records.push({ number: start, cells });
+    cells.push(cell);
+    if (cells.some((value) => value.trim())) records.push({ number: start, cells });
     cells = []; cell = ""; closed = false;
     if (records.length > MAX_IMPORT_ROWS + 1) throw new ImportValidationError("rowLimit");
   };
@@ -54,7 +54,7 @@ function* parseCsvWork(input: string, separator?: string): Generator<void, CsvDo
       if (cell.trim() || closed) throw new ImportValidationError("csv");
       cell = ""; inQuote = true;
     } else if (char === delimiter) {
-      cells.push(cell.trim()); cell = ""; closed = false;
+      cells.push(cell); cell = ""; closed = false;
     } else if (char === "\n" || char === "\r") {
       if (char === "\r" && text[i + 1] === "\n") i++;
       endRecord(); line++; start = line;
@@ -65,8 +65,21 @@ function* parseCsvWork(input: string, separator?: string): Generator<void, CsvDo
   }
   if (inQuote) throw new ImportValidationError("csv");
   endRecord();
-  const headers = records.shift()?.cells ?? [];
+  const headers = records.shift()?.cells.map((value) => value.trim()) ?? [];
   if (!headers.length || !records.length || headers.some((h) => !h) || new Set(headers.map((h) => h.toLowerCase())).size !== headers.length) throw new ImportValidationError("headers");
+  const encodedTransactions = isAppTransactionHeaders(headers, true);
+  for (const row of records) {
+    yield;
+    const decodeText = encodedTransactions && row.cells[19]?.trim() === "apostrophe-v1";
+    row.cells = row.cells.map((value, index) => {
+      if (decodeText && APP_TRANSACTION_TEXT_COLUMNS.has(index)) {
+        // Preserve whitespace inside protected text; legacy files retain their old trimming behavior.
+        return value.startsWith("'") &&
+          (value[1] === "'" || /^[\s\x00-\x1f]*[=+@-]/.test(value.slice(1))) ? value.slice(1) : value;
+      }
+      return value.trim();
+    });
+  }
   // Undo only our own account-export text escaping; arbitrary CSV text remains unchanged.
   if (headers[0] === "Account ID" && headers.includes("Archived") && headers.includes("Opening Date")) {
     const textColumns = new Set(["Account ID", "Account Name", "Account Type", "Account Group", "Currency", "Pockets Summary", "Note", "Icon Key"]);
@@ -82,9 +95,15 @@ function* parseCsvWork(input: string, separator?: string): Generator<void, CsvDo
 // Full wire-format signature: a generic Amount/Type header is not enough to
 // infer signs. Round-trip tests keep this aligned with the transaction exporter.
 const APP_TRANSACTION_HEADERS = "Date,Time,Type,Name,Amount,Currency,Account,Pocket,Category,Labels,Note,Transfer Account,Transfer Pocket,Transfer Fee,Fee Account,Original Amount,Original Currency,Exchange Rate,Transaction ID".split(",");
+const APP_TRANSACTION_TEXT_COLUMNS = new Set([2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18]);
+function isAppTransactionHeaders(headers: readonly string[], encoded: boolean): boolean {
+  return headers.length === APP_TRANSACTION_HEADERS.length + (encoded ? 1 : 0) &&
+    APP_TRANSACTION_HEADERS.every((header, index) => header === headers[index]) &&
+    (!encoded || headers[19] === "CSV Text Encoding");
+}
 export function resolveAmountInterpretation(headers: readonly string[], options: ImportOptions): "signed" | "unsigned" {
   if (options.amountInterpretation) return options.amountInterpretation;
-  return headers.length === APP_TRANSACTION_HEADERS.length && headers.every((header, index) => header === APP_TRANSACTION_HEADERS[index]) ? "signed" : "unsigned";
+  return isAppTransactionHeaders(headers, false) || isAppTransactionHeaders(headers, true) ? "signed" : "unsigned";
 }
 
 const aliases: Record<ImportField, string[]> = {

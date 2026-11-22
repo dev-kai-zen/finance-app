@@ -124,3 +124,83 @@ test("buildTransactionsCsv includes header and transfer row details", () => {
   assert.match(lines[2], /Savings/);
   assert.match(lines[2], /15\.00/);
 });
+
+
+const { parseCsv, parseCsvAsync, resolveAmountInterpretation } = require("../../data-import/utils/csv.ts");
+const textColumns = [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18];
+
+function transactionWithText(value) {
+  return {
+    ...baseTransaction,
+    id: value, type: value, name: value, note: value,
+    currencyCode: value, accountCurrency: value,
+    accountName: value, pocketName: value, categoryName: value,
+    labels: [{ id: "label", name: value }],
+    transferAccountName: value, transferPocketName: value, transferFeeAccountName: value,
+  };
+}
+
+test("V2-10: every transaction text column protects dangerous prefixes and literal apostrophes", () => {
+  for (const value of ["=1+1", "+SUM(1,2)", "-formula", "@value", " \t\r\n=1+1", "\x01+1", "\x00=1", "\u00a0@value", "'=literal", "'ordinary", "''", '=HYPERLINK("url","label")']) {
+    const row = transactionToCsvRow(transactionWithText(value));
+    for (const index of textColumns) {
+      // Currency codes are normalized by the existing exporter.
+      if (index === 16) continue;
+      const original = index === 5 ? value.trim().toUpperCase() : value;
+      assert.equal(row[index], "'" + original, "text column " + index);
+    }
+    assert.equal(row[4], "-1500.00");
+    assert.equal(row[19], "apostrophe-v1");
+  }
+  const original = transactionToCsvRow({ ...baseTransaction, currencyCode: "'=usd", accountCurrency: "PHP", originalAmountMinorUnits: -250, exchangeRateScaled: 100000000 });
+  assert.equal(original[15], "-2.50");
+  assert.equal(original[16], "''=USD");
+});
+
+test("V2-10: protected CSV round-trips text, punctuation and whitespace in sync and cooperative parsers", async () => {
+  for (const value of ["=1+1", "+SUM(1,2)", "-formula", "@value", " \t=1+1  ", "\x01-1", "\r\n@value\n", "'=literal", "'ordinary", "''", 'plain, "quoted"\nnext line', " plain "]) {
+    const transaction = transactionWithText(value);
+    transaction.type = "expense";
+    transaction.currencyCode = "USD";
+    transaction.accountCurrency = "PHP";
+    transaction.originalAmountMinorUnits = -250;
+    const csv = buildTransactionsCsv([transaction]);
+    const document = parseCsv(csv);
+    assert.deepEqual(await parseCsvAsync(csv), document);
+    for (const index of textColumns.filter((index) => ![2, 5, 16].includes(index))) {
+      assert.equal(document.rows[0].cells[index], value, "round-trip column " + index);
+    }
+    assert.equal(document.rows[0].cells[4], "-1500.00");
+    assert.equal(document.rows[0].cells[15], "-2.50");
+    assert.equal(resolveAmountInterpretation(document.headers, {}), "signed");
+  }
+});
+
+test("V2-10: split category text is protected after composition, and fees remain numeric", () => {
+  const row = transactionToCsvRow({
+    ...baseTransaction, isSplit: true,
+    splitEntries: [{ categoryName: "\t=1+1", amountMinorUnits: -100 }, { categoryName: "Food", amountMinorUnits: -200 }],
+    transferFeeAmountMinorUnits: -1500,
+  });
+  assert.equal(row[8], "'\t=1+1 (-1.00) | Food (-2.00)");
+  assert.equal(row[13], "15.00");
+  assert.equal(parseCsv(buildTransactionsCsv([{ ...baseTransaction, isSplit: true, splitEntries: [{ categoryName: "=1+1", amountMinorUnits: -100 }] }])).rows[0].cells[8], "=1+1 (-1.00)");
+});
+
+test("V2-10: only the exact marked format decodes text; legacy and external apostrophes survive", () => {
+  const row = transactionToCsvRow({ ...baseTransaction, name: "'=literal", note: "''ordinary" });
+  const serialize = (headers, cells) => headers.join(",") + "\r\n" + cells.map(escapeCsvCell).join(",");
+  for (const headers of [TRANSACTION_CSV_HEADERS.slice(0, -1), [...TRANSACTION_CSV_HEADERS.slice(0, -1), "Other"], ["Other", ...TRANSACTION_CSV_HEADERS.slice(1)]]) {
+    const cells = row.slice(0, headers.length);
+    const document = parseCsv(serialize(headers, cells));
+    assert.equal(document.rows[0].cells[3], "''=literal");
+    assert.equal(document.rows[0].cells[10], "'''ordinary");
+  }
+  for (const marker of ["", "unknown-v2"]) {
+    const document = parseCsv(serialize(TRANSACTION_CSV_HEADERS, [...row.slice(0, -1), marker]));
+    assert.equal(document.rows[0].cells[3], "''=literal");
+  }
+  const external = parseCsv("Name,Note\n'=literal,''ordinary");
+  assert.deepEqual(external.rows[0].cells, ["'=literal", "''ordinary"]);
+  assert.equal(resolveAmountInterpretation(TRANSACTION_CSV_HEADERS.slice(0, -1), {}), "signed");
+});

@@ -25,7 +25,12 @@ export const TRANSACTION_CSV_HEADERS = [
   "Original Currency",
   "Exchange Rate",
   "Transaction ID",
+  "CSV Text Encoding",
 ] as const;
+
+function protectCsvText(value: string): string {
+  return /^[\s\x00-\x1f]*[=+@-]/.test(value) || value.startsWith("'") ? "'" + value : value;
+}
 
 export function escapeCsvCell(value: string): string {
   if (/[",\r\n]/.test(value)) {
@@ -132,18 +137,18 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
         )
       : "";
 
-  return [
+  const row = [
     formatLocalDate(occurredAt),
     formatLocalTime(occurredAt),
     transaction.type,
-    transaction.name?.trim() ?? "",
+    transaction.name ?? "",
     formatMinorUnitsForCsv(exportAmountMinorUnits(transaction), amountCurrency),
     amountCurrency,
     transaction.accountName,
     transaction.pocketName ?? "",
     categoryCell,
     labels,
-    transaction.note?.trim() ?? "",
+    transaction.note ?? "",
     transaction.transferAccountName ?? "",
     transaction.transferPocketName ?? "",
     transferFee,
@@ -152,7 +157,13 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
     originalCurrency,
     formatExchangeRateForCsv(transaction.exchangeRateScaled),
     transaction.id,
+    "apostrophe-v1",
   ];
+  // Only text cells are protected: signed amounts must remain numeric.
+  for (const index of [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18]) {
+    row[index] = protectCsvText(row[index]);
+  }
+  return row;
 }
 
 export function buildTransactionsCsv(rows: readonly TransactionListItem[]): string {

@@ -282,6 +282,10 @@ Both cloud backup creation and Quick Sync updates throw when the archive exceeds
 
 ## V2-10 — Transaction exports still allow spreadsheet formula interpretation
 
+**Implementation update (November 22, 2026):** Transaction CSV exports now protect every text column using the established apostrophe convention, including formula prefixes after whitespace/control characters and literal leading apostrophes. Numeric amounts, original amounts, rates, and transfer fees remain numeric. New exports append a CSV Text Encoding column with apostrophe-v1. Re-import decodes only text cells in the exact marked transaction format; legacy transaction exports retain signed amounts and literal apostrophes. Generic CSV files and unknown encoding markers are not decoded. Marked text retains whitespace through CSV parsing. Regression tests cover all text columns, split category summaries, punctuation, newlines, controls, apostrophes, synchronous/cooperative parsing, legacy formats, and committed SQLite imports. Release notes and version fields remain unchanged.
+
+**Performance and verification limits:** Protection and decoding are linear in text size, add no database queries or React subscriptions, and decoding yields between rows in the cooperative parser. No new mount/focus work is introduced. TypeScript, all 723 full-suite tests, and the additional committed-text import test pass. Excel automation was attempted but rejected by the local application, so Excel/LibreOffice display and formula interpretation still require manual verification. Device frame-rate profiling was not performed; this change does not certify sustained 60-120fps.
+
 **Evidence:** [CSV escaping](src/modules/transactions/utils/transactions-csv.ts#L30), [transaction text fields](src/modules/transactions/utils/transactions-csv.ts#L139), [export builder](src/modules/transactions/utils/transactions-csv.ts#L158).
 
 Accounts export was hardened in P2-11d, but Transactions export only handles CSV delimiters/quotes. It does not neutralize formula-like text in names, Notes, categories, labels, or account names. The exporter probe emitted a transaction name `=1+1` directly into a CSV cell.
