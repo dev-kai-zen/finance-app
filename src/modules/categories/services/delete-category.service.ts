@@ -6,6 +6,7 @@ import {
   hasSubcategories,
 } from "../repositories/categories.repository";
 import { isProtectedCategoryId } from "../constants/categories.constants";
+import { CategoryError } from "../types/category-error";
 import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import { reassignTransactionCategoryReferences } from "@/modules/transactions";
 import { reassignScheduledTransactionCategoryReferences } from "@/modules/scheduled-transactions";
@@ -16,15 +17,16 @@ export async function deleteCategory(
 ): Promise<boolean> {
   const existing = await getCategoryById(client, id);
   if (!existing) {
-    throw new Error("Category not found.");
+    throw new CategoryError("notFound", "Category not found.");
   }
 
   if (isProtectedCategoryId(existing.id)) {
-    throw new Error("System default categories are protected and cannot be deleted.");
+    throw new CategoryError("protectedDelete", "System default categories are protected and cannot be deleted.");
   }
 
   if (await hasSubcategories(client, id)) {
-    throw new Error(
+    throw new CategoryError(
+      "deleteHasChildren",
       "Cannot delete a category group while it has subcategories. Delete the subcategories first, then try again.",
     );
   }

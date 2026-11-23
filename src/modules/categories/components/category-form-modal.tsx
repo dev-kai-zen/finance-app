@@ -13,6 +13,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ChevronRight, Plus, Sparkles } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
+import { useLocalization, type TranslationKey } from "@/infrastructure/localization";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -72,6 +73,7 @@ function CategoryFormModalContent({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const walkthrough = useCategoryFormWalkthrough();
   const { colors, addColor } = useHexColors();
@@ -85,7 +87,7 @@ function CategoryFormModalContent({
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<TranslationKey | null>(null);
 
   const customColors = colors.filter((color) => !color.isSystem);
   const selectedHexColor = colors.find((color) => color.id === hexColorsId);
@@ -123,7 +125,7 @@ function CategoryFormModalContent({
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      setLocalError("Category name is required.");
+      setLocalError("categories.errors.nameRequired");
       return;
     }
 
@@ -145,7 +147,7 @@ function CategoryFormModalContent({
     }
   };
 
-  const displayError = localError || error;
+  const displayError = localError ? t(localError) : error;
 
   return (
     <Modal
@@ -160,7 +162,7 @@ function CategoryFormModalContent({
         style={styles.modalOverlay}
       >
         <Pressable
-          accessibilityLabel="Dismiss category form"
+          accessibilityLabel={t("categories.dismissForm")}
           accessibilityRole="button"
           onPress={handleClose}
           style={styles.backdrop}
@@ -178,16 +180,16 @@ function CategoryFormModalContent({
             <Text style={styles.modalTitle}>
               {categoryToEdit
                 ? isSubcategory
-                  ? "Edit Subcategory"
-                  : "Edit Category"
+                  ? t("categories.editSubcategory")
+                  : t("categories.editCategory")
                 : isSubcategory
-                  ? "New Subcategory"
-                  : "New Category"}
+                  ? t("categories.newSubcategory")
+                  : t("categories.newCategory")}
             </Text>
             <View style={styles.headerActions}>
               {!categoryToEdit && guideHelperEnabled ? (
                 <Pressable
-                  accessibilityLabel="Tour category form"
+                  accessibilityLabel={t("categories.tourForm")}
                   accessibilityRole="button"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   onPress={walkthrough.startWalkthrough}
@@ -200,7 +202,7 @@ function CategoryFormModalContent({
                 </Pressable>
               ) : null}
               <Pressable
-                accessibilityLabel="Close category form"
+                accessibilityLabel={t("categories.closeForm")}
                 accessibilityRole="button"
                 onPress={handleClose}
                 style={styles.closeBtn}
@@ -213,7 +215,7 @@ function CategoryFormModalContent({
           {/* Subcategory Parent Indicator Banner */}
           {isSubcategory && parentCategoryName ? (
             <View style={styles.parentBanner}>
-              <Text style={styles.parentBannerLabel}>PARENT CATEGORY</Text>
+              <Text style={styles.parentBannerLabel}>{t("categories.parentCategory")}</Text>
               <Text style={styles.parentBannerName}>{parentCategoryName}</Text>
             </View>
           ) : null}
@@ -224,11 +226,11 @@ function CategoryFormModalContent({
           >
             {/* Category Type Toggle */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>GROUP TYPE</Text>
+              <Text style={styles.fieldLabel}>{t("categories.groupType")}</Text>
               <WalkthroughTarget id="catFormType">
                 <View style={styles.typeSegment}>
                   <Pressable
-                    accessibilityLabel="Expense category"
+                    accessibilityLabel={t("categories.expenseCategory")}
                     accessibilityRole="button"
                     disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
                     onPress={() => setType("expense")}
@@ -244,12 +246,12 @@ function CategoryFormModalContent({
                         type === "expense" && styles.typeOptionTextActiveColored,
                       ]}
                     >
-                      Expense
+                      {t("categories.expense")}
                     </Text>
                   </Pressable>
 
                   <Pressable
-                    accessibilityLabel="Income category"
+                    accessibilityLabel={t("categories.incomeCategory")}
                     accessibilityRole="button"
                     disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
                     onPress={() => setType("income")}
@@ -265,7 +267,7 @@ function CategoryFormModalContent({
                         type === "income" && styles.typeOptionTextActiveColored,
                       ]}
                     >
-                      Income
+                      {t("categories.incomeType")}
                     </Text>
                   </Pressable>
                 </View>
@@ -274,14 +276,14 @@ function CategoryFormModalContent({
 
             {/* Category Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
+              <Text style={styles.fieldLabel}>{t("categories.categoryName")}</Text>
               <WalkthroughTarget id="catFormName">
                 <TextInput
-                  accessibilityLabel="Category name"
+                  accessibilityLabel={t("categories.nameAccessibility")}
                   autoFocus={!categoryToEdit}
                   maxLength={50}
                   onChangeText={setName}
-                  placeholder="e.g. Subscriptions, Groceries"
+                  placeholder={t("categories.namePlaceholder")}
                   placeholderTextColor={theme.colors.textMuted}
                   style={styles.textInput}
                   value={name}
@@ -291,10 +293,10 @@ function CategoryFormModalContent({
 
             {/* Icon Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>CATEGORY ICON</Text>
+              <Text style={styles.fieldLabel}>{t("categories.categoryIcon")}</Text>
               <WalkthroughTarget id="catFormIcon">
                 <Pressable
-                  accessibilityLabel="Choose category icon"
+                  accessibilityLabel={t("categories.chooseIcon")}
                   accessibilityRole="button"
                   onPress={() => setIsIconPickerOpen(true)}
                   style={styles.iconSelectTrigger}
@@ -326,7 +328,7 @@ function CategoryFormModalContent({
 
             {/* Color Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>THEME COLOR</Text>
+              <Text style={styles.fieldLabel}>{t("categories.themeColor")}</Text>
               <WalkthroughTarget id="catFormColor">
                 <View style={styles.colorPalette}>
                   {CATEGORY_COLOR_KEYS.map((colKey) => {
@@ -336,7 +338,7 @@ function CategoryFormModalContent({
                     return (
                       <Pressable
                         key={colKey}
-                        accessibilityLabel={`Select color ${colKey}`}
+                        accessibilityLabel={t("categories.selectColor", { name: t(`categories.colors.${colKey}`) })}
                         accessibilityRole="button"
                         onPress={() => setHexColorsId(`color_${colKey}`)}
                         style={[
@@ -362,7 +364,7 @@ function CategoryFormModalContent({
                     return (
                       <Pressable
                         key={color.id}
-                        accessibilityLabel={`Select custom color ${color.hex}`}
+                        accessibilityLabel={t("categories.selectCustomColor", { hex: color.hex })}
                         accessibilityRole="button"
                         onPress={() => setHexColorsId(color.id)}
                         style={[
@@ -385,7 +387,7 @@ function CategoryFormModalContent({
                   })}
                   <WalkthroughTarget id="catFormCustomColor">
                     <Pressable
-                      accessibilityLabel="Add custom color"
+                      accessibilityLabel={t("categories.addColor")}
                       accessibilityRole="button"
                       onPress={() => setIsColorFormOpen(true)}
                       style={({ pressed }) => [
@@ -410,12 +412,12 @@ function CategoryFormModalContent({
           <View style={styles.footerRow}>
             <WalkthroughTarget id="catFormCancel" style={{ flex: 1 }}>
               <Pressable
-                accessibilityLabel="Cancel"
+                accessibilityLabel={t("common.cancel")}
                 accessibilityRole="button"
                 onPress={handleClose}
                 style={styles.cancelBtn}
               >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText}>{t("common.cancel")}</Text>
               </Pressable>
             </WalkthroughTarget>
 
@@ -423,14 +425,14 @@ function CategoryFormModalContent({
               <Pressable
                 accessibilityLabel={
                   pending
-                    ? "Saving..."
+                    ? t("categories.saving")
                     : isSubcategory
                       ? categoryToEdit
-                        ? "Update Subcategory"
-                        : "Create Subcategory"
+                        ? t("categories.updateSubcategory")
+                        : t("categories.createSubcategory")
                       : categoryToEdit
-                        ? "Update Category"
-                        : "Create Category"
+                        ? t("categories.updateCategory")
+                        : t("categories.createCategory")
                 }
                 accessibilityRole="button"
                 disabled={pending}
@@ -442,14 +444,14 @@ function CategoryFormModalContent({
               >
                 <Text style={styles.saveBtnText}>
                   {pending
-                    ? "Saving..."
+                    ? t("categories.saving")
                     : isSubcategory
                       ? categoryToEdit
-                        ? "Update Subcategory"
-                        : "Create Subcategory"
+                        ? t("categories.updateSubcategory")
+                        : t("categories.createSubcategory")
                       : categoryToEdit
-                        ? "Update Category"
-                        : "Create Category"}
+                        ? t("categories.updateCategory")
+                        : t("categories.createCategory")}
                 </Text>
               </Pressable>
             </WalkthroughTarget>
@@ -479,7 +481,7 @@ function CategoryFormModalContent({
         onSelectIcon={setSelectedIcon}
         selectedIcon={selectedIcon}
         themeColor={categoricalColor}
-        title="Select Category Icon"
+        title={t("categories.selectIcon")}
         visible={isIconPickerOpen}
       />
 
@@ -489,7 +491,7 @@ function CategoryFormModalContent({
           setLocalError(null);
           onClearError();
         }}
-        title={localError ? "Check category details" : "Unable to save category"}
+        title={localError ? t("categories.checkCategory") : t("categories.saveCategoryFailed")}
         variant={localError ? "warning" : "error"}
         visible={visible && Boolean(displayError)}
       />

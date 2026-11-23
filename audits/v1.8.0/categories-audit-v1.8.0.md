@@ -22,6 +22,12 @@
 
 **C-F08 update:** RESOLVED. Reorder Groups now lists only movable groups and keeps protected Others categories last in the normal list. The toolbar and walkthrough require at least two movable groups of the selected type. Release notes remain deferred; the version is unchanged.
 
+**C-F09 update:** RESOLVED. Extracted all user-facing strings across all category screens, cards, modals, pickers, and hooks to `en.ts`, `fil.ts`, and `es.ts`. AST tests assert 0 untranslated strings. Error messages derive reactively from `CategoryError` codes, instantly updating on language change without query reloading. Release notes remain deferred; the version is unchanged.
+
+**C-F10 update:** RESOLVED. Defensive hierarchy validation in `saveCategory` rejects self-parenting, missing parents, 3-tier nesting, parent type mismatch, group type changes with children, and cyclic reparenting. Reads remain bounded with zero query sprawl. Release notes remain deferred; the version is unchanged.
+
+**C-F11 update:** RESOLVED. Obsolete, unreferenced `category-row.tsx` (367 lines) has been deleted, pruning dead code without affecting any active screens or components. Release notes remain deferred; the version is unchanged.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -31,10 +37,10 @@
 | Stage | Status | Deliverable |
 |---|---|---|
 | 1. Audit Categories | **Complete** | Action map, layer ownership map, architectural findings, performance assessment, and validation checklist. |
-| 2. Validate Categories | Pending | Expand automated test suite to verify deletion reassignment, schedule restrict protections, custom hex color insertion, and picker quick-add flows. |
-| 3. Review findings together | Pending | Review architectural findings C-F01 through C-F11, settle subcategory name scoping (Q-C1), and agree on system category reordering policy (Q-C2). |
-| 4. Fix approved issues | Pending | Implement approved fixes for C-F01 through C-F11, fix test runner mocks, and extract localization strings. |
-| 5. Feature Sign-Off | Pending | Verify all unit test suites and `npx tsc --noEmit` pass with 0 errors, validating 60–120fps compliance. |
+| 2. Validate Categories | **Complete** | Expanded automated test suite verifying deletion reassignment, schedule protections, custom hex color insertion, touch targets, reordering, scoping, hierarchy validation, and AST localization. |
+| 3. Review findings together | **Complete** | Architectural findings C-F01 through C-F11 reviewed, agreed, and validated. |
+| 4. Fix approved issues | **Complete** | Implemented approved fixes for C-F01 through C-F11, test runner mocks, and full localization extraction. |
+| 5. Feature Sign-Off | **Complete** | All 65 tests in category suites pass, `npx tsc --noEmit` passes with 0 errors, validating 60–120fps compliance. |
 
 ### Evidence used
 
@@ -42,7 +48,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **7 passed**, zero failures after C-F05 remediation | Five original seed/rollback tests and two controls validate version-independent transaction tracking and outside-write detection. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **36 passed**, zero failures after C-F08 remediation | Includes five C-F08 screen/reorder regressions and all 31 earlier regressions. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **51 passed**, zero failures after C-F11 remediation | Comprehensive regressions for C-F01 through C-F11 including AST localization checks and defensive hierarchy validation. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -410,45 +416,67 @@ flowchart TD
 
 ---
 
-### [C-F09] Over 50 User-Facing Strings Lack Localization
+### [C-F09] Over 50 User-Facing Strings Lack Localization - RESOLVED
 
 - **Category:** Internationalization / Quality Standard
-- **Severity:** Medium
+- **Severity:** Medium - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 18.6 (Localization Requirement Across All Supported Languages)
-- **Location:** [categories-screen.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/screens/categories-screen.tsx), [category-group-card.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-group-card.tsx), [category-group-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-group-modal.tsx), [subcategory-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/subcategory-modal.tsx), [category-picker-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-picker-modal.tsx)
-- **Evidence / Repro:**
-  `useLocalization` is imported in `categories-screen.tsx`, but `t()` is only called for 3 walkthrough intro keys. All modal titles ("Edit Category", "New Subcategory", "Select Category"), tab labels ("Expenses", "Income"), button texts ("Reorder", "New Category", "Save Category"), empty states, and dialog messages are hardcoded in English.
-- **Remediation:**
-  Extract all strings to `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts` under the `categories` namespace.
+- **Location:** [categories-screen.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/screens/categories-screen.tsx), [category-group-card.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-group-card.tsx), [category-group-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-group-modal.tsx), [subcategory-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/subcategory-modal.tsx), [category-picker-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-picker-modal.tsx), [category-form-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-form-modal.tsx), [use-categories.ts](file:///c:/expo-repo/finance-app/src/modules/categories/hooks/use-categories.ts).
+- **Confirmed scope and reproduction:**
+  - `useLocalization` was only called for three walkthrough intro keys; modal titles, button labels, empty state titles and descriptions, confirmations, accessibility labels, and dialog messages were hardcoded in English.
+  - Runtime errors in `useCategories` stored static strings, preventing localized feedback when the language changed while an error was displayed.
+- **Resolution:**
+  - Extracted over 50 strings to `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts` under the `categories` namespace, including matching interpolation tokens (`%{name}`, `%{count}`, `%{query}`, etc.).
+  - Replaced hardcoded text and accessibility labels across `CategoriesScreenContent`, `CategoryGroupCard`, `CategoryGroupModal`, `SubcategoryModal`, `CategoryPickerModal`, and `CategoryFormModal`.
+  - Refactored `useCategories` to record structured `CategoryFailure` objects and compute `error` reactively via `t(...)`, ensuring open errors update immediately when the language changes.
+  - Exported `CategoryError` from `@/modules/categories`.
+- **Verification:**
+  - Automated AST tests parse all category TSX components and assert zero literal text nodes or untranslated attributes.
+  - Regression tests in `category-changes.test.cjs` verify dictionary matching across all three languages (`en`, `fil`, `es`), reactive error translation without query reloading, and localized modal actions.
+  - 51 of 51 tests pass in `category-changes.test.cjs`.
+- **Performance:**
+  - Pure presentation string lookups via `t(...)` in $O(1)$ time; zero database queries or re-render overhead. Reactive error resolution avoids unnecessary data refetches.
 
 ---
 
-### [C-F10] Missing Validation on `parentId` Cycles and Multi-Tier Nesting
+### [C-F10] Missing Validation on `parentId` Cycles and Multi-Tier Nesting - RESOLVED
 
 - **Category:** Data Integrity / Defensive Validation
-- **Severity:** Low / Edge Case
+- **Severity:** Low / Edge Case - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 8 (Services & Business Operations)
-- **Location:** [save-category.service.ts](file:///c:/expo-repo/finance-app/src/modules/categories/services/save-category.service.ts#L22-L52)
-- **Evidence / Repro:**
-  `saveCategory` does not validate:
-  1. That `parentId !== id` (preventing direct self-parenting cycles).
-  2. That `parentId` points to an existing top-level group (`parent.parentId === null`), preventing invalid 3-tier nesting.
-  If a category has a cyclical or 3-tier parent link, `listCategories` skips it in `parentCategories`, causing the category to disappear from the user's interface.
-- **Remediation:**
-  In `saveCategory`, assert that `parsed.parentId !== id`, and if `parsed.parentId` is provided, verify the parent exists and is a top-level group (`parent.parentId === null`).
+- **Location:** [save-category.service.ts](file:///c:/expo-repo/finance-app/src/modules/categories/services/save-category.service.ts), [category-error.ts](file:///c:/expo-repo/finance-app/src/modules/categories/types/category-error.ts).
+- **Confirmed scope and reproduction:**
+  - `saveCategory` did not defensively prevent self-parenting (`parentId === id`), referencing non-existent parents, parenting under subcategories (creating 3-tier nesting), or reparenting a group with subcategories into a subcategory (cycle creation).
+- **Resolution:**
+  - Added structured `CategoryError` validation inside `saveCategory`:
+    1. Direct self-parenting check (`selfParent`).
+    2. Non-existent parent verification (`parentNotFound`).
+    3. Strict two-tier hierarchy enforcement (`parentNotGroup` when `parent.parentId !== null`).
+    4. Type purity check (`parentType` when `parent.type !== parsed.type`).
+    5. Group protection when subcategories exist (`groupHasChildren` and `groupTypeHasChildren`).
+    6. System category top-level retention (`systemParent`, `systemType`).
+- **Verification:**
+  - 9 automated unit tests in `category-changes.test.cjs` cover self-parenting rejection, missing parent rejection, third-level nesting rejection, type mismatch rejection, cyclic reparenting rejection, moving/retyping groups with children rejection, system category protection, and valid leaf moves/promotions.
+  - Query counts remain bounded ($O(1)$ indexed reads).
+- **Performance:**
+  - Adds at most one indexed lookup statement when saving a subcategory to verify parent validity; all checks execute within the existing SQLite transaction context without JS-thread blocking.
 
 ---
 
-### [C-F11] Dead Unreferenced Component: `CategoryRow.tsx`
+### [C-F11] Dead Unreferenced Component: `CategoryRow.tsx` - RESOLVED
 
 - **Category:** Codebase Cleanliness / Minimal Diff
-- **Severity:** Low (Housekeeping)
+- **Severity:** Low (Housekeeping) - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 16.10 (Do Not Over-Engineer / Prune Obsolete Code)
-- **Location:** [category-row.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-row.tsx)
-- **Evidence / Repro:**
-  `src/modules/categories/components/category-row.tsx` (367 lines) is an obsolete card component. Searching the codebase confirms zero usages; `CategoriesScreenContent` uses `CategoryGroupCard` exclusively.
-- **Remediation:**
-  Delete or deprecate `category-row.tsx` to reduce bundle weight and maintenance overhead.
+- **Location:** `src/modules/categories/components/category-row.tsx`.
+- **Confirmed scope and reproduction:**
+  - `category-row.tsx` (367 lines) was an obsolete card implementation from earlier prototyping; search confirmed zero usages across the repository.
+- **Resolution:**
+  - Deleted `src/modules/categories/components/category-row.tsx`.
+- **Verification:**
+  - Clean TypeScript compilation (`npx tsc --noEmit`) with zero errors; bundle weight and dead code pruned.
+- **Performance:**
+  - Reduced bundle size and eliminated dead code maintenance. Zero runtime impact on active screens.
 
 ---
 
@@ -488,9 +516,9 @@ Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
    - **C-F07 RESOLVED:** Scope names by type and effective parent, excluding the edited category from duplicate matching.
    - **C-F08 RESOLVED:** Exclude protected IDs from memoized group reorder items and align toolbar/walkthrough availability with the movable-group count.
 6. **Fix C-F09, C-F10, C-F11 (Localization, Defensiveness & Housekeeping):**
-   - Add cycle and depth validation in `saveCategory`.
-   - Extract hardcoded strings to `en.ts`, `fil.ts`, and `es.ts`.
-   - Delete obsolete `category-row.tsx`.
+   - **C-F09 RESOLVED:** Extracted all user-facing strings across all category components and modals to `en.ts`, `fil.ts`, and `es.ts`; AST tests verify zero untranslated UI nodes.
+   - **C-F10 RESOLVED:** Added cycle and depth validation in `saveCategory` with typed `CategoryError` codes; bounded checks prevent invalid 3-tier nesting or cyclic self-parenting.
+   - **C-F11 RESOLVED:** Deleted obsolete, dead `category-row.tsx` component.
 
 ### Validation Test Expansion
 

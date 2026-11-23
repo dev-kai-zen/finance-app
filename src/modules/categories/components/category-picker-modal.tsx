@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Check, ChevronRight, Search, X } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components/icon-helper";
@@ -45,12 +46,13 @@ function CategoryPickerModalContent({
   selectedCategoryId,
   onSelectCategory,
   type,
-  title = "Select Category",
+  title,
   enableQuickAdd = false,
   onRequestAddCategory,
   onRequestAddSubcategory,
 }: CategoryPickerModalProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const [searchQuery, setSearchQuery] = useState("");
@@ -180,11 +182,11 @@ function CategoryPickerModalContent({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTextCol}>
-              <Text style={styles.headerTitle}>{title}</Text>
+              <Text style={styles.headerTitle}>{title ?? t("categories.selectCategory")}</Text>
               <Text style={styles.headerSubtitle}>
                 {subcategoryParentMode
-                  ? "Choose a parent category for the new subcategory"
-                  : "Select a category or subcategory"}
+                  ? t("categories.chooseParent")
+                  : t("categories.selectHint")}
               </Text>
             </View>
             <TouchableOpacity
@@ -192,8 +194,8 @@ function CategoryPickerModalContent({
               style={styles.closeBtn}
               accessibilityLabel={
                 subcategoryParentMode
-                  ? "Back to category selection"
-                  : "Close category picker"
+                  ? t("categories.backToSelection")
+                  : t("categories.closePicker")
               }
               accessibilityRole="button"
             >
@@ -264,7 +266,7 @@ function CategoryPickerModalContent({
                     selectedType === "expense" && styles.activeTypeTabText,
                   ]}
                 >
-                  Expenses
+                  {t("categories.expenses")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -280,7 +282,7 @@ function CategoryPickerModalContent({
                     selectedType === "income" && styles.activeTypeTabText,
                   ]}
                 >
-                  Income
+                  {t("categories.income")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -296,7 +298,7 @@ function CategoryPickerModalContent({
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search category or subcategory..."
+              placeholder={t("categories.searchPlaceholder")}
               placeholderTextColor={theme.colors.textMuted}
               style={styles.searchInput}
               clearButtonMode="while-editing"
@@ -330,11 +332,11 @@ function CategoryPickerModalContent({
           >
             {filteredCategories.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateTitle}>No categories found</Text>
+                <Text style={styles.emptyStateTitle}>{t("categories.noResults")}</Text>
                 <Text style={styles.emptyStateDesc}>
                   {searchQuery
-                    ? `No categories matching "${searchQuery}"`
-                    : "No categories available"}
+                    ? t("categories.noMatching", { query: searchQuery })
+                    : t("categories.noAvailable")}
                 </Text>
               </View>
             ) : (
@@ -355,7 +357,7 @@ function CategoryPickerModalContent({
                         isParentSelected && styles.selectedParentRow,
                       ]}
                       accessibilityRole="button"
-                      accessibilityLabel={`Category ${parent.name}`}
+                      accessibilityLabel={t("categories.selectNamed", { name: parent.name })}
                     >
                       <View style={styles.parentLeft}>
                         <View
@@ -385,10 +387,7 @@ function CategoryPickerModalContent({
                           </Text>
                           {hasSubcategories && (
                             <Text style={styles.subCountText}>
-                              {parent.subcategories!.length}{" "}
-                              {parent.subcategories!.length === 1
-                                ? "subcategory"
-                                : "subcategories"}
+                              {t(parent.subcategories!.length === 1 ? "categories.oneSubcategory" : "categories.manySubcategories", { count: parent.subcategories!.length })}
                             </Text>
                           )}
                         </View>
@@ -405,7 +404,7 @@ function CategoryPickerModalContent({
                           </View>
                         ) : (
                           <View style={styles.selectParentBadge}>
-                            <Text style={styles.selectParentText}>Select</Text>
+                            <Text style={styles.selectParentText}>{t("categories.select")}</Text>
                             <ChevronRight
                               size={14}
                               color={theme.colors.textMuted}
@@ -434,7 +433,7 @@ function CategoryPickerModalContent({
                                   isSubSelected && styles.selectedSubChip,
                                 ]}
                                 accessibilityRole="button"
-                                accessibilityLabel={`Subcategory ${sub.name}`}
+                                accessibilityLabel={t("categories.selectNamedSubcategory", { name: sub.name })}
                               >
                                 <View
                                   style={[
@@ -486,7 +485,7 @@ function CategoryPickerModalContent({
                     onPress={() => onRequestAddCategory(effectiveType)}
                     style={styles.quickAddButton}
                   >
-                    <Text style={styles.quickAddButtonText}>Add category</Text>
+                    <Text style={styles.quickAddButtonText}>{t("categories.addCategory")}</Text>
                   </TouchableOpacity>
                 ) : null}
                 {onRequestAddSubcategory ? (
@@ -506,7 +505,7 @@ function CategoryPickerModalContent({
                     ]}
                   >
                     <Text style={styles.quickAddButtonTextSecondary}>
-                      Add subcategory
+                      {t("categories.addSubcategory")}
                     </Text>
                   </TouchableOpacity>
                 ) : null}

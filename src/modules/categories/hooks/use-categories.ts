@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { ZodError } from "zod";
+import { useLocalization } from "@/infrastructure/localization";
 import { subscribeCategoryChanges } from "../services/category-changes.service";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
@@ -12,17 +14,37 @@ import {
   loadCategoryPresets as loadCategoryPresetsService,
 } from "../services/category-presets.service";
 import type { Category, CategoryInput } from "../types/category.types";
+import { CategoryError } from "../types/category-error";
+
+type CategoryFailure = {
+  cause: unknown;
+  fallback: "loadFailed" | "saveFailed" | "deleteFailed" | "reorderFailed" | "loadPresetsFailed" | "deletePresetsFailed";
+};
+
+function getCategoryErrorMessage(failure: CategoryFailure, t: ReturnType<typeof useLocalization>["t"]) {
+  if (failure.cause instanceof CategoryError) {
+    return t(`categories.errors.${failure.cause.code}`, failure.cause.details);
+  }
+  if (failure.cause instanceof ZodError) {
+    const issue = failure.cause.issues[0];
+    if (issue?.path[0] === "name" && issue.code === "too_small") return t("categories.errors.nameRequired");
+    if (issue?.path[0] === "name" && issue.code === "too_big") return t("categories.errors.nameTooLong");
+    return t("categories.errors.invalidDetails");
+  }
+  return t(`categories.errors.${failure.fallback}`);
+}
 
 export interface UseCategoriesOptions {
   skipQuery?: boolean;
 }
 
 export function useCategories(options?: UseCategoriesOptions) {
+  const { t } = useLocalization();
   const skipQuery = options?.skipQuery ?? false;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(!skipQuery);
   const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<CategoryFailure | null>(null);
   const focusedRef = useRef(false);
   const requestIdRef = useRef(0);
   const cancelPendingRef = useRef<(() => void) | null>(null);
@@ -45,10 +67,10 @@ export function useCategories(options?: UseCategoriesOptions) {
             const list = await listCategories(db);
             if (requestId !== requestIdRef.current) return;
             setCategories(list);
-            setError(null);
+            setFailure(null);
           } catch (err: any) {
             if (requestId === requestIdRef.current) {
-              setError(err?.message ?? "Failed to load categories.");
+              setFailure({ cause: err, fallback: "loadFailed" });
             }
           } finally {
             if (requestId === requestIdRef.current) {
@@ -80,13 +102,13 @@ export function useCategories(options?: UseCategoriesOptions) {
     async (input: CategoryInput, id?: string): Promise<Category | null> => {
       try {
         setSaving(true);
-        setError(null);
+        setFailure(null);
         const saved = await saveCategoryService(input, id);
         await refresh();
         return saved;
       } catch (err: any) {
         console.error("[useCategories] Save failed:", err);
-        setError(err?.message ?? "Failed to save category.");
+        setFailure({ cause: err, fallback: "saveFailed" });
         return null;
       } finally {
         setSaving(false);
@@ -99,13 +121,13 @@ export function useCategories(options?: UseCategoriesOptions) {
     async (id: string): Promise<boolean> => {
       try {
         setSaving(true);
-        setError(null);
+        setFailure(null);
         await deleteCategoryService(id);
         await refresh();
         return true;
       } catch (err: any) {
         console.error("[useCategories] Delete failed:", err);
-        setError(err?.message ?? "Failed to delete category.");
+        setFailure({ cause: err, fallback: "deleteFailed" });
         return false;
       } finally {
         setSaving(false);
@@ -118,13 +140,13 @@ export function useCategories(options?: UseCategoriesOptions) {
     async (orderedIds: string[]): Promise<boolean> => {
       try {
         setSaving(true);
-        setError(null);
+        setFailure(null);
         await reorderCategoriesService(orderedIds);
         await refresh();
         return true;
       } catch (err: any) {
         console.error("[useCategories] Reorder failed:", err);
-        setError(err?.message ?? "Failed to reorder categories.");
+        setFailure({ cause: err, fallback: "reorderFailed" });
         return false;
       } finally {
         setSaving(false);
@@ -136,13 +158,13 @@ export function useCategories(options?: UseCategoriesOptions) {
   const loadPresets = useCallback(async (): Promise<boolean> => {
     try {
       setSaving(true);
-      setError(null);
+      setFailure(null);
       await loadCategoryPresetsService();
       await refresh();
       return true;
     } catch (err: any) {
       console.error("[useCategories] Load presets failed:", err);
-      setError(err?.message ?? "Failed to load category presets.");
+      setFailure({ cause: err, fallback: "loadPresetsFailed" });
       return false;
     } finally {
       setSaving(false);
@@ -153,7 +175,7 @@ export function useCategories(options?: UseCategoriesOptions) {
     if (cancelPresetDeletionRef.current) return false;
     try {
       setSaving(true);
-      setError(null);
+      setFailure(null);
       const ready = await new Promise<boolean>((resolve) => {
         const cancelPaint = scheduleAfterPaint(() => {
           cancelPresetDeletionRef.current = null;
@@ -167,20 +189,20 @@ export function useCategories(options?: UseCategoriesOptions) {
       return true;
     } catch (err: any) {
       console.error("[useCategories] Delete presets failed:", err);
-      setError(err?.message ?? "Failed to delete category presets.");
+      setFailure({ cause: err, fallback: "deletePresetsFailed" });
       return false;
     } finally {
       setSaving(false);
     }
   }, [refresh]);
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => setFailure(null), []);
 
   return {
     categories,
     loading,
     saving,
-    error,
+    error: failure ? getCategoryErrorMessage(failure, t) : null,
     refresh,
     saveCategory: save,
     deleteCategory: remove,

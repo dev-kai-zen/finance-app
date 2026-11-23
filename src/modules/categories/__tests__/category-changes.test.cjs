@@ -217,6 +217,7 @@ function mountCategories(options, overrides = {}) {
     exports,
     require(name) {
       if(name==='react')return react;
+      if(name==='@/infrastructure/localization')return { useLocalization: () => overrides.localization ?? categoryTestLocalization() };
       if(name==='expo-router')return{useFocusEffect:cb=>{focusCallback=cb;}};
       if(name==='@/utils/schedule-after-paint')return{scheduleAfterPaint:cb=>{
         scheduled += 1;
@@ -574,6 +575,18 @@ test("C-F02: bulk deletion waits for paint and cancels pending work on blur", as
   }
 });
 
+function categoryTestLocalization(locale = "en") {
+  if (!categoryTestLocalization.cache) categoryTestLocalization.cache = new Map();
+  if (!categoryTestLocalization.cache.has(locale)) {
+    const { I18n } = require("i18n-js");
+    const catalog = require("@/infrastructure/localization/translations/" + locale)[locale];
+    const i18n = new I18n({ [locale]: catalog });
+    i18n.locale = locale;
+    categoryTestLocalization.cache.set(locale, { t: (key, options) => i18n.t(key, options) });
+  }
+  return categoryTestLocalization.cache.get(locale);
+}
+
 function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrides = {}, moduleOverrides = {}) {
   const file = path.resolve(__dirname, relativeFile);
   const exported = {};
@@ -582,7 +595,7 @@ function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrid
     pink: "#EC4899", orange: "#F97316", amber: "#F59E0B", slate: "#64748B",
   } }, spacing: { sm: 8, md: 12, lg: 16, xxl: 32 },
     borderRadius: { small: 4, medium: 8, large: 16, round: 999 },
-    shadows: { modal: {}, card: {} }, typography: { fontSize: {}, fontWeight: {} } };
+    shadows: { modal: {}, card: {} }, typography: { fontSize: {}, fontWeight: {}, lineHeight: {} } };
   const native = new Proxy({
     useWindowDimensions: () => ({ width: 390, height: 800 }),
     StyleSheet: { create: (styles) => styles },
@@ -599,6 +612,7 @@ function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrid
     require(name) {
       if (Object.hasOwn(moduleOverrides, name)) return moduleOverrides[name];
       if (name === "react") return react;
+      if (name === "@/infrastructure/localization") return { useLocalization: () => categoryTestLocalization() };
       if (name === "react/jsx-runtime") return {
         jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: "Fragment",
       };
@@ -820,7 +834,7 @@ test("C-F04: enabling queries while focused schedules once; skipQuery and blur p
   }
 });
 
-function mountCategoryCloseModal(file, exportName, props = {}) {
+function mountCategoryCloseModal(file, exportName, props = {}, localization = categoryTestLocalization()) {
   const events = [], slots = [], effects = [];
   let cursor = 0, tree;
   const react = {
@@ -840,7 +854,7 @@ function mountCategoryCloseModal(file, exportName, props = {}) {
   };
   const component = loadColorFormComponent("../components/" + file, react, () => ({ colors: [] }), {
     Keyboard: { dismiss: () => events.push("dismiss") },
-  })[exportName];
+  }, { "@/infrastructure/localization": { useLocalization: () => localization } })[exportName];
   function render() {
     cursor = 0;
     const element = component({ visible: true, onClearError() {}, onClose: () => events.push("close"), ...props });
@@ -1050,7 +1064,7 @@ test("C-F07: editing a legacy duplicate still detects another matching sibling",
   } finally { sqlite.close(); }
 });
 
-test("C-F07: scope checks use one indexed query and do not increase create/edit statement counts", async () => {
+test("C-F07/C-F10: scope checks stay indexed and hierarchy validation uses bounded reads", async () => {
   setupTestDb();
   try {
     const { getCategoryByNameAndType } = require("../repositories/categories.repository");
@@ -1067,18 +1081,23 @@ test("C-F07: scope checks use one indexed query and do not increase create/edit 
     }
     queries = [];
     const created = await saveCategory({ name: "Bounded check", type: "expense", parentId: "cat_dining", sortOrder: 0 }, undefined, database);
-    assert.equal(queries.length, 3, "Create keeps one duplicate check, one insert, and one result read");
+    assert.equal(queries.length, 4, "Child creation adds one authoritative parent lookup to its three original statements");
     queries = [];
     await saveCategory({ name: created.name, type: "expense" }, created.id, database);
-    assert.equal(queries.length, 5, "Edit reuses its existing category lookup to resolve the parent");
+    assert.equal(queries.length, 7, "Child editing adds a parent lookup and one-row child probe to its five original statements");
+    const probe = queries.find((query) => query.includes("limit ?"));
+    assert.ok(probe, "Hierarchy checks use a one-row existence probe");
+    const probePlan = sqlite.prepare("EXPLAIN QUERY PLAN " + probe).all(created.id, 1).map((row) => row.detail).join(" ");
+    assert.match(probePlan, /USING (?:COVERING )?INDEX categories_parent_id_index/i);
+    assert.doesNotMatch(probePlan, /TEMP B-TREE/i);
     await saveCategory({ name: "Conflict", type: "expense", parentId: "cat_dining", sortOrder: 1 }, undefined, database);
     queries = [];
     await assert.rejects(saveCategory({ name: "Conflict", type: "expense" }, created.id, database), /already exists/);
-    assert.equal(queries.length, 2, "A rejected edit needs only its current row and a scoped duplicate check");
+    assert.equal(queries.length, 4, "Conflicting child edits validate the parent and hierarchy before their duplicate check");
   } finally { sqlite.close(); }
 });
 
-function mountCategoryReorderScreen(initialCategories) {
+function mountCategoryReorderScreen(initialCategories, localization = categoryTestLocalization()) {
   let categories = initialCategories, cursor = 0, walkthroughOptions, targets;
   const slots = [];
   const react = {
@@ -1103,7 +1122,7 @@ function mountCategoryReorderScreen(initialCategories) {
       reorderCategories: (ids) => require("../services/reorder-categories.service").reorderCategories(ids, database),
     }) },
     "expo-router": { useRouter: () => ({ setParams() {} }), useFocusEffect() {} },
-    "@/infrastructure/localization": { useLocalization: () => ({ t: (key) => key }) },
+    "@/infrastructure/localization": { useLocalization: () => localization },
     "@/components/app-shell-header-context": { useHeaderWalkthroughAction() {} },
     "@/modules/walkthrough": {
       WalkthroughRegistryProvider: "WalkthroughRegistryProvider",
@@ -1228,4 +1247,174 @@ test("C-F08: modal items stay stable on unrelated renders and update when the ca
   const nextItems = h.modal("Reorder Expense Groups").props.items;
   assert.notEqual(nextItems, items);
   assert.deepEqual(Array.from(nextItems, (item) => item.id), ["first", "second", "third"]);
+});
+
+
+for (const [label, code, prepare] of [
+  ["self-parenting", "selfParent", async () => ({ id: "cat_groceries", input: { name: "Groceries", type: "expense", parentId: "cat_groceries" } })],
+  ["missing parent", "parentNotFound", async () => ({ input: { name: "Invalid child", type: "expense", parentId: "missing_parent" } })],
+  ["third-level nesting", "parentNotGroup", async () => {
+    const parent = await saveCategory({ name: "Child", type: "expense", parentId: "cat_dining" }, undefined, database);
+    return { input: { name: "Grandchild", type: "expense", parentId: parent.id } };
+  }],
+  ["parent type mismatch", "parentType", async () => ({ input: { name: "Invalid income", type: "income", parentId: "cat_dining" } })],
+  ["cyclic reparenting", "parentNotGroup", async () => {
+    const parent = await saveCategory({ name: "Parent", type: "expense" }, undefined, database);
+    const child = await saveCategory({ name: "Child", type: "expense", parentId: parent.id }, undefined, database);
+    return { id: parent.id, input: { name: parent.name, type: "expense", parentId: child.id } };
+  }],
+  ["moving a group with children", "groupHasChildren", async () => {
+    const parent = await saveCategory({ name: "Parent", type: "expense" }, undefined, database);
+    await saveCategory({ name: "Child", type: "expense", parentId: parent.id }, undefined, database);
+    return { id: parent.id, input: { name: parent.name, type: "expense", parentId: "cat_dining" } };
+  }],
+  ["changing a group's type with children", "groupTypeHasChildren", async () => {
+    const parent = await saveCategory({ name: "Parent", type: "expense" }, undefined, database);
+    await saveCategory({ name: "Child", type: "expense", parentId: parent.id }, undefined, database);
+    return { id: parent.id, input: { name: parent.name, type: "income" } };
+  }],
+  ["nesting a protected fallback", "systemParent", async () => {
+    await loadCategoryPresets(database);
+    return { id: "cat_exp_others", input: { name: "Other Expenses", type: "expense", parentId: "cat_dining" } };
+  }],
+]) {
+  test("C-F10: reject " + label + " without writing or notifying", async () => {
+    setupTestDb();
+    let unsubscribe;
+    try {
+      const { input, id } = await prepare();
+      const before = sqlite.prepare("SELECT * FROM categories ORDER BY id").all();
+      let notifications = 0;
+      unsubscribe = subscribeCategoryChanges(() => notifications++);
+      queries = [];
+      await assert.rejects(saveCategory(input, id, database), (error) => error.code === code);
+      assert.deepEqual(sqlite.prepare("SELECT * FROM categories ORDER BY id").all(), before);
+      assert.equal(notifications, 0);
+      assert.ok(!queries.some((query) => /^(insert|update|delete)\b/i.test(query)));
+      assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+    } finally { unsubscribe?.(); sqlite.close(); }
+  });
+}
+
+test("C-F10: valid leaf moves, promotion, and omitted parents preserve a two-level tree", async () => {
+  setupTestDb();
+  try {
+    const first = await saveCategory({ name: "First", type: "expense" }, undefined, database);
+    const second = await saveCategory({ name: "Second", type: "expense" }, undefined, database);
+    const leaf = await saveCategory({ name: "Leaf", type: "expense", parentId: first.id }, undefined, database);
+    const edited = await saveCategory({ name: "Renamed leaf", type: "expense" }, leaf.id, database);
+    assert.equal(edited.parentId, first.id);
+    const moved = await saveCategory({ name: "Renamed leaf", type: "expense", parentId: second.id }, leaf.id, database);
+    assert.equal(moved.parentId, second.id);
+    const promoted = await saveCategory({ name: "Renamed leaf", type: "expense", parentId: null }, leaf.id, database);
+    assert.equal(promoted.parentId, null);
+    const changed = await saveCategory({ name: "Renamed leaf", type: "income" }, leaf.id, database);
+    assert.equal(changed.type, "income");
+  } finally { sqlite.close(); }
+});
+
+
+test("C-F09: all category translation keys and interpolation tokens match in all supported languages", () => {
+  function flatten(value, prefix = "categories") {
+    return Object.entries(value).flatMap(([key, child]) => typeof child === "string" ? [[prefix + "." + key, child]] : flatten(child, prefix + "." + key));
+  }
+  const english = flatten(require("@/infrastructure/localization/translations/en").en.categories);
+  const options = { count: 2, name: "User category", query: "User query", hex: "#FF5500", icon: "tag" };
+  for (const locale of ["en", "fil", "es"]) {
+    const catalog = new Map(flatten(require("@/infrastructure/localization/translations/" + locale)[locale].categories));
+    assert.deepEqual([...catalog.keys()].sort(), english.map(([key]) => key).sort());
+    const { t } = categoryTestLocalization(locale);
+    for (const [key, template] of english) {
+      assert.ok(catalog.get(key).trim(), key + " must not be empty in " + locale);
+      const tokens = (value) => [...value.matchAll(/%\{([^}]+)\}/g)].map((match) => match[1]).sort();
+      assert.deepEqual(tokens(catalog.get(key)), tokens(template), key + " interpolation differs in " + locale);
+      assert.doesNotMatch(t(key, options), /%\{|\[missing/i, key + " failed to translate");
+    }
+    assert.ok(t("categories.deleteGroupMessage", { name: "Library %{literal}" }).includes("Library %{literal}"), "Saved names are not translated or interpolated again");
+  }
+});
+
+test("C-F09: category-owned UI has no hardcoded text or literal accessibility/dialog strings", () => {
+  const files = ["../screens/categories-screen.tsx", ...["category-group-card", "category-group-modal", "subcategory-modal", "category-picker-modal", "category-form-modal"].map((name) => "../components/" + name + ".tsx")];
+  const props = new Set(["accessibilityLabel", "accessibilityHint", "placeholder", "title", "message", "description", "actionLabel", "buttonLabel", "confirmLabel", "cancelLabel"]);
+  for (const file of files) {
+    const source = fs.readFileSync(path.resolve(__dirname, file), "utf8");
+    const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    function walk(node) {
+      if (ts.isJsxText(node)) assert.doesNotMatch(node.text.trim(), /[A-Za-z]/, file + " contains literal UI text");
+      if (ts.isJsxAttribute(node) && props.has(node.name.text) && node.initializer && ts.isStringLiteral(node.initializer)) {
+        assert.equal(node.initializer.text, "", file + " contains untranslated " + node.name.text);
+      }
+      ts.forEachChild(node, walk);
+    }
+    walk(tree);
+  }
+});
+
+for (const locale of ["en", "fil", "es"]) {
+  test("C-F09: " + locale + " category forms, picker, cards, and screen use translated text", async () => {
+    const localization = categoryTestLocalization(locale), { t } = localization;
+    queries = [];
+    for (const [file, exportName, , saveLabel] of closeModalCases) {
+      const h = mountCategoryCloseModal(file, exportName, { onSave: async () => false,
+        parentCategory: { id: "parent", name: "Saved group", type: "expense" },
+      }, localization);
+      const closeKey = exportName === "CategoryGroupModal" ? "closeGroup" : exportName === "SubcategoryModal" ? "closeSubcategory" : "closeForm";
+      h.element(t("categories." + closeKey));
+      const action = saveLabel === "Create Subcategory" ? "createSubcategory" : "createCategory";
+      await h.element(t("categories." + action)).props.onPress();
+      const notice = h.find((node) => node.type === "NotificationModal");
+      const errorKey = exportName === "CategoryGroupModal" ? "groupNameRequired" : exportName === "SubcategoryModal" ? "subcategoryNameRequired" : "nameRequired";
+      assert.equal(notice.props.message, t("categories.errors." + errorKey));
+      const input = h.find((node) => node.type === "TextInput");
+      input.props.onChangeText("Saved name stays unchanged");
+      assert.equal(h.find((node) => node.type === "TextInput").props.value, "Saved name stays unchanged");
+    }
+    const picker = mountCategoryCloseModal("category-picker-modal.tsx", "CategoryPickerModal", {
+      categories: [{ id: "parent", name: "Saved group", type: "expense", subcategories: [] }], onSelectCategory() {},
+    }, localization);
+    picker.element(t("categories.closePicker"));
+    picker.element(t("categories.selectNamed", { name: "Saved group" }));
+    picker.find((node) => node.type === "TextInput").props.onChangeText("Unmatched query");
+    picker.find((node) => node.props?.children === t("categories.noMatching", { query: "Unmatched query" }));
+    const screen = mountCategoryReorderScreen([], localization);
+    screen.element(t("categories.expenses"));
+    const empty = screen.query((node) => node.type === "PageEmptyState");
+    assert.equal(empty.props.title, t("categories.emptyExpense"));
+    assert.equal(empty.props.actionLabel, t("categories.addFirstExpense"));
+    const card = loadColorFormComponent("../components/category-group-card.tsx", {}, undefined, {}, {
+      "@/infrastructure/localization": { useLocalization: () => localization },
+    }).CategoryGroupCard;
+    for (const count of [0, 1, 2]) {
+      const tree = card({ group: { id: "parent", name: "Saved group", subcategories: Array.from({ length: count }, (_, i) => ({ id: "child" + i, name: "Saved child" })) }, isExpanded: true });
+      const label = t(count === 0 ? "categories.noSubcategories" : count === 1 ? "categories.oneSubcategory" : "categories.manySubcategories", { count });
+      assert.ok(findFormElement(tree, (node) => node.props?.children === label));
+    }
+    assert.equal(queries.length, 0, "Rendering and typing use no SQLite queries");
+  });
+}
+
+test("C-F09: changing language updates open validation errors without reloading categories", async () => {
+  setupTestDb();
+  const localization = { ...categoryTestLocalization("en") };
+  const h = mountCategories(undefined, { localization });
+  try {
+    h.render(); await h.flush();
+    assert.equal(await h.render().saveCategory({ name: "Dining", type: "expense" }), null);
+    const scheduled = h.scheduled;
+    queries = [];
+    for (const locale of ["fil", "es", "en"]) {
+      localization.t = categoryTestLocalization(locale).t;
+      assert.equal(h.render().error, localization.t("categories.errors.duplicateName", { name: "Dining" }));
+      await h.flush();
+      assert.equal(h.scheduled, scheduled);
+      assert.equal(queries.length, 0);
+    }
+    assert.equal(await h.render().saveCategory({ name: "x".repeat(51), type: "expense" }), null);
+    assert.equal(h.render().error, localization.t("categories.errors.nameTooLong"));
+    assert.equal(await h.render().saveCategory({ name: "Child", type: "expense", parentId: "missing" }), null);
+    assert.equal(h.render().error, localization.t("categories.errors.parentNotFound"));
+    h.render().clearError();
+    assert.equal(h.render().error, null);
+  } finally { h.blur(); sqlite.close(); }
 });

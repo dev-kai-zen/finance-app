@@ -13,6 +13,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
+import { useLocalization, type TranslationKey } from "@/infrastructure/localization";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -64,6 +65,7 @@ function CategoryGroupModalContent({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const {
     colors: hexColorsList,
@@ -85,7 +87,7 @@ function CategoryGroupModalContent({
   );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<TranslationKey | null>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
 
   const selectedHexObj = hexColorsList.find((c) => c.id === hexColorsId);
@@ -134,7 +136,7 @@ function CategoryGroupModalContent({
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      setLocalError("Please enter a category group name.");
+      setLocalError("categories.errors.groupNameRequired");
       return;
     }
 
@@ -166,7 +168,7 @@ function CategoryGroupModalContent({
     }
   };
 
-  const displayError = localError || error;
+  const displayError = localError ? t(localError) : error;
 
   return (
     <Modal
@@ -181,7 +183,7 @@ function CategoryGroupModalContent({
         style={styles.modalOverlay}
       >
         <Pressable
-          accessibilityLabel="Dismiss category group modal"
+          accessibilityLabel={t("categories.dismissGroup")}
           accessibilityRole="button"
           onPress={handleClose}
           style={styles.backdrop}
@@ -197,10 +199,10 @@ function CategoryGroupModalContent({
           {/* Header */}
           <View style={styles.headerRow}>
             <Text style={styles.modalTitle}>
-              {categoryToEdit ? "Edit Category" : "New Category"}
+              {categoryToEdit ? t("categories.editCategory") : t("categories.newCategory")}
             </Text>
             <Pressable
-              accessibilityLabel="Close category group modal"
+              accessibilityLabel={t("categories.closeGroup")}
               accessibilityRole="button"
               onPress={handleClose}
               style={styles.closeBtn}
@@ -215,10 +217,10 @@ function CategoryGroupModalContent({
           >
             {/* Category Type Switcher */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>GROUP TYPE</Text>
+              <Text style={styles.fieldLabel}>{t("categories.groupType")}</Text>
               <View style={styles.typeSegment}>
                 <Pressable
-                  accessibilityLabel="Expense category group"
+                  accessibilityLabel={t("categories.expenseGroup")}
                   accessibilityRole="button"
                   disabled={Boolean(categoryToEdit?.isSystem)}
                   onPress={() => handleTypeChange("expense")}
@@ -233,12 +235,12 @@ function CategoryGroupModalContent({
                       type === "expense" && styles.typeOptionTextActive,
                     ]}
                   >
-                    Expense
+                    {t("categories.expense")}
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  accessibilityLabel="Income category group"
+                  accessibilityLabel={t("categories.incomeGroup")}
                   accessibilityRole="button"
                   disabled={Boolean(categoryToEdit?.isSystem)}
                   onPress={() => handleTypeChange("income")}
@@ -253,7 +255,7 @@ function CategoryGroupModalContent({
                       type === "income" && styles.typeOptionTextActive,
                     ]}
                   >
-                    Income
+                    {t("categories.incomeType")}
                   </Text>
                 </Pressable>
               </View>
@@ -261,14 +263,14 @@ function CategoryGroupModalContent({
 
             {/* Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
+              <Text style={styles.fieldLabel}>{t("categories.categoryName")}</Text>
               <TextInput
                 maxLength={50}
                 onChangeText={setName}
                 placeholder={
                   type === "expense"
-                    ? "e.g. Food & Dining, Travel"
-                    : "e.g. Salary, Investments"
+                    ? t("categories.expensePlaceholder")
+                    : t("categories.incomePlaceholder")
                 }
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
@@ -278,9 +280,9 @@ function CategoryGroupModalContent({
 
             {/* Icon Picker Trigger */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>ICON</Text>
+              <Text style={styles.fieldLabel}>{t("categories.icon")}</Text>
               <Pressable
-                accessibilityLabel={`Selected icon: ${selectedIcon}. Tap to change.`}
+                accessibilityLabel={t("categories.selectedIcon", { icon: selectedIcon })}
                 accessibilityRole="button"
                 onPress={() => setIsIconPickerOpen(true)}
                 style={styles.iconPreviewCard}
@@ -312,7 +314,7 @@ function CategoryGroupModalContent({
             {/* Color Selector */}
             <View style={styles.inputGroup}>
               <View style={styles.colorHeaderRow}>
-                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>THEME COLOR</Text>
+                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>{t("categories.themeColor")}</Text>
                 <View style={styles.selectedColorBadge}>
                   <View
                     style={[styles.selectedColorDot, { backgroundColor: categoricalColor }]}
@@ -323,7 +325,7 @@ function CategoryGroupModalContent({
                 </View>
               </View>
               <Text style={styles.colorHelperText}>
-                Select a palette color or create your own custom color.
+                {t("categories.colorHelp")}
               </Text>
               <View style={styles.colorPalette}>
                 {hexColorsList.map((c) => {
@@ -332,7 +334,7 @@ function CategoryGroupModalContent({
                   return (
                     <Pressable
                       key={c.id}
-                      accessibilityLabel={`Color ${c.name} (${c.hex})`}
+                      accessibilityLabel={t("categories.color", { name: c.name, hex: c.hex })}
                       accessibilityRole="button"
                       onPress={() => setHexColorsId(c.id)}
                       style={[
@@ -354,7 +356,7 @@ function CategoryGroupModalContent({
                   );
                 })}
                 <Pressable
-                  accessibilityLabel="Add custom color"
+                  accessibilityLabel={t("categories.addColor")}
                   accessibilityRole="button"
                   onPress={() => setIsColorFormOpen(true)}
                   style={({ pressed }) => [
@@ -388,17 +390,17 @@ function CategoryGroupModalContent({
           {/* Action Buttons */}
           <View style={styles.footerRow}>
             <Pressable
-              accessibilityLabel="Cancel"
+              accessibilityLabel={t("common.cancel")}
               accessibilityRole="button"
               disabled={pending}
               onPress={handleClose}
               style={styles.cancelBtn}
             >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t("common.cancel")}</Text>
             </Pressable>
 
             <Pressable
-              accessibilityLabel={categoryToEdit ? "Update Category" : "Create Category"}
+              accessibilityLabel={categoryToEdit ? t("categories.updateCategory") : t("categories.createCategory")}
               accessibilityRole="button"
               disabled={pending}
               onPress={handleSave}
@@ -406,10 +408,10 @@ function CategoryGroupModalContent({
             >
               <Text style={styles.saveBtnText}>
                 {pending
-                  ? "Saving..."
+                  ? t("categories.saving")
                   : categoryToEdit
-                    ? "Update Category"
-                    : "Create Category"}
+                    ? t("categories.updateCategory")
+                    : t("categories.createCategory")}
               </Text>
             </Pressable>
           </View>
@@ -424,6 +426,7 @@ function CategoryGroupModalContent({
             setIsIconPickerOpen(false);
           }}
           selectedIcon={selectedIcon}
+          title={t("categories.selectIcon")}
           visible={isIconPickerOpen}
         />
       ) : null}
@@ -443,7 +446,7 @@ function CategoryGroupModalContent({
           onClearError();
         }}
         title={
-          localError ? "Check category group details" : "Unable to save category group"
+          localError ? t("categories.checkGroup") : t("categories.saveGroupFailed")
         }
         variant={localError ? "warning" : "error"}
         visible={visible && !isColorFormOpen && Boolean(displayError)}

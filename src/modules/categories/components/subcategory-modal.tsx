@@ -13,6 +13,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
+import { useLocalization, type TranslationKey } from "@/infrastructure/localization";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -63,6 +64,7 @@ function SubcategoryModalContent({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -82,7 +84,7 @@ function SubcategoryModalContent({
   );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<TranslationKey | null>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
 
   const parentHexObj = hexColorsList.find(
@@ -131,12 +133,12 @@ function SubcategoryModalContent({
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      setLocalError("Please enter a subcategory name.");
+      setLocalError("categories.errors.subcategoryNameRequired");
       return;
     }
 
     if (!parentCategory) {
-      setLocalError("Parent category is required.");
+      setLocalError("categories.errors.parentRequired");
       return;
     }
 
@@ -168,7 +170,7 @@ function SubcategoryModalContent({
     }
   };
 
-  const displayError = localError || error;
+  const displayError = localError ? t(localError) : error;
 
   return (
     <Modal
@@ -183,7 +185,7 @@ function SubcategoryModalContent({
         style={styles.modalOverlay}
       >
         <Pressable
-          accessibilityLabel="Dismiss subcategory modal"
+          accessibilityLabel={t("categories.dismissSubcategory")}
           accessibilityRole="button"
           onPress={handleClose}
           style={styles.backdrop}
@@ -199,10 +201,10 @@ function SubcategoryModalContent({
           {/* Header */}
           <View style={styles.headerRow}>
             <Text style={styles.modalTitle}>
-              {subcategoryToEdit ? "Edit Subcategory" : "New Subcategory"}
+              {subcategoryToEdit ? t("categories.editSubcategory") : t("categories.newSubcategory")}
             </Text>
             <Pressable
-              accessibilityLabel="Close subcategory modal"
+              accessibilityLabel={t("categories.closeSubcategory")}
               accessibilityRole="button"
               onPress={handleClose}
               style={styles.closeBtn}
@@ -231,7 +233,7 @@ function SubcategoryModalContent({
                   />
                 </View>
                 <View>
-                  <Text style={styles.parentBannerLabel}>PARENT CATEGORY</Text>
+                  <Text style={styles.parentBannerLabel}>{t("categories.parentCategory")}</Text>
                   <Text style={styles.parentBannerName}>
                     {parentCategory.name}
                   </Text>
@@ -259,7 +261,7 @@ function SubcategoryModalContent({
                     },
                   ]}
                 >
-                  {parentCategory.type === "income" ? "Income" : "Expense"}
+                  {parentCategory.type === "income" ? t("categories.incomeType") : t("categories.expense")}
                 </Text>
               </View>
             </View>
@@ -271,11 +273,11 @@ function SubcategoryModalContent({
           >
             {/* Subcategory Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>SUBCATEGORY NAME</Text>
+              <Text style={styles.fieldLabel}>{t("categories.subcategoryName")}</Text>
               <TextInput
                 maxLength={50}
                 onChangeText={setName}
-                placeholder="e.g. Groceries, Dining"
+                placeholder={t("categories.subcategoryPlaceholder")}
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
                 value={name}
@@ -284,9 +286,9 @@ function SubcategoryModalContent({
 
             {/* Icon Picker Trigger */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>ICON</Text>
+              <Text style={styles.fieldLabel}>{t("categories.icon")}</Text>
               <Pressable
-                accessibilityLabel={`Selected icon: ${selectedIcon}. Tap to change.`}
+                accessibilityLabel={t("categories.selectedIcon", { icon: selectedIcon })}
                 accessibilityRole="button"
                 onPress={() => setIsIconPickerOpen(true)}
                 style={styles.iconPreviewCard}
@@ -318,7 +320,7 @@ function SubcategoryModalContent({
             {/* Theme Color Selector */}
             <View style={styles.inputGroup}>
               <View style={styles.colorHeaderRow}>
-                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>THEME COLOR</Text>
+                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>{t("categories.themeColor")}</Text>
                 <View style={styles.selectedColorBadge}>
                   <View
                     style={[styles.selectedColorDot, { backgroundColor: categoricalColor }]}
@@ -329,7 +331,7 @@ function SubcategoryModalContent({
                 </View>
               </View>
               <Text style={styles.colorHelperText}>
-                Select a palette color or create your own custom color.
+                {t("categories.colorHelp")}
               </Text>
               <View style={styles.colorPalette}>
                 {hexColorsList.map((entry) => {
@@ -338,7 +340,7 @@ function SubcategoryModalContent({
                   return (
                     <Pressable
                       key={entry.id}
-                      accessibilityLabel={`Color ${entry.name} (${entry.hex})`}
+                      accessibilityLabel={t("categories.color", { name: entry.name, hex: entry.hex })}
                       accessibilityRole="button"
                       onPress={() => setHexColorsId(entry.id)}
                       style={[
@@ -360,7 +362,7 @@ function SubcategoryModalContent({
                   );
                 })}
                 <Pressable
-                  accessibilityLabel="Add custom color"
+                  accessibilityLabel={t("categories.addColor")}
                   accessibilityRole="button"
                   onPress={() => setIsColorFormOpen(true)}
                   style={({ pressed }) => [
@@ -394,18 +396,18 @@ function SubcategoryModalContent({
           {/* Action Buttons */}
           <View style={styles.footerRow}>
             <Pressable
-              accessibilityLabel="Cancel"
+              accessibilityLabel={t("common.cancel")}
               accessibilityRole="button"
               disabled={pending}
               onPress={handleClose}
               style={styles.cancelBtn}
             >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t("common.cancel")}</Text>
             </Pressable>
 
             <Pressable
               accessibilityLabel={
-                subcategoryToEdit ? "Update Subcategory" : "Create Subcategory"
+                subcategoryToEdit ? t("categories.updateSubcategory") : t("categories.createSubcategory")
               }
               accessibilityRole="button"
               disabled={pending}
@@ -414,10 +416,10 @@ function SubcategoryModalContent({
             >
               <Text style={styles.saveBtnText}>
                 {pending
-                  ? "Saving..."
+                  ? t("categories.saving")
                   : subcategoryToEdit
-                    ? "Update Subcategory"
-                    : "Create Subcategory"}
+                    ? t("categories.updateSubcategory")
+                    : t("categories.createSubcategory")}
               </Text>
             </Pressable>
           </View>
@@ -432,6 +434,7 @@ function SubcategoryModalContent({
             setIsIconPickerOpen(false);
           }}
           selectedIcon={selectedIcon}
+          title={t("categories.selectIcon")}
           visible={isIconPickerOpen}
         />
       ) : null}
@@ -450,7 +453,7 @@ function SubcategoryModalContent({
           setLocalError(null);
           onClearError();
         }}
-        title={localError ? "Check subcategory details" : "Unable to save subcategory"}
+        title={localError ? t("categories.checkSubcategory") : t("categories.saveSubcategoryFailed")}
         variant={localError ? "warning" : "error"}
         visible={visible && !isColorFormOpen && Boolean(displayError)}
       />

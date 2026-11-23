@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { IconHelper } from "@/components/icon-helper";
+import { useLocalization } from "@/infrastructure/localization";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useResolveEntityColor } from "@/modules/hex-colors";
@@ -36,6 +37,7 @@ export function CategoryGroupCard({
   addSubRef,
 }: CategoryGroupCardProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
 
@@ -47,7 +49,7 @@ export function CategoryGroupCard({
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Pressable
-          accessibilityLabel={`${isExpanded ? "Collapse" : "Expand"} ${group.name}`}
+          accessibilityLabel={t(isExpanded ? "categories.collapse" : "categories.expand", { name: group.name })}
           accessibilityRole="button"
           disabled={!hasSub}
           onPress={hasSub ? onToggleExpand : undefined}
@@ -74,8 +76,8 @@ export function CategoryGroupCard({
             </Text>
             <Text numberOfLines={1} style={styles.subCount}>
               {hasSub
-                ? `${subcategories.length} subcategor${subcategories.length === 1 ? "y" : "ies"}`
-                : "No subcategories"}
+                ? t(subcategories.length === 1 ? "categories.oneSubcategory" : "categories.manySubcategories", { count: subcategories.length })
+                : t("categories.noSubcategories")}
             </Text>
           </View>
         </Pressable>
@@ -83,7 +85,7 @@ export function CategoryGroupCard({
         <View style={styles.headerActions}>
           {hasSub ? (
             <Pressable
-              accessibilityLabel={`${isExpanded ? "Collapse" : "Expand"} ${group.name}`}
+              accessibilityLabel={t(isExpanded ? "categories.collapse" : "categories.expand", { name: group.name })}
               accessibilityRole="button"
               onPress={onToggleExpand}
               style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
@@ -98,7 +100,7 @@ export function CategoryGroupCard({
 
           {hasSub && subcategories.length > 1 ? (
             <Pressable
-              accessibilityLabel={`Reorder subcategories in ${group.name}`}
+              accessibilityLabel={t("categories.reorderInGroup", { name: group.name })}
               accessibilityRole="button"
               collapsable={false}
               onPress={onReorderSubcategories}
@@ -117,7 +119,7 @@ export function CategoryGroupCard({
           ) : null}
 
           <Pressable
-            accessibilityLabel={`Add subcategory to ${group.name}`}
+            accessibilityLabel={t("categories.addToGroup", { name: group.name })}
             accessibilityRole="button"
             collapsable={false}
             onPress={onAddSubcategory}
@@ -135,7 +137,7 @@ export function CategoryGroupCard({
           </Pressable>
 
           <Pressable
-            accessibilityLabel={`Edit ${group.name}`}
+            accessibilityLabel={t("categories.editNamed", { name: group.name })}
             accessibilityRole="button"
             onPress={onEditGroup}
             style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
@@ -145,7 +147,7 @@ export function CategoryGroupCard({
 
           {canDeleteGroup ? (
             <Pressable
-              accessibilityLabel={`Delete ${group.name}`}
+              accessibilityLabel={t("categories.deleteNamed", { name: group.name })}
               accessibilityRole="button"
               onPress={onDeleteGroup}
               style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
@@ -182,7 +184,7 @@ export function CategoryGroupCard({
 
                 <View style={styles.subActions}>
                   <Pressable
-                    accessibilityLabel={`Edit subcategory ${sub.name}`}
+                    accessibilityLabel={t("categories.editNamedSubcategory", { name: sub.name })}
                     accessibilityRole="button"
                     onPress={() => onEditSubcategory(sub)}
                     style={({ pressed }) => [styles.subIconAction, pressed && styles.pressed]}
@@ -191,7 +193,7 @@ export function CategoryGroupCard({
                   </Pressable>
 
                   <Pressable
-                    accessibilityLabel={`Delete subcategory ${sub.name}`}
+                    accessibilityLabel={t("categories.deleteNamedSubcategory", { name: sub.name })}
                     accessibilityRole="button"
                     onPress={() => onDeleteSubcategory(sub)}
                     style={({ pressed }) => [styles.subIconAction, pressed && styles.pressed]}

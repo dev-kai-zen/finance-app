@@ -355,7 +355,7 @@ function CategoriesScreenContent({
         {/* Category type chips */}
         <View collapsable={false} ref={typeToggleRef} style={styles.tabRow}>
           <Pressable
-            accessibilityLabel="Expenses"
+            accessibilityLabel={t("categories.expenses")}
             accessibilityRole="button"
             onPress={() => setSelectedType("expense")}
             style={[
@@ -369,12 +369,12 @@ function CategoriesScreenContent({
                 selectedType === "expense" && styles.tabTextActive,
               ]}
             >
-              Expenses
+              {t("categories.expenses")}
             </Text>
           </Pressable>
 
           <Pressable
-            accessibilityLabel="Income"
+            accessibilityLabel={t("categories.income")}
             accessibilityRole="button"
             onPress={() => setSelectedType("income")}
             style={[
@@ -388,7 +388,7 @@ function CategoriesScreenContent({
                 selectedType === "income" && styles.tabTextActive,
               ]}
             >
-              Income
+              {t("categories.income")}
             </Text>
           </Pressable>
         </View>
@@ -399,14 +399,13 @@ function CategoriesScreenContent({
             <View style={styles.headerCountBadge}>
               <IconHelper color={activeColor} name="layers" size={14} />
               <Text style={[styles.headerCountText, { color: activeColor }]}>
-                {currentCategories.length}{" "}
-                {selectedType === "expense" ? "Expense" : "Income"} Groups
+                {t(selectedType === "expense" ? "categories.expenseGroupCount" : "categories.incomeGroupCount", { count: currentCategories.length })}
               </Text>
             </View>
 
             {hasExistingTransactions === false ? (
               <Pressable
-                accessibilityLabel="Manage category presets"
+                accessibilityLabel={t("categories.managePresets")}
                 accessibilityRole="button"
                 collapsable={false}
                 onPress={() => setPresetMenuVisible(true)}
@@ -424,7 +423,7 @@ function CategoriesScreenContent({
           <View style={styles.headerActions}>
             {canReorderGroups && (
               <Pressable
-                accessibilityLabel="Reorder Groups"
+                accessibilityLabel={t("categories.reorderGroups")}
                 accessibilityRole="button"
                 collapsable={false}
                 onPress={() => setReorderGroupsVisible(true)}
@@ -435,12 +434,12 @@ function CategoriesScreenContent({
                 ]}
               >
                 <IconHelper color={activeColor} name="arrow-up-down" size={14} />
-                <Text style={[styles.headerActionBtnText, { color: activeColor }]}>Reorder</Text>
+                <Text style={[styles.headerActionBtnText, { color: activeColor }]}>{t("categories.reorder")}</Text>
               </Pressable>
             )}
 
             <Pressable
-              accessibilityLabel={`New ${selectedType === "expense" ? "expense" : "income"} category`}
+              accessibilityLabel={t(selectedType === "expense" ? "categories.newExpense" : "categories.newIncome")}
               accessibilityRole="button"
               collapsable={false}
               onPress={handleCreateGroup}
@@ -452,19 +451,19 @@ function CategoriesScreenContent({
               ]}
             >
               <IconHelper color={activeColor} name="plus" size={15} />
-              <Text style={[styles.headerActionBtnText, { color: activeColor }]}>New Category</Text>
+              <Text style={[styles.headerActionBtnText, { color: activeColor }]}>{t("categories.newCategory")}</Text>
             </Pressable>
           </View>
         </View>
 
         {loading ? (
-          <PageLoadingState message="Loading categories..." variant="cards" />
+          <PageLoadingState message={t("categories.loading")} variant="cards" />
         ) : currentCategories.length === 0 ? (
           <PageEmptyState
-            actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}
-            description="Create custom category groups and nested subcategories to organize your financial transactions."
+            actionLabel={t(selectedType === "expense" ? "categories.addFirstExpense" : "categories.addFirstIncome")}
+            description={t("categories.emptyDescription")}
             onAction={handleCreateGroup}
-            title={`No ${selectedType === "expense" ? "Expense" : "Income"} Groups Found`}
+            title={t(selectedType === "expense" ? "categories.emptyExpense" : "categories.emptyIncome")}
           />
         ) : (
           <View style={[styles.groupsList, isDesktop && styles.groupsListDesktop]}>
@@ -532,7 +531,7 @@ function CategoriesScreenContent({
           onSave={async (orderedIds) => {
             await reorderCategories(orderedIds);
           }}
-          title={`Reorder ${selectedType === "expense" ? "Expense" : "Income"} Groups`}
+          title={t(selectedType === "expense" ? "categories.reorderExpense" : "categories.reorderIncome")}
           titleAlign="left"
           visible={reorderGroupsVisible}
         />
@@ -554,7 +553,7 @@ function CategoriesScreenContent({
           onSave={async (orderedIds) => {
             await reorderCategories(orderedIds);
           }}
-          title={`Reorder ${groupForSubReorder.name} Subcategories`}
+          title={t("categories.reorderSubcategories", { name: groupForSubReorder.name })}
           titleAlign="left"
           visible={reorderSubsVisible}
         />
@@ -565,13 +564,13 @@ function CategoriesScreenContent({
           items={[
             {
               id: "load-category-presets",
-              label: "Load category presets",
+              label: t("categories.loadPresets"),
               icon: <IconHelper color={theme.colors.success} name="download" size={20} />,
               onPress: () => setPresetConfirm("load"),
             },
             {
               id: "delete-category-presets",
-              label: "Delete category presets",
+              label: t("categories.deletePresets"),
               icon: <IconHelper color={theme.colors.danger} name="trash-2" size={20} />,
               onPress: () => setPresetConfirm("delete"),
             },
@@ -582,57 +581,57 @@ function CategoriesScreenContent({
       ) : null}
 
       <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel={presetConfirm === "load" ? "Load presets" : "Delete presets"}
+        cancelLabel={t("common.cancel")}
+        confirmLabel={presetConfirm === "load" ? t("categories.loadPresetsAction") : t("categories.deletePresetsAction")}
         message={
           presetConfirm === "load"
-            ? "Load the built-in category groups and subcategories? Existing categories will not be overwritten."
-            : "Delete all built-in category groups and subcategories? Your transactions will be reassigned safely."
+            ? t("categories.loadPresetsMessage")
+            : t("categories.deletePresetsMessage")
         }
         onCancel={() => setPresetConfirm(null)}
         onConfirm={() => {
           void handleConfirmPresetAction();
         }}
         pending={saving}
-        title={presetConfirm === "load" ? "Load Category Presets?" : "Delete Category Presets?"}
+        title={presetConfirm === "load" ? t("categories.loadPresetsTitle") : t("categories.deletePresetsTitle")}
         variant={presetConfirm === "load" ? "primary" : "destructive"}
         visible={presetConfirm !== null}
       />
 
       <InfoModal
-        buttonLabel="OK"
-        message="Default system categories cannot be deleted."
+        buttonLabel={t("common.ok")}
+        message={t("categories.protectedMessage")}
         onClose={() => setProtectedInfoVisible(false)}
-        title="Protected Category"
+        title={t("categories.protectedTitle")}
         visible={protectedInfoVisible}
       />
 
       <InfoModal
-        buttonLabel="OK"
+        buttonLabel={t("common.ok")}
         message={
           blockedGroupDelete
-            ? `This group contains ${blockedGroupDelete.subcategories?.length ?? 0} subcategor${blockedGroupDelete.subcategories?.length === 1 ? "y" : "ies"}. Delete the subcategor${blockedGroupDelete.subcategories?.length === 1 ? "y" : "ies"} first, then try deleting the group again.`
-            : "Delete the subcategories first, then try deleting the group again."
+            ? t(blockedGroupDelete.subcategories?.length === 1 ? "categories.blockedDeleteOne" : "categories.blockedDeleteMany", { count: blockedGroupDelete.subcategories?.length ?? 0 })
+            : t("categories.blockedDeleteMessage")
         }
         onClose={() => setBlockedGroupDelete(null)}
-        title="Cannot Delete Category Group"
+        title={t("categories.blockedDeleteTitle")}
         visible={blockedGroupDelete !== null}
       />
 
       <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("common.delete")}
         message={
           deleteConfirm?.isGroup
-            ? `Are you sure you want to delete "${deleteConfirm.category.name}"? Any linked transactions will be safely reassigned to "Others".`
-            : `Are you sure you want to delete subcategory "${deleteConfirm?.category.name ?? ""}"? Any linked transactions will be assigned to its parent or "Others".`
+            ? t("categories.deleteGroupMessage", { name: deleteConfirm.category.name })
+            : t("categories.deleteSubcategoryMessage", { name: deleteConfirm?.category.name ?? "" })
         }
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => {
           void handleConfirmDelete();
         }}
         title={
-          deleteConfirm?.isGroup ? "Delete Category Group?" : "Delete Subcategory?"
+          deleteConfirm?.isGroup ? t("categories.deleteGroupTitle") : t("categories.deleteSubcategoryTitle")
         }
         variant="destructive"
         visible={deleteConfirm !== null}
@@ -641,7 +640,7 @@ function CategoriesScreenContent({
       <NotificationModal
         message={error ?? ""}
         onClose={clearError}
-        title="Unable to update categories"
+        title={t("categories.updateFailedTitle")}
         variant="error"
         visible={
           Boolean(error) &&
