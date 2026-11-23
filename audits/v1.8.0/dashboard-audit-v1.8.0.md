@@ -7,11 +7,12 @@
 **Stage:** 4 — Fix approved issues in progress.
 
 **Result:** **HOLD Dashboard feature sign-off.**
+* **D-F03 is RESOLVED:** In `NetWorthInspectModal`, `chartWidthRef` and `pointsRef` are maintained and read dynamically inside `getClosestIndexFromX`. Dragging and scrubbing across the chart smoothly selects the closest point in real time.
 * **D-F02 is RESOLVED:** First-run `interactionBlocker` touch deadlock on the "Retry" button has been completely eliminated. `enabled` and rendering are strictly gated by `Boolean(summary) && !dashboardError`.
 * **D-F01 is CLOSED as Working as Designed:** Confirmed product decision. Dashboard cards mask glanceable values in public, but tapping into the inspector or transaction details is an explicit, intentional user action to inspect figures.
-* Remaining open issues (D-F03, D-F04, D-F06, D-F07, D-F08, D-F09, D-F10) are scheduled for remediation.
+* Remaining open issues (D-F04, D-F06, D-F07, D-F08, D-F09, D-F10) are scheduled for remediation.
 
-**Changes made:** Resolved D-F02 in [dashboard-screen.tsx](file:///c:/expo-repo/finance-app/src/modules/dashboard/screens/dashboard-screen.tsx), documented resolution in this audit file, verified with 57 automated tests, and confirmed `npx tsc --noEmit` exits with 0 errors.
+**Changes made:** Resolved D-F02 in [dashboard-screen.tsx](file:///c:/expo-repo/finance-app/src/modules/dashboard/screens/dashboard-screen.tsx), resolved D-F03 in [net-worth-inspect-modal.tsx](file:///c:/expo-repo/finance-app/src/components/net-worth-inspect-modal.tsx), documented resolutions in this audit file, verified with 57 automated tests, and confirmed `npx tsc --noEmit` exits with 0 errors.
 
 ---
 
@@ -171,7 +172,7 @@ Posted transactions:
 |---|---|---|---|---|---|
 | **D-F01** | **Intentional UX** | Net Worth Inspector and Transaction Details display raw figures when tapped from Stealth Mode. | Intended design: Dashboard overview masks public glanceable figures; tapping to inspect is an intentional user action to view data. | Closed — Working as Designed. No changes required. | **CLOSED** |
 | **D-F02** | **High · UX Deadlock** | First-load database failure locks the screen; "Retry" button cannot be tapped. | `interactionBlocker` (`zIndex: 99999`) rendered whenever `isWaitingForIntro` was true, covering the `PageErrorState` Retry button. | Gated `useWalkthroughIntro` with `Boolean(summary) && !dashboardError`, and guarded blocker rendering so it only mounts during valid waiting state. | **RESOLVED** |
-| **D-F03** | **Medium · Chart UX** | Net Worth chart scrubber responder retains initial zero-width layout, clamping all drag gestures to index 0. | `PanResponder` in `NetWorthInspectModal` closes over `chartWidth = 0` from initial render; `Math.min(chartWidth - 24, x)` clamps to 44px. | Use a layout ref (`chartWidthRef`) and points ref inside touch handlers so point selection uses the live measured width. | **Open** |
+| **D-F03** | **Medium · Chart UX** | Net Worth chart scrubber responder retains initial zero-width layout, clamping all drag gestures to index 0. | `PanResponder` in `NetWorthInspectModal` closes over `chartWidth = 0` from initial render; `Math.min(chartWidth - 24, x)` clamps to 44px. | Added `chartWidthRef` and `pointsRef` in `NetWorthInspectModal` so `PanResponder` touch calculations read live measured layout width and points array dynamically. | **RESOLVED** |
 | **D-F04** | **High · Financial Parity** | Cashflow Inflow drill-down omits expense refunds; Top Categories drill-down for Uncategorized fails with 0 rows; parent category link expands to children contrary to card grouping. | Inflow route filters strictly by `type=income` rather than signed inflow; category drill-down passes literal string `'uncategorized'`; `TransactionsScreen` automatically expands parent categories to all children. | Update transaction navigation to pass a filter supporting positive refunds, and handle `categoryId === 'uncategorized'` as `uncategorized=true` in `TransactionsScreen`. | **Open** |
 | **D-F05** | **Medium · Policy** | Future-dated transactions shift headline net worth but are excluded from today's chart history point. | Headline sums current account balances (all active transactions); historical points enforce `lte(occurredAt, endOfDay)`. | Align or document semantics clearly: headline reflects total ledger balance, while chart reflects history up to selected cutoff date. | **Open** |
 | **D-F06** | **High · Stale State** | Pull-to-refresh failure leaves stale amounts; currency switch can display new currency code on old numeric points. | Fixed 500ms spinner in `handleRefresh`; error state suppressed if previous summary exists; currency change race. | Tie refresh completion to query promise resolution; pair currency code atomically with snapshot; surface subtle error banner if background refresh fails. | **Open** |
@@ -214,7 +215,7 @@ On a small 2-account fixture, opening or focusing the Dashboard executes:
 - [x] Trace and reproduce findings D-F01 through D-F10.
 - [x] Settle D-F01 (Confirmed Working as Designed / intentional inspection UX).
 - [x] Remediate D-F02 (First-run `interactionBlocker` touch deadlock on Retry button).
-- [ ] Remediate D-F03 (Net Worth chart PanResponder layout width ref).
+- [x] Remediate D-F03 (Net Worth chart PanResponder layout width ref).
 - [ ] Remediate D-F04 (Cashflow refund drill-down & Uncategorized category route).
 - [ ] Remediate D-F06 (Pull-to-refresh promise synchronization & currency atomicity).
 - [ ] Remediate D-F07 (Decouple direct Drizzle SQL to `@/modules/transactions` service & defer closed modal hooks).
@@ -224,4 +225,4 @@ On a small 2-account fixture, opening or focusing the Dashboard executes:
 - [ ] Verify sustained 60–120fps performance on populated ledger.
 - [ ] Feature Sign-Off achieved.
 
-**Current status:** Stage 4 Remediation in progress. D-F02 resolved. Ready for next finding.
+**Current status:** Stage 4 Remediation in progress. D-F02 and D-F03 resolved. Ready for next finding.

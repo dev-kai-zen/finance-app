@@ -144,6 +144,12 @@ function NetWorthInspectModalContent({
   const selectedPointIndexRef = useRef(selectedPointIndex);
   selectedPointIndexRef.current = selectedPointIndex;
 
+  const chartWidthRef = useRef(chartWidth);
+  chartWidthRef.current = chartWidth;
+
+  const pointsRef = useRef(points);
+  pointsRef.current = points;
+
   const chartWrapperRef = useRef<View>(null);
   const chartLayoutXRef = useRef<number>(0);
 
@@ -156,10 +162,29 @@ function NetWorthInspectModalContent({
 
   const handleLayout = (e: LayoutChangeEvent) => {
     const w = Math.round(e.nativeEvent.layout.width);
+    chartWidthRef.current = w;
     if (w !== chartWidth) {
       setChartWidth(w);
     }
+    chartWrapperRef.current?.measure((_x, _y, _width, _height, pageX) => {
+      if (typeof pageX === "number" && !isNaN(pageX) && pageX > 0) {
+        chartLayoutXRef.current = pageX;
+      }
+    });
   };
+
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        chartWrapperRef.current?.measure((_x, _y, _width, _height, pageX) => {
+          if (typeof pageX === "number" && !isNaN(pageX) && pageX > 0) {
+            chartLayoutXRef.current = pageX;
+          }
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
 
   const plotWidth = Math.max(1, chartWidth - PLOT_LEFT - PLOT_RIGHT);
   const plotHeight = CHART_HEIGHT - PLOT_TOP - PLOT_BOTTOM;
@@ -186,15 +211,22 @@ function NetWorthInspectModalContent({
   };
 
   const getClosestIndexFromX = (xCoord: number) => {
-    if (points.length === 0) return 0;
+    const currentPoints = pointsRef.current;
+    const currentWidth = chartWidthRef.current;
+    if (currentPoints.length === 0) return 0;
+
+    const currentPlotWidth = Math.max(1, currentWidth - PLOT_LEFT - PLOT_RIGHT);
     const clampedX = Math.max(
       PLOT_LEFT,
-      Math.min(chartWidth - PLOT_RIGHT, xCoord),
+      Math.min(currentWidth - PLOT_RIGHT, xCoord),
     );
     let closestIndex = 0;
     let minDistance = Infinity;
-    for (let i = 0; i < points.length; i++) {
-      const px = xForIndex(i);
+    for (let i = 0; i < currentPoints.length; i++) {
+      const px =
+        currentPoints.length <= 1
+          ? PLOT_LEFT + currentPlotWidth / 2
+          : PLOT_LEFT + (i / (currentPoints.length - 1)) * currentPlotWidth;
       const dist = Math.abs(px - clampedX);
       if (dist < minDistance) {
         minDistance = dist;
@@ -208,18 +240,27 @@ function NetWorthInspectModalContent({
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 3;
+        return (
+          Math.abs(gestureState.dx) > 3 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
+        );
       },
-      onPanResponderGrant: (evt) => {
-        const touchX = evt.nativeEvent.locationX;
+      onPanResponderGrant: (evt, gestureState) => {
+        const pageX = evt.nativeEvent.pageX ?? (gestureState.x0 || 0);
+        const chartOriginX =
+          chartLayoutXRef.current > 0 ? chartLayoutXRef.current : 30;
+        const touchX = pageX - chartOriginX;
         const closest = getClosestIndexFromX(touchX);
         if (closest !== selectedPointIndexRef.current) {
           triggerHaptic("light");
           setSelectedPointIndex(closest);
         }
       },
-      onPanResponderMove: (evt) => {
-        const touchX = evt.nativeEvent.locationX;
+      onPanResponderMove: (evt, gestureState) => {
+        const pageX = evt.nativeEvent.pageX ?? (gestureState.moveX || 0);
+        const chartOriginX =
+          chartLayoutXRef.current > 0 ? chartLayoutXRef.current : 30;
+        const touchX = pageX - chartOriginX;
         const closest = getClosestIndexFromX(touchX);
         if (closest !== selectedPointIndexRef.current) {
           triggerHaptic("light");
