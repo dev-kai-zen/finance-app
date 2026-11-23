@@ -230,7 +230,7 @@ function DashboardScreenContent() {
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "dashboardWalkthroughDismissed",
-    enabled: !isVersionHistoryPending,
+    enabled: !isVersionHistoryPending && Boolean(summary) && !dashboardError,
     autoTrigger: true,
     onStart: walkthrough.startWalkthrough,
   });
@@ -826,7 +826,7 @@ function DashboardScreenContent() {
       />
 
       {/* Block interaction while waiting for the first-time modal */}
-      {walkthroughIntro.isWaitingForIntro ? (
+      {Boolean(summary) && !dashboardError && walkthroughIntro.isWaitingForIntro ? (
         <Pressable
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
