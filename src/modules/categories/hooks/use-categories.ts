@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { subscribeCategoryChanges } from "../services/category-changes.service";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
@@ -72,6 +72,12 @@ export function useCategories(options?: UseCategoriesOptions) {
       cancelPending();
     };
   }, [cancelPending, refresh, skipQuery]));
+
+  useEffect(() => {
+    if (!skipQuery && focusedRef.current) {
+      void refresh();
+    }
+  }, [refresh, skipQuery]);
 
   const save = useCallback(
     async (input: CategoryInput, id?: string): Promise<Category | null> => {

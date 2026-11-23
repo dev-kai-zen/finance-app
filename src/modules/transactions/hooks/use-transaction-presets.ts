@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   listActiveTransactionPresets,
@@ -21,17 +21,30 @@ import {
   writePresetSortPreference,
 } from "../utils/preset-sort-preference";
 
-export function useTransactionPresets(initialSortBy?: PresetSortBy) {
+export type UseTransactionPresetsOptions = {
+  initialSortBy?: PresetSortBy;
+  skipQuery?: boolean;
+};
+
+export function useTransactionPresets(
+  initialSortByOrOptions?: PresetSortBy | UseTransactionPresetsOptions,
+) {
+  const options =
+    typeof initialSortByOrOptions === "object"
+      ? initialSortByOrOptions
+      : { initialSortBy: initialSortByOrOptions };
+  const skipQuery = options.skipQuery ?? false;
   const [sortBy, setSortByState] = useState<PresetSortBy>(
-    () => initialSortBy ?? readPresetSortPreference(),
+    () => options.initialSortBy ?? readPresetSortPreference(),
   );
   const [presets, setPresets] = useState<TransactionPreset[]>([]);
   const [archivedPresets, setArchivedPresets] = useState<TransactionPreset[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipQuery);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    if (skipQuery) return;
     try {
       setLoading(true);
       setPresets(listActiveTransactionPresets({ sortBy }));
@@ -42,13 +55,21 @@ export function useTransactionPresets(initialSortBy?: PresetSortBy) {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]);
+  }, [skipQuery, sortBy]);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh]),
+      if (!skipQuery) {
+        refresh();
+      }
+    }, [refresh, skipQuery]),
   );
+
+  useEffect(() => {
+    if (!skipQuery) {
+      refresh();
+    }
+  }, [refresh, skipQuery]);
 
   const setSortBy = useCallback((newSort: PresetSortBy) => {
     setSortByState(newSort);

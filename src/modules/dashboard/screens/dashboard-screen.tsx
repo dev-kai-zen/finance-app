@@ -94,6 +94,30 @@ function DashboardScreenContent() {
     error: dashboardError,
     refresh: refreshDashboard,
   } = useDashboard();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const frozenDashboardLayoutRef = useRef(dashboardLayout);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<
+    ((data?: ChatSavedTransactionResult) => void) | null
+  >(null);
+  const [modalMode, setModalMode] = useState<TransactionType>("expense");
+  const [inspectedTransaction, setInspectedTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [prefilledTransaction, setPrefilledTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+  const returnToChatOnFormCloseRef = useRef(false);
+
+  const isManualSetup =
+    workspaceState.status === "completed" &&
+    workspaceState.mode === "personal" &&
+    workspaceState.setupStrategy === "manual";
+  const shouldLoadModalData = isModalOpen || isChatModalOpen || isManualSetup;
+
   const {
     accounts,
     pockets,
@@ -102,12 +126,15 @@ function DashboardScreenContent() {
     refresh: refreshAccounts,
   } = useAccounts({
     includeCreditCardMonitoring: false,
+    skipQuery: !shouldLoadModalData,
   });
   const {
     categories,
     loading: categoriesLoading,
     refresh: refreshCategories,
-  } = useCategories();
+  } = useCategories({
+    skipQuery: !shouldLoadModalData,
+  });
   const {
     recordTransaction,
     recordTransfer,
@@ -127,12 +154,14 @@ function DashboardScreenContent() {
       () => {
         if (isScreenActive) {
           refreshDashboard();
-          refreshAccounts();
+          if (shouldLoadModalData) {
+            refreshAccounts();
+          }
         }
       },
     );
     return () => sub.remove();
-  }, [isScreenActive, refreshAccounts, refreshDashboard]);
+  }, [isScreenActive, refreshAccounts, refreshDashboard, shouldLoadModalData]);
   const {
     presets,
     archivedPresets,
@@ -149,24 +178,9 @@ function DashboardScreenContent() {
     sortBy: presetSortBy,
     setSortBy: setPresetSortBy,
     clearError: clearPresetError,
-  } = useTransactionPresets();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
-  const frozenDashboardLayoutRef = useRef(dashboardLayout);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [onChatEditSaved, setOnChatEditSaved] = useState<
-    ((data?: ChatSavedTransactionResult) => void) | null
-  >(null);
-  const [modalMode, setModalMode] = useState<TransactionType>("expense");
-  const [inspectedTransaction, setInspectedTransaction] =
-    useState<TransactionListItem | null>(null);
-  const [prefilledTransaction, setPrefilledTransaction] =
-    useState<TransactionListItem | null>(null);
-  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
-  const returnToChatOnFormCloseRef = useRef(false);
+  } = useTransactionPresets({
+    skipQuery: !isModalOpen,
+  });
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
@@ -202,16 +216,19 @@ function DashboardScreenContent() {
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
-      await Promise.allSettled([
-        refreshDashboard(),
-        refreshAccounts(),
-        refreshCategories(),
-        refreshPresets(),
-      ]);
+      const tasks: Promise<unknown>[] = [refreshDashboard()];
+      if (shouldLoadModalData) {
+        tasks.push(
+          Promise.resolve(refreshAccounts()),
+          Promise.resolve(refreshCategories()),
+          Promise.resolve(refreshPresets()),
+        );
+      }
+      await Promise.allSettled(tasks);
     } finally {
       setIsPullRefreshing(false);
     }
-  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshPresets]);
+  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshPresets, shouldLoadModalData]);
 
   const walkthrough = useDashboardWalkthrough({
     layout: dashboardLayout,

@@ -215,6 +215,11 @@ export const getCashFlowHistory = deferFunction(
     require("./services/get-cashflow-history.service").getCashFlowHistory,
 ) as typeof import("./services/get-cashflow-history.service").getCashFlowHistory;
 
+export const getMonthlyCashflow = deferFunction(
+  () =>
+    require("./services/get-monthly-cashflow.service").getMonthlyCashflow,
+) as typeof import("./services/get-monthly-cashflow.service").getMonthlyCashflow;
+
 export const hasTransactions = deferFunction(
   () => require("./services/has-transactions.service").hasTransactions,
 ) as typeof import("./services/has-transactions.service").hasTransactions;
@@ -368,6 +373,7 @@ export type {
   CashFlowHistoryResult,
   CashFlowPeriodPoint,
 } from "./services/get-cashflow-history.service";
+export type { MonthlyCashflowSummary } from "./services/get-monthly-cashflow.service";
 export type { TransactionsScreenProps } from "./screens/transactions-screen";
 
 export const getTransactionImportCatalog = deferFunction(

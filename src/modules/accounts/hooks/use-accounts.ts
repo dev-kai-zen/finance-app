@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { getAccountsWithBalances } from "@/modules/accounts/services/get-accounts-with-balances.service";
 import { getPocketsWithBalances } from "@/modules/accounts/services/get-pockets-with-balances.service";
@@ -102,5 +102,10 @@ export function useAccounts(options?: UseAccountsOptions) {
       };
     }, [refresh]),
   );
+  useEffect(() => {
+    if (!skipQuery) {
+      refresh();
+    }
+  }, [refresh, skipQuery]);
   return { ...data, loading, error, refresh };
 }

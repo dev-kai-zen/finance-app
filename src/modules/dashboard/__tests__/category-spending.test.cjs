@@ -412,3 +412,22 @@ test("D-F06: getDashboardSummary includes atomic currencyCode snapshot", () => {
     assert.ok(["PHP", "USD", "EUR"].includes(summary.currencyCode));
   } finally { sqlite.close(); }
 });
+
+test("D-F07: getMonthlyCashflow delegates to @/modules/transactions service and returns accurate cashflow", () => {
+  const f = fixture();
+  try {
+    f.transaction("tx_inc", "shopping", -15000, { type: "income" });
+    f.transaction("tx_exp", "shopping", 5000, { type: "expense" });
+    const { getMonthlyCashflow: getDashboardCashflow } = require("../repositories/dashboard.repository");
+    const { getMonthlyCashflow: getTxCashflow } = require("@/modules/transactions");
+
+    const dashboardResult = getDashboardCashflow(f.db, f.date);
+    const txResult = getTxCashflow(f.db, f.date);
+
+    assert.deepEqual(dashboardResult, txResult);
+    assert.equal(dashboardResult.totalInflowMinorUnits, 15000);
+    assert.equal(dashboardResult.totalOutflowMinorUnits, 5000);
+    assert.equal(dashboardResult.netSavingsMinorUnits, 10000);
+    assert.equal(dashboardResult.savingsRatePercentage, 67);
+  } finally { sqlite.close(); }
+});
