@@ -13,6 +13,7 @@ import {
   hasSchedulesForAccount as repoHasSchedulesForAccount,
   hasSchedulesForPocket as repoHasSchedulesForPocket,
   listScheduleIdsWithPostings,
+  reassignScheduledTransactionCategoryRecords as repoReassignScheduledTransactionCategoryRecords,
   updateScheduledTransactionRecord,
 } from "../repositories/scheduled-transactions.repository";
 
@@ -207,3 +208,12 @@ export function unlinkScheduledTransactionSubscription(
   };
   return context ? runner(context) : db.transaction(runner);
 }
+
+export function reassignScheduledTransactionCategoryReferences(
+  fromCategoryId: string,
+  toCategoryId: string,
+  context: DbContext = db,
+): void {
+  repoReassignScheduledTransactionCategoryRecords(fromCategoryId, toCategoryId, context);
+}
+

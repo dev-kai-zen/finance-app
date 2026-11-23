@@ -8,6 +8,7 @@ import {
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import { reassignTransactionCategoryReferences } from "@/modules/transactions";
+import { reassignScheduledTransactionCategoryReferences } from "@/modules/scheduled-transactions";
 
 export async function deleteCategory(
   id: string,
@@ -33,9 +34,11 @@ export async function deleteCategory(
     (existing.type === "income" ? "cat_inc_others" : "cat_exp_others");
 
   await client.transaction(async (tx) => {
+    const dbContext = tx as unknown as DbContext;
     // Subcategory transactions and split entries return to their parent group.
     // Top-level group transactions return to the protected "Other" category.
-    reassignTransactionCategoryReferences(id, fallbackId, tx as unknown as DbContext);
+    reassignTransactionCategoryReferences(id, fallbackId, dbContext);
+    reassignScheduledTransactionCategoryReferences(id, fallbackId, dbContext);
 
     const deleted = await repoDeleteCategory(tx, id);
     if (!deleted) {

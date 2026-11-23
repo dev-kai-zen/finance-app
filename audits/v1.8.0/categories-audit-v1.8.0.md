@@ -6,9 +6,9 @@
 
 **Stage:** 1 — Audit Categories Complete (Ready for Review & Validation)
 
-**Result:** Categories requires **remediation before feature sign-off**. While the two-tier category hierarchy, SQLite hierarchical schema, and core CRUD flows are functional, the audit identified **11 findings**: a foreign key restrict crash on category deletion when linked to scheduled transactions (**C-F01**), direct cross-module updates and foreign-key crash risks during preset deletion (**C-F02**), a custom hex color foreign-key constraint violation in `CategoryFormModal` (**C-F03**), duplicate focus and mount queries in `useCategories` violating Rule 19.5 (**C-F04**), test harness defects in `seed-defaults.test.cjs` and `category-changes.test.cjs` (**C-F05**), sub-44px touch targets and missing keyboard dismissal violating Rule 19.8 (**C-F06**), overly aggressive global name uniqueness blocking valid subcategories (**C-F07**), visual jump bug when reordering the system "Others" category (**C-F08**), complete absence of localization across category screens and modals (**C-F09**), unvalidated `parentId` updates permitting cycles or multi-tier nesting (**C-F10**), and dead unreferenced code in `CategoryRow.tsx` (**C-F11**).
+**Result:** Categories remediation in progress. **C-F01 is RESOLVED**: deleting a category now safely reassigns linked scheduled transactions (`transaction_schedules`) and actionable occurrence template snapshots to the fallback category without foreign-key constraint errors, verified with passing automated regression tests and 0 TypeScript compilation errors.
 
-**Changes made:** Documented action-by-action workflows, layer ownership map, architectural findings C-F01 through C-F11, 60–120fps runtime performance assessment, and the Stage 2 validation test plan.
+**Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
 
@@ -197,10 +197,10 @@ flowchart TD
 
 ## 5. Prioritized Findings & Inconsistencies
 
-### [C-F01] Foreign Key Restrict Crash when Deleting a Category Linked to Scheduled Transactions
+### [C-F01] Foreign Key Restrict Crash when Deleting a Category Linked to Scheduled Transactions — RESOLVED
 
 - **Category:** Financial Integrity / Foreign Key Crash
-- **Severity:** High (Crash)
+- **Severity:** High (Crash) — **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 2 (Data Integrity) & Section 13 (Transactions)
 - **Location:** [delete-category.service.ts](file:///c:/expo-repo/finance-app/src/modules/categories/services/delete-category.service.ts#L35-L44), [transaction-schedules.ts](file:///c:/expo-repo/finance-app/src/infrastructure/database/schema/transaction-schedules.ts#L33-L35)
 - **Evidence / Repro:**
@@ -218,9 +218,9 @@ flowchart TD
     ...
   });
   ```
-  `reassignTransactionCategoryReferences` reassigns `transactions`, `transaction_entries` (splits), and `transaction_presets`. It completely omits `transaction_schedules`. If a user has an active or paused scheduled transaction using this category, `repoDeleteCategory(tx, id)` triggers an unhandled `SQLITE_CONSTRAINT: FOREIGN KEY constraint failed` error, crashing the delete action.
-- **Remediation:**
-  Extend category reference reassignment or add `reassignScheduleCategoryReferences(fromId, toId, tx)` (or block deletion if schedules exist, matching the `canDeleteAccount` pattern).
+  `reassignTransactionCategoryReferences` reassigns `transactions`, `transaction_entries` (splits), and `transaction_presets`. It completely omitted `transaction_schedules`. If a user had an active or paused scheduled transaction using this category, `repoDeleteCategory(tx, id)` triggered an unhandled `SQLITE_CONSTRAINT: FOREIGN KEY constraint failed` error, crashing the delete action.
+- **Resolution:**
+  Implemented `reassignScheduledTransactionCategoryRecords` in `scheduled-transactions.repository.ts` and exposed `reassignScheduledTransactionCategoryReferences` via `@/modules/scheduled-transactions`. Integrated the call inside `deleteCategory.service.ts` and `category-presets.service.ts` within the SQLite transaction context, safely updating both `transaction_schedules.category_id` and actionable occurrences in `transaction_schedule_occurrences`. Verified with automated unit test `B06` in `category-changes.test.cjs`.
 
 ---
 

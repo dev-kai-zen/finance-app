@@ -208,6 +208,7 @@ function mountCategories(options, overrides = {}) {
     useState(initial) { const i=cursor++; if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;}]; },
     useRef(initial) { const i=cursor++;return slots[i]??(slots[i]={current:initial}); },
     useCallback(callback,deps) { const i=cursor++;if(!same(slots[i]?.deps,deps))slots[i]={callback,deps};return slots[i].callback; },
+    useEffect(callback,deps) { const i=cursor++;if(!same(slots[i]?.deps,deps)){slots[i]={callback,deps};pending.add(callback);} },
   };
   const file = path.resolve(__dirname,'../hooks/use-categories.ts');
   const localRequire = Module.createRequire(file), exports = {};
@@ -303,6 +304,14 @@ test("B06: deleteCategory safely reassigns split transaction entries, direct tra
       VALUES ('preset_1', 'Morning Coffee', 'expense', 'acc_1', 'cat_custom', 5000, 'PHP', 0, 0, ${now}, ${now});
     `);
 
+    // Insert a scheduled transaction referencing cat_custom with restrict foreign key (C-F01)
+    sqlite.exec(`
+      INSERT INTO transaction_schedules (id, status, transaction_type, account_id, category_id, amount_minor_units, currency_code, frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, auto_post, anchor_occurrence_number, next_occurrence_number, created_at, updated_at)
+      VALUES ('sched_1', 'active', 'expense', 'acc_1', 'cat_custom', -5000, 'PHP', 'monthly', 1, ${now}, 'UTC', 'never', 'exact', 0, 1, 1, ${now}, ${now});
+      INSERT INTO transaction_schedule_occurrences (id, schedule_id, sequence_number, nominal_due_at, template_snapshot, status, created_at, updated_at)
+      VALUES ('occ_1', 'sched_1', 1, ${now}, '{"transactionType":"expense","accountId":"acc_1","pocketId":null,"categoryId":"cat_custom","toAccountId":null,"toPocketId":null,"amountMinorUnits":-5000,"name":"Coffee Schedule","note":null}', 'due', ${now}, ${now});
+    `);
+
     // Delete custom category
     await deleteCategory("cat_custom", database);
 
@@ -321,6 +330,15 @@ test("B06: deleteCategory safely reassigns split transaction entries, direct tra
     // Verify preset was reassigned to fallback (cat_exp_others)
     const preset = sqlite.prepare("SELECT category_id FROM transaction_presets WHERE id = 'preset_1'").get();
     assert.equal(preset.category_id, "cat_exp_others", "Preset should be reassigned to cat_exp_others");
+
+    // Verify scheduled transaction was reassigned to fallback (cat_exp_others) (C-F01)
+    const schedule = sqlite.prepare("SELECT category_id FROM transaction_schedules WHERE id = 'sched_1'").get();
+    assert.equal(schedule.category_id, "cat_exp_others", "Scheduled transaction should be reassigned to cat_exp_others");
+
+    // Verify scheduled occurrence template snapshot was updated to fallback (cat_exp_others) (C-F01)
+    const occ = sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE id = 'occ_1'").get();
+    const parsedSnapshot = JSON.parse(occ.template_snapshot);
+    assert.equal(parsedSnapshot.categoryId, "cat_exp_others", "Scheduled occurrence snapshot should be updated to cat_exp_others");
   } finally {
     sqlite.close();
   }

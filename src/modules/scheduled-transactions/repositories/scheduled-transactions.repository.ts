@@ -4,6 +4,7 @@ import {
   desc,
   eq,
   getTableColumns,
+  inArray,
   isNotNull,
   isNull,
   lte,
@@ -459,3 +460,50 @@ export function listActionableScheduleOccurrences(limit: number, context: DbCont
       cursor ? or(lt(transactionScheduleOccurrences.nominalDueAt, cursor.date), and(eq(transactionScheduleOccurrences.nominalDueAt, cursor.date), lt(transactionScheduleOccurrences.id, cursor.id))) : undefined),
   ).orderBy(desc(transactionScheduleOccurrences.nominalDueAt), desc(transactionScheduleOccurrences.id)).limit(limit).all().map(mapOccurrence);
 }
+
+export function reassignScheduledTransactionCategoryRecords(
+  fromCategoryId: string,
+  toCategoryId: string,
+  context: DbContext = db,
+): void {
+  const now = new Date();
+  context
+    .update(transactionSchedules)
+    .set({
+      categoryId: toCategoryId,
+      updatedAt: now,
+    })
+    .where(eq(transactionSchedules.categoryId, fromCategoryId))
+    .run();
+
+  const actionableOccurrences = context
+    .select({
+      id: transactionScheduleOccurrences.id,
+      templateSnapshot: transactionScheduleOccurrences.templateSnapshot,
+    })
+    .from(transactionScheduleOccurrences)
+    .where(
+      inArray(transactionScheduleOccurrences.status, ["due", "failed"]),
+    )
+    .all();
+
+  for (const occ of actionableOccurrences) {
+    try {
+      const parsed = JSON.parse(occ.templateSnapshot);
+      if (parsed.categoryId === fromCategoryId) {
+        parsed.categoryId = toCategoryId;
+        context
+          .update(transactionScheduleOccurrences)
+          .set({
+            templateSnapshot: JSON.stringify(parsed),
+            updatedAt: now,
+          })
+          .where(eq(transactionScheduleOccurrences.id, occ.id))
+          .run();
+      }
+    } catch {
+      // Ignore malformed snapshot
+    }
+  }
+}
+
