@@ -1932,14 +1932,19 @@ export function findCategoryBreakdownRows(
 
 export function findAccountBalanceDeltaRows(
   context: DbContext = db,
+  cutoffDate?: Date,
 ): Array<{ accountId: string; delta: number }> {
+  const conditions = [isNull(transactions.deletedAt)];
+  if (cutoffDate) {
+    conditions.push(lte(transactions.occurredAt, cutoffDate));
+  }
   return context
     .select({
       accountId: transactions.accountId,
       delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
     })
     .from(transactions)
-    .where(isNull(transactions.deletedAt))
+    .where(and(...conditions))
     .groupBy(transactions.accountId)
     .all();
 }

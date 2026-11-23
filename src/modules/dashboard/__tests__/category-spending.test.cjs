@@ -431,3 +431,38 @@ test("D-F07: getMonthlyCashflow delegates to @/modules/transactions service and 
     assert.equal(dashboardResult.savingsRatePercentage, 67);
   } finally { sqlite.close(); }
 });
+
+test("D-F05: Headline Net Worth and latest chart point match as-of-today, excluding future-dated transactions", () => {
+  const f = fixture();
+  try {
+    const { getDashboardSummary } = require("../repositories/dashboard.repository");
+    const { getAccountsWithBalances } = require("@/modules/accounts");
+
+    sqlite.prepare("UPDATE accounts SET opening_balance_at = ? WHERE id = 'acc_1'").run(f.time - 30 * 86400000);
+
+    // Add transaction today: -10,000 cents (-₱100)
+    f.transaction("tx_today", "shopping", 10000, { occurredAt: f.time });
+
+    // Add future-dated transaction (10 days in future): -20,000 cents (-₱200)
+    const futureTime = f.time + 10 * 86400000;
+    f.transaction("tx_future", "shopping", 20000, { occurredAt: futureTime });
+
+    // Dashboard summary as of today:
+    const summary = getDashboardSummary(f.db, f.date, { includeNetWorthHistory: true });
+
+    // As of today, acc_1 opening balance (100,000) - 10,000 = 90,000 cents
+    assert.equal(summary.netWorthMinorUnits, 90000);
+
+    // Latest historical net worth point for 1Y should also be 90,000 cents:
+    const latest1YPoint = summary.netWorthHistory["1Y"].at(-1);
+    assert.equal(latest1YPoint.netWorthMinorUnits, 90000);
+
+    // Headline Net Worth strictly equals the latest chart point:
+    assert.equal(summary.netWorthMinorUnits, latest1YPoint.netWorthMinorUnits);
+
+    // Total ledger balance without date cutoff includes the future transaction: 100,000 - 10,000 - 20,000 = 70,000
+    const allTimeAccounts = getAccountsWithBalances(f.db);
+    const acc1 = allTimeAccounts.find(a => a.id === "acc_1");
+    assert.equal(acc1.currentBalanceMinorUnits, 70000);
+  } finally { sqlite.close(); }
+});

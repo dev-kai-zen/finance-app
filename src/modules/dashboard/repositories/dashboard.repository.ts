@@ -29,8 +29,12 @@ const NET_WORTH_PERIODS: NetWorthPeriod[] = ["1W", "3M", "6M", "1Y", "ALL"];
 
 export function getAccountDynamicBalances(
   context: DbContext = db,
+  asOfDate?: Date,
 ): AccountWithBalance[] {
-  return getAccountsWithBalances(context, { includeManagementFlags: false });
+  return getAccountsWithBalances(context, {
+    includeManagementFlags: false,
+    asOfDate,
+  });
 }
 
 export function getMonthlyCashflow(
@@ -107,7 +111,9 @@ export function getDashboardSummary(
     includeCategoryBreakdown?: boolean;
   },
 ): DashboardSummary {
-  const accountsWithBalances = getAccountDynamicBalances(context);
+  const endOfTargetDate = new Date(targetDate);
+  endOfTargetDate.setHours(23, 59, 59, 999);
+  const accountsWithBalances = getAccountDynamicBalances(context, endOfTargetDate);
   const activeAccounts = accountsWithBalances.filter(
     (a) => !a.isArchived && !a.hideFromReports,
   );

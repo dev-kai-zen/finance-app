@@ -20,6 +20,11 @@ export type UseAccountsOptions = {
    * Defaults to matching `includeCreditCardMonitoring` so pickers skip management-only scans.
    */
   includeManagementFlags?: boolean;
+  /**
+   * Optional cutoff date to compute account balances as of a specific date (e.g. today).
+   * When omitted, sums all active transactions in the ledger.
+   */
+  asOfDate?: Date;
 };
 
 export function useAccounts(options?: UseAccountsOptions) {
@@ -52,6 +57,7 @@ export function useAccounts(options?: UseAccountsOptions) {
         try {
           const baseAccounts = getAccountsWithBalances(undefined, {
             includeManagementFlags,
+            asOfDate: options?.asOfDate,
           });
           let accounts: AccountListItem[];
           if (includeCreditCardMonitoring) {

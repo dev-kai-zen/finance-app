@@ -14,8 +14,9 @@ import {
  */
 export function getAccountBalanceDeltas(
   context: DbContext = db,
+  cutoffDate?: Date,
 ): Record<string, number> {
-  const rows = findAccountBalanceDeltaRows(context);
+  const rows = findAccountBalanceDeltaRows(context, cutoffDate);
 
   const deltasByAccountId: Record<string, number> = {};
   for (const row of rows) {

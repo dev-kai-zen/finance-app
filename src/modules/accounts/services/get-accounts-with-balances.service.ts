@@ -14,6 +14,11 @@ export interface GetAccountsWithBalancesOptions {
    * Defaults to true to preserve existing management behavior.
    */
   includeManagementFlags?: boolean;
+  /**
+   * Optional cutoff date to compute account balances as of a specific date (e.g. today).
+   * When omitted, sums all active transactions in the ledger.
+   */
+  asOfDate?: Date;
 }
 
 /**
@@ -30,7 +35,7 @@ export function getAccountsWithBalances(
 ): AccountListItem[] {
   const includeManagementFlags = options?.includeManagementFlags ?? true;
   const accounts = listAccounts(context);
-  const deltas = getAccountBalanceDeltas(context);
+  const deltas = getAccountBalanceDeltas(context, options?.asOfDate);
 
   if (!includeManagementFlags) {
     return accounts.map((account) => ({
