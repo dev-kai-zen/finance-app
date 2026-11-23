@@ -574,7 +574,7 @@ test("C-F02: bulk deletion waits for paint and cancels pending work on blur", as
   }
 });
 
-function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrides = {}) {
+function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrides = {}, moduleOverrides = {}) {
   const file = path.resolve(__dirname, relativeFile);
   const exported = {};
   const theme = { colors: { primary: "#2563EB", surfaceMuted: "#EEEEEE", categorical: {
@@ -597,6 +597,7 @@ function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrid
   vm.runInNewContext(code, {
     exports: exported,
     require(name) {
+      if (Object.hasOwn(moduleOverrides, name)) return moduleOverrides[name];
       if (name === "react") return react;
       if (name === "react/jsx-runtime") return {
         jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: "Fragment",
@@ -1075,4 +1076,156 @@ test("C-F07: scope checks use one indexed query and do not increase create/edit 
     await assert.rejects(saveCategory({ name: "Conflict", type: "expense" }, created.id, database), /already exists/);
     assert.equal(queries.length, 2, "A rejected edit needs only its current row and a scoped duplicate check");
   } finally { sqlite.close(); }
+});
+
+function mountCategoryReorderScreen(initialCategories) {
+  let categories = initialCategories, cursor = 0, walkthroughOptions, targets;
+  const slots = [];
+  const react = {
+    useState(initial) {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
+      return [slots[index], (value) => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
+    },
+    useRef(initial) { const index = cursor++; return slots[index] ?? (slots[index] = { current: initial }); },
+    useMemo(callback, deps) {
+      const index = cursor++;
+      if (!slots[index] || deps.some((value, i) => !Object.is(value, slots[index].deps[i]))) {
+        slots[index] = { deps, value: callback() };
+      }
+      return slots[index].value;
+    },
+    useEffect() {},
+  };
+  react.useCallback = (callback, deps) => react.useMemo(() => callback, deps);
+  const component = loadColorFormComponent("../screens/categories-screen.tsx", react, undefined, {}, {
+    "../hooks/use-categories": { useCategories: () => ({ categories, loading: false,
+      reorderCategories: (ids) => require("../services/reorder-categories.service").reorderCategories(ids, database),
+    }) },
+    "expo-router": { useRouter: () => ({ setParams() {} }), useFocusEffect() {} },
+    "@/infrastructure/localization": { useLocalization: () => ({ t: (key) => key }) },
+    "@/components/app-shell-header-context": { useHeaderWalkthroughAction() {} },
+    "@/modules/walkthrough": {
+      WalkthroughRegistryProvider: "WalkthroughRegistryProvider",
+      CategoriesWalkthroughOverlay: "CategoriesWalkthroughOverlay", WalkthroughIntroModal: "WalkthroughIntroModal",
+      useWalkthroughTarget: (id) => { targets.push(id); return { current: null }; },
+      useWalkthroughRegistry: () => ({}), useWalkthroughIntro: () => ({ scrollEnabled: true }),
+      useCategoriesWalkthrough: (options) => { walkthroughOptions = options; return {}; },
+    },
+  }).CategoriesScreen;
+  function render(nextCategories = categories) {
+    categories = nextCategories;
+    cursor = 0; targets = [];
+    const wrapper = component({});
+    return wrapper.props.children.type(wrapper.props.children.props);
+  }
+  return {
+    render,
+    query(predicate) { return findFormElement(render(), predicate); },
+    element(label) { const node = this.query((node) => node.props?.accessibilityLabel === label); assert.ok(node, "Missing " + label); return node; },
+    get walkthrough() { return walkthroughOptions; },
+    get targets() { return targets; },
+    modal(title) { return this.query((node) => node.type === "SortableListModal" && node.props.title === title); },
+    groupCards() {
+      const cards = [];
+      findFormElement(render(), (node) => { if (node.type === "CategoryGroupCard") cards.push(node); return false; });
+      return cards;
+    },
+  };
+}
+
+function setupCategoryReorderFixture() {
+  setupTestDb();
+  const insert = sqlite.prepare("INSERT INTO categories (id, name, type, parent_id, is_system, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 1)");
+  for (const type of ["expense", "income"]) {
+    const prefix = type === "expense" ? "exp" : "inc";
+    const otherId = "cat_" + prefix + "_others";
+    insert.run(otherId, "Renamed fallback " + type, type, null, 1, -10);
+    insert.run(type + "_first", "First " + type, type, null, 1, 10);
+    insert.run(type + "_second", "Others custom " + type, type, null, 0, 20);
+    insert.run(type + "_sub_a", "A", type, otherId, 0, 0);
+    insert.run(type + "_sub_b", "B", type, otherId, 0, 1);
+  }
+}
+
+for (const type of ["expense", "income"]) {
+  test("C-F08: " + type + " group reorder excludes protected IDs and persists with Others last", async () => {
+    setupCategoryReorderFixture();
+    try {
+      const { listCategories } = require("../repositories/categories.repository");
+      const otherId = type === "expense" ? "cat_exp_others" : "cat_inc_others";
+      const groups = await listCategories(database);
+      const h = mountCategoryReorderScreen(groups);
+      if (type === "income") h.element("Income").props.onPress();
+      queries = [];
+      h.element("Reorder Groups").props.onPress();
+      const title = "Reorder " + (type === "expense" ? "Expense" : "Income") + " Groups";
+      const modal = h.modal(title);
+      const expected = groups.filter((group) => group.type === type && group.id !== otherId).map((group) => group.id);
+      assert.deepEqual(Array.from(modal.props.items, (item) => item.id), expected);
+      assert.ok(expected.includes(type + "_first"), "Non-protected system rows remain reorderable");
+      assert.ok(expected.includes(type + "_second"), "Custom names starting with Others remain reorderable");
+      assert.equal(queries.length, 0, "Opening and rendering the modal performs no SQLite reads");
+      const untouched = sqlite.prepare("SELECT * FROM categories WHERE id = ? OR type <> ? OR parent_id IS NOT NULL ORDER BY id").all(otherId, type);
+      const reversed = [...expected].reverse();
+      await modal.props.onSave(reversed);
+      assert.equal(queries.filter((query) => /^update\b/i.test(query)).length, expected.length);
+      assert.ok(!queries.some((query) => /^select\b/i.test(query)), "Reordering adds no supporting read queries");
+      assert.deepEqual(sqlite.prepare("SELECT * FROM categories WHERE id = ? OR type <> ? OR parent_id IS NOT NULL ORDER BY id").all(otherId, type), untouched);
+      modal.props.onClose();
+      h.render(await listCategories(database));
+      assert.deepEqual(h.groupCards().map((card) => card.props.group.id), [...reversed, otherId]);
+      h.element("Reorder Groups").props.onPress();
+      assert.deepEqual(Array.from(h.modal(title).props.items, (item) => item.id), reversed);
+    } finally { sqlite.close(); }
+  });
+}
+
+test("C-F08: toolbar and walkthrough require two movable groups in the selected type", () => {
+  for (const type of ["expense", "income"]) {
+    const other = { id: type === "expense" ? "cat_exp_others" : "cat_inc_others", name: "Fallback", type };
+    const opposite = type === "expense" ? "income" : "expense";
+    for (const count of [0, 1, 2]) {
+      const groups = Array.from({ length: count }, (_, i) => ({ id: type + i, name: "Group " + i, type }));
+      const h = mountCategoryReorderScreen([...groups, other, { id: "opposite_a", type: opposite }, { id: "opposite_b", type: opposite }]);
+      if (type === "income") h.element("Income").props.onPress();
+      const button = h.query((node) => node.props?.accessibilityLabel === "Reorder Groups");
+      assert.equal(Boolean(button), count > 1);
+      assert.equal(h.walkthrough.canReorderGroups, count > 1);
+      assert.equal(h.targets.includes("catReorderGroups"), count > 1);
+      assert.ok(h.groupCards().some((card) => card.props.group.id === other.id), "Others stays in the normal category list");
+    }
+  }
+});
+
+test("C-F08: subcategories under protected Others groups remain reorderable", async () => {
+  setupCategoryReorderFixture();
+  try {
+    const { listCategories } = require("../repositories/categories.repository");
+    for (const type of ["expense", "income"]) {
+      const otherId = type === "expense" ? "cat_exp_others" : "cat_inc_others";
+      const h = mountCategoryReorderScreen(await listCategories(database));
+      if (type === "income") h.element("Income").props.onPress();
+      const card = h.groupCards().find((card) => card.props.group.id === otherId);
+      card.props.onReorderSubcategories();
+      const modal = h.modal("Reorder " + card.props.group.name + " Subcategories");
+      assert.deepEqual(Array.from(modal.props.items, (item) => item.id), [type + "_sub_a", type + "_sub_b"]);
+      await modal.props.onSave([type + "_sub_b", type + "_sub_a"]);
+      const refreshed = (await listCategories(database)).find((group) => group.id === otherId);
+      assert.deepEqual(refreshed.subcategories.map((sub) => sub.id), [type + "_sub_b", type + "_sub_a"]);
+    }
+  } finally { sqlite.close(); }
+});
+
+test("C-F08: modal items stay stable on unrelated renders and update when the category snapshot changes", () => {
+  const groups = [{ id: "first", name: "First", type: "expense" }, { id: "second", name: "Second", type: "expense" },
+    { id: "cat_exp_others", name: "Fallback", type: "expense" }];
+  const h = mountCategoryReorderScreen(groups);
+  h.element("Reorder Groups").props.onPress();
+  const items = h.modal("Reorder Expense Groups").props.items;
+  assert.equal(h.modal("Reorder Expense Groups").props.items, items);
+  h.render([...groups, { id: "third", name: "Third", type: "expense" }]);
+  const nextItems = h.modal("Reorder Expense Groups").props.items;
+  assert.notEqual(nextItems, items);
+  assert.deepEqual(Array.from(nextItems, (item) => item.id), ["first", "second", "third"]);
 });

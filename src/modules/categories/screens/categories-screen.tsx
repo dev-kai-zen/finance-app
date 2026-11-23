@@ -182,10 +182,21 @@ function CategoriesScreenContent({
   };
 
   const currentCategories = categories.filter((c) => c.type === selectedType);
+  const reorderableGroupItems = useMemo(
+    () => categories
+      .filter((c) => c.type === selectedType && !isProtectedCategoryId(c.id))
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon ?? "tag",
+        color: c.color,
+      })),
+    [categories, selectedType],
+  );
 
   // Walkthrough targets & coordination
   const hasPresetsButton = hasExistingTransactions === false;
-  const canReorderGroups = currentCategories.length > 1;
+  const canReorderGroups = reorderableGroupItems.length > 1;
   const canReorderSubcategories = currentCategories.some(
     (g) => (g.subcategories?.length ?? 0) > 1,
   );
@@ -411,7 +422,7 @@ function CategoriesScreenContent({
           </View>
 
           <View style={styles.headerActions}>
-            {currentCategories.length > 1 && (
+            {canReorderGroups && (
               <Pressable
                 accessibilityLabel="Reorder Groups"
                 accessibilityRole="button"
@@ -516,12 +527,7 @@ function CategoriesScreenContent({
       {/* 3. Reorder Category Groups Modal */}
       {reorderGroupsVisible && (
         <SortableListModal
-          items={currentCategories.map((c) => ({
-            id: c.id,
-            name: c.name,
-            icon: c.icon ?? "tag",
-            color: c.color,
-          }))}
+          items={reorderableGroupItems}
           onClose={() => setReorderGroupsVisible(false)}
           onSave={async (orderedIds) => {
             await reorderCategories(orderedIds);

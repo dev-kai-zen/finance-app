@@ -20,6 +20,8 @@
 
 **C-F07 update:** RESOLVED. Category names now share a scope only with the same type and parent: groups compare with groups, and subcategories compare with siblings. Editing preserves an omitted parent and checks other matching rows. Release notes remain deferred; the version is unchanged.
 
+**C-F08 update:** RESOLVED. Reorder Groups now lists only movable groups and keeps protected Others categories last in the normal list. The toolbar and walkthrough require at least two movable groups of the selected type. Release notes remain deferred; the version is unchanged.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -40,7 +42,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **7 passed**, zero failures after C-F05 remediation | Five original seed/rollback tests and two controls validate version-independent transaction tracking and outside-write detection. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **31 passed**, zero failures after C-F07 remediation | Includes eight C-F07 scope/edit/query regressions, six C-F06 modal regressions, and all 17 earlier regressions. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **36 passed**, zero failures after C-F08 remediation | Includes five C-F08 screen/reorder regressions and all 31 earlier regressions. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -175,8 +177,8 @@ flowchart TD
 
 | Step | What happens | Assessment / Findings |
 |---|---|---|
-| Open reorder groups | Opens `SortableListModal` with all groups of current type. | Draggable list updates sort order sequentially. |
-| Drag system "Others" category | User can drag "Other Expenses" to position 0 and save. | **Finding C-F08:** `reorderCategoriesInDb` saves `sortOrder: 0`, but `listCategories` unconditionally overrides the order in JS and pins "Others" to the bottom, causing a jarring visual snap-back. |
+| Open reorder groups | Opens `SortableListModal` with movable groups of the current type. | **C-F08 RESOLVED:** Available only with at least two movable groups; protected Others IDs are excluded. |
+| Protected "Others" category | Remains visible at the bottom of the normal category list. | **C-F08 RESOLVED:** Cannot be dragged or submitted from the group reorder modal. Subcategories remain reorderable. |
 | Reorder subcategories | Opens `SortableListModal` scoped to that group's subcategories. Updates `sortOrder` 0, 1, 2... | Verified. Subcategories sort cleanly by `sortOrder` ascending. |
 
 ### E. Delete category and subcategory
@@ -387,26 +389,24 @@ flowchart TD
 
 ---
 
-### [C-F08] System "Others" Category Reorder Jump Bug
+### [C-F08] System "Others" Category Reorder Jump Bug - RESOLVED
 
 - **Category:** UI Polish / State Consistency
-- **Severity:** Low
+- **Severity:** Low - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 19.7 (Instant Presentation & Predictability)
-- **Location:** [categories-screen.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/screens/categories-screen.tsx#L518-L533), [categories.repository.ts](file:///c:/expo-repo/finance-app/src/modules/categories/repositories/categories.repository.ts#L83-L91)
-- **Evidence / Repro:**
-  In `CategoriesScreenContent`, `currentCategories` includes `cat_exp_others`. The user can drag "Others" to the top in `SortableListModal` and click Save. `reorderCategoriesInDb` writes `sortOrder: 0`. However, `listCategories` enforces:
-  ```ts
-  parentCategories.sort((a, b) => {
-    const aIsOthers = isProtectedCategoryId(a.id);
-    const bIsOthers = isProtectedCategoryId(b.id);
-    if (aIsOthers && !bIsOthers) return 1;
-    if (!aIsOthers && bIsOthers) return -1;
-    ...
-  });
-  ```
-  "Others" immediately snaps back to the bottom upon refresh, giving the user the impression that their reordering failed.
-- **Remediation:**
-  Filter out protected categories (`isProtectedCategoryId`) from the draggable items list in `SortableListModal`, or pin them with a disabled drag handle.
+- **Location:** `src/modules/categories/screens/categories-screen.tsx`.
+- **Confirmed scope and reproduction:**
+  - The group reorder modal received every category group of the selected type, including the protected Others ID. Saving a moved fallback persisted its new sort order, but category reads pinned it last again.
+  - Four of five new C-F08 checks failed before the production change: both expense/income reorder lists included Others, one movable group plus Others incorrectly enabled reordering, and modal items changed identity on unrelated renders. The subcategory reorder control already passed.
+- **Resolution:**
+  - Build memoized reorder items from the selected type while excluding `isProtectedCategoryId` matches. Use this same list for the modal and its availability count.
+  - Show the group reorder button and register its walkthrough target only when at least two movable groups exist. The normal category list still includes Others at the bottom.
+  - Match protection by ID, preserving reordering for non-protected system rows and custom groups whose names begin with Others. Subcategories under protected groups remain reorderable.
+  - No shared sortable component, service, repository, schema, dependency, or release-note changes. The application version is unchanged.
+- **Verification:**
+  Five screen/callback regressions pass, including real in-memory SQLite persistence through the reorder service. Coverage verifies expense/income exclusion, saved order after refresh/reopening, unchanged fallback/opposite-type/subcategory records during group reordering, zero extra render/open/read queries, toolbar/walkthrough availability at zero/one/two movable groups, subcategory reordering under Others, and stable item references between unrelated renders. All 50 category tests pass; the two Categories walkthrough tests and five shared sortable dirty-state tests also pass (57 total), and `npx tsc --noEmit` passes with zero errors. Native drag/visual checks and release-device FPS profiling remain outstanding.
+- **Performance:**
+  The in-memory filter/map is O(N) only when the category snapshot or selected type changes. Unrelated parent renders reuse the item array, avoiding resets caused by changed items in the shared sortable effect. No new mount/focus queries, contexts, subscriptions, or navigation listeners. Saving updates only movable groups in the existing atomic transaction. No measured FPS improvement is claimed.
 
 ---
 
@@ -486,7 +486,7 @@ Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
 5. **Fix C-F06, C-F07, C-F08 (UX, Touch Targets & Reordering):**
    - **C-F06 RESOLVED:** Use 44×44 close buttons and keyboard-aware dismissal in all four category modals; preserve picker back behavior.
    - **C-F07 RESOLVED:** Scope names by type and effective parent, excluding the edited category from duplicate matching.
-   - Exclude protected categories from drag-and-drop handles in `SortableListModal`.
+   - **C-F08 RESOLVED:** Exclude protected IDs from memoized group reorder items and align toolbar/walkthrough availability with the movable-group count.
 6. **Fix C-F09, C-F10, C-F11 (Localization, Defensiveness & Housekeeping):**
    - Add cycle and depth validation in `saveCategory`.
    - Extract hardcoded strings to `en.ts`, `fil.ts`, and `es.ts`.
