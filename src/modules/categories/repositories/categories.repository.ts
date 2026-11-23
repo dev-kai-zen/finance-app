@@ -202,6 +202,8 @@ export async function getCategoryByNameAndType(
   db: DbContext,
   name: string,
   type: CategoryType,
+  parentId: string | null = null,
+  excludeId?: string,
 ): Promise<Category | null> {
   const trimmedLower = name.trim().toLowerCase();
   const rows = await db
@@ -211,7 +213,11 @@ export async function getCategoryByNameAndType(
     })
     .from(categories)
     .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
-    .where(eq(categories.type, type));
+    .where(and(
+      eq(categories.type, type),
+      parentId === null ? isNull(categories.parentId) : eq(categories.parentId, parentId),
+      excludeId ? ne(categories.id, excludeId) : undefined,
+    ));
 
   const found = rows.find(
     (row) => row.category.name.trim().toLowerCase() === trimmedLower,

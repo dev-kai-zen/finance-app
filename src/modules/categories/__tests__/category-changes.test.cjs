@@ -943,3 +943,136 @@ test("C-F06: closed category modals mount no content Hooks", () => {
     assert.equal(component({ visible: false }), null);
   }
 });
+
+for (const type of ["expense", "income"]) {
+  test("C-F07: " + type + " subcategories can share names across parents but not within a parent", async () => {
+    setupTestDb();
+    try {
+      const housing = await saveCategory({ name: "Housing", type }, undefined, database);
+      const office = await saveCategory({ name: "Office", type }, undefined, database);
+      const first = await saveCategory({ name: "Supplies", type, parentId: housing.id }, undefined, database);
+      const second = await saveCategory({ name: "Supplies", type, parentId: office.id }, undefined, database);
+      assert.notEqual(first.id, second.id);
+      assert.equal(first.parentId, housing.id);
+      assert.equal(second.parentId, office.id);
+      assert.equal(first.type, type);
+      assert.equal(second.type, type);
+      await assert.rejects(saveCategory({ name: "  sUPPLIES  ", type, parentId: office.id }, undefined, database), /already exists/);
+      const { listCategories } = require("../repositories/categories.repository");
+      const groups = await listCategories(database);
+      assert.ok(groups.find((group) => group.id === housing.id).subcategories.some((child) => child.id === first.id));
+      assert.ok(groups.find((group) => group.id === office.id).subcategories.some((child) => child.id === second.id));
+      assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+    } finally { sqlite.close(); }
+  });
+}
+
+test("C-F07: groups have separate name scopes from subcategories and from the other type", async () => {
+  setupTestDb();
+  try {
+    await saveCategory({ name: "Supplies", type: "expense", parentId: "cat_dining" }, undefined, database);
+    const group = await saveCategory({ name: "Supplies", type: "expense" }, undefined, database);
+    assert.equal(group.parentId, null);
+    await saveCategory({ name: "Supplies", type: "income", parentId: null }, undefined, database);
+    await saveCategory({ name: "Supplies", type: "expense", parentId: group.id }, undefined, database);
+    for (const parentId of [undefined, null]) {
+      await assert.rejects(saveCategory({ name: " supplies ", type: "expense", parentId }, undefined, database), /already exists/);
+      await assert.rejects(saveCategory({ name: "SUPPLIES", type: "income", parentId }, undefined, database), /already exists/);
+    }
+  } finally { sqlite.close(); }
+});
+
+test("C-F07: scoped duplicate checks preserve Unicode lowercasing and whitespace trimming", async () => {
+  setupTestDb();
+  try {
+    const first = await saveCategory({ name: "\u00c9cole", type: "expense", parentId: "cat_dining" }, undefined, database);
+    sqlite.prepare("UPDATE categories SET name = ? WHERE id = ?").run("\u00a0\u00c9COLE\u00a0", first.id);
+    await assert.rejects(saveCategory({ name: "\u00a0\u00e9cole\u00a0", type: "expense", parentId: "cat_dining" }, undefined, database), /already exists/);
+    const other = await saveCategory({ name: "\u00e9cole", type: "expense", parentId: "cat_groceries" }, undefined, database);
+    assert.equal(other.name, "\u00e9cole");
+  } finally { sqlite.close(); }
+});
+
+test("C-F07: edits ignore themselves while renames and moves validate the destination scope", async () => {
+  setupTestDb();
+  try {
+    const first = await saveCategory({ name: "Supplies", type: "expense", parentId: "cat_dining" }, undefined, database);
+    const second = await saveCategory({ name: "Materials", type: "expense", parentId: "cat_groceries" }, undefined, database);
+    const edited = await saveCategory({ name: " supplies ", type: "expense", parentId: "cat_dining" }, first.id, database);
+    assert.equal(edited.id, first.id);
+    assert.equal(edited.name, "supplies");
+    const renamed = await saveCategory({ name: "Supplies", type: "expense", parentId: "cat_groceries" }, second.id, database);
+    assert.equal(renamed.id, second.id);
+    await saveCategory({ name: "Travel", type: "expense", parentId: "cat_groceries" }, undefined, database);
+    for (const input of [
+      { name: "Travel", type: "expense", parentId: "cat_groceries" },
+      { name: "Supplies", type: "expense", parentId: "cat_dining" },
+    ]) {
+      const before = sqlite.prepare("SELECT * FROM categories WHERE id = ?").get(second.id);
+      await assert.rejects(saveCategory(input, second.id, database), /already exists/);
+      assert.deepEqual(sqlite.prepare("SELECT * FROM categories WHERE id = ?").get(second.id), before);
+    }
+    const moved = await saveCategory({ name: "Moved supplies", type: "expense", parentId: "cat_dining" }, second.id, database);
+    assert.equal(moved.parentId, "cat_dining");
+    const group = await saveCategory({ name: "Top supplies", type: "expense" }, undefined, database);
+    await assert.rejects(saveCategory({ name: group.name, type: "expense", parentId: null }, second.id, database), /already exists/);
+    const promoted = await saveCategory({ name: "Promoted supplies", type: "expense", parentId: null }, second.id, database);
+    assert.equal(promoted.parentId, null);
+    await assert.rejects(saveCategory({ name: "Materials", type: "expense" }, "missing_category", database), /Category not found/);
+    await assert.rejects(saveCategory({ name: "Dining", type: "income" }, "cat_dining", database), /System categories cannot change/);
+  } finally { sqlite.close(); }
+});
+
+test("C-F07: edits that omit parentId validate the saved parent instead of the top-level scope", async () => {
+  setupTestDb();
+  try {
+    const group = await saveCategory({ name: "Supplies", type: "expense" }, undefined, database);
+    const child = await saveCategory({ name: "Materials", type: "expense", parentId: "cat_dining" }, undefined, database);
+    const renamed = await saveCategory({ name: group.name, type: "expense" }, child.id, database);
+    assert.equal(renamed.parentId, "cat_dining");
+    await saveCategory({ name: "Travel", type: "expense", parentId: "cat_dining" }, undefined, database);
+    const before = sqlite.prepare("SELECT * FROM categories WHERE id = ?").get(child.id);
+    await assert.rejects(saveCategory({ name: "Travel", type: "expense" }, child.id, database), /already exists/);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM categories WHERE id = ?").get(child.id), before);
+  } finally { sqlite.close(); }
+});
+
+test("C-F07: editing a legacy duplicate still detects another matching sibling", async () => {
+  setupTestDb();
+  try {
+    const first = await saveCategory({ name: "Supplies", type: "expense", parentId: "cat_dining" }, undefined, database);
+    sqlite.prepare(`INSERT INTO categories (id, name, type, parent_id, is_system, sort_order, created_at, updated_at)
+      VALUES ('legacy_duplicate', 'SUPPLIES', 'expense', 'cat_dining', 0, 0, 1, 1)`).run();
+    const before = sqlite.prepare("SELECT * FROM categories ORDER BY id").all();
+    await assert.rejects(saveCategory({ name: "supplies", type: "expense", parentId: "cat_dining" }, first.id, database), /already exists/);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM categories ORDER BY id").all(), before);
+  } finally { sqlite.close(); }
+});
+
+test("C-F07: scope checks use one indexed query and do not increase create/edit statement counts", async () => {
+  setupTestDb();
+  try {
+    const { getCategoryByNameAndType } = require("../repositories/categories.repository");
+    for (const parentId of [null, "cat_dining"]) {
+      queries = [];
+      assert.equal(await getCategoryByNameAndType(database, "Missing", "expense", parentId, "ignore_me"), null);
+      assert.equal(queries.length, 1);
+      assert.match(queries[0], /"categories"\."parent_id" (?:is null|= \?)/i);
+      assert.match(queries[0], /"categories"\."id" (?:<>|!=) \?/i);
+      const params = parentId === null ? ["expense", "ignore_me"] : ["expense", parentId, "ignore_me"];
+      const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + queries[0]).all(...params).map((row) => row.detail).join(" ");
+      assert.match(plan, /USING INDEX categories_(?:parent_id|type)_index/i);
+      assert.doesNotMatch(plan, /TEMP B-TREE/i);
+    }
+    queries = [];
+    const created = await saveCategory({ name: "Bounded check", type: "expense", parentId: "cat_dining", sortOrder: 0 }, undefined, database);
+    assert.equal(queries.length, 3, "Create keeps one duplicate check, one insert, and one result read");
+    queries = [];
+    await saveCategory({ name: created.name, type: "expense" }, created.id, database);
+    assert.equal(queries.length, 5, "Edit reuses its existing category lookup to resolve the parent");
+    await saveCategory({ name: "Conflict", type: "expense", parentId: "cat_dining", sortOrder: 1 }, undefined, database);
+    queries = [];
+    await assert.rejects(saveCategory({ name: "Conflict", type: "expense" }, created.id, database), /already exists/);
+    assert.equal(queries.length, 2, "A rejected edit needs only its current row and a scoped duplicate check");
+  } finally { sqlite.close(); }
+});

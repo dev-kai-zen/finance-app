@@ -21,23 +21,27 @@ export async function saveCategory(
 ): Promise<Category> {
   const parsed = categoryInputSchema.parse(input);
 
-  // Check duplicate name within the same type
+  const existing = id ? await getCategoryById(client, id) : null;
+  if (id && !existing) {
+    throw new Error(`Category not found with ID ${id}`);
+  }
+  const parentId =
+    parsed.parentId === undefined ? existing?.parentId ?? null : parsed.parentId;
+
+  // Check duplicate name within the same type and parent scope
   const existingWithSameName = await getCategoryByNameAndType(
     client,
     parsed.name,
     parsed.type,
+    parentId,
+    id,
   );
 
-  if (existingWithSameName && existingWithSameName.id !== id) {
+  if (existingWithSameName) {
     throw new Error(`A ${parsed.type} category named "${parsed.name}" already exists.`);
   }
 
-  if (id) {
-    const existing = await getCategoryById(client, id);
-    if (!existing) {
-      throw new Error(`Category not found with ID ${id}`);
-    }
-
+  if (id && existing) {
     // System categories cannot change their type
     if (existing.isSystem && existing.type !== parsed.type) {
       throw new Error("System categories cannot change their group type.");

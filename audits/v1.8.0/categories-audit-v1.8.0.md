@@ -18,6 +18,8 @@
 
 **C-F06 update:** RESOLVED. Category group, subcategory, picker, and inline quick-add close buttons now have 44×44 targets. Actual modal exits dismiss the keyboard before closing; picker parent-selection back behavior is preserved. Release notes are deferred at the user's request; the version is unchanged.
 
+**C-F07 update:** RESOLVED. Category names now share a scope only with the same type and parent: groups compare with groups, and subcategories compare with siblings. Editing preserves an omitted parent and checks other matching rows. Release notes remain deferred; the version is unchanged.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -38,7 +40,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **7 passed**, zero failures after C-F05 remediation | Five original seed/rollback tests and two controls validate version-independent transaction tracking and outside-write detection. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **23 passed**, zero failures after C-F06 remediation | Includes six new C-F06 checks for close targets, dismissal paths, save outcomes, picker selection/back behavior, and hidden-modal gating, plus all 17 existing regressions. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **31 passed**, zero failures after C-F07 remediation | Includes eight C-F07 scope/edit/query regressions, six C-F06 modal regressions, and all 17 earlier regressions. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -153,7 +155,7 @@ flowchart TD
 
 | Step | What happens | Assessment / Findings |
 |---|---|---|
-| Enter group name | Validates 1–50 characters, trimmed. Checks name uniqueness via `getCategoryByNameAndType`. | **Finding C-F07:** Enforces uniqueness across the entire type globally. Rejects creating a group if any subcategory shares that name. |
+| Enter group name | Validates 1–50 characters, trimmed. Checks name uniqueness via `getCategoryByNameAndType`. | **C-F07 RESOLVED:** Groups compare only with other top-level groups of the same type; subcategory names do not block them. |
 | Select group type | Toggle between Expense and Income. Disabled if editing a system category (`isSystem: true`). | Correctly prevents reclassifying system categories. |
 | Select color | Selects from pre-seeded `hex_colors` or opens `HexColorFormModal` to create a custom hex color. | Correctly stores `hexColorsId` in `CategoryGroupModal`. |
 | Select icon | Opens `IconPickerModal` searching Lucide icons. Defaults to `"tag"`. | Verified. Generates valid icon key. |
@@ -165,7 +167,7 @@ flowchart TD
 | Step | What happens | Assessment / Findings |
 |---|---|---|
 | Choose parent group | Passed via `parentCategory` prop. Subcategory inherits parent's `type`. | Verified. Guarantees subcategory matches parent type. |
-| Enter subcategory name | Validates 1–50 characters. | **Finding C-F07:** Blocks legitimate subcategories if another group has a subcategory with the same name (e.g. "Housing → Supplies" vs "Office → Supplies"). |
+| Enter subcategory name | Validates 1–50 characters. | **C-F07 RESOLVED:** Matching names are allowed in different groups; duplicates within the same group are rejected. |
 | Color inheritance | Defaults to parent group's `hexColorsId`, but allows custom override. | Good UX. Allows visually differentiating sibling subcategories while defaulting to the parent theme. |
 | Save subcategory | `saveCategory` sets `parentId: parentCategory.id`. Sort order is set to `max(subcategories.sortOrder) + 1`. | Verified. Subcategory correctly nests under parent group. |
 
@@ -364,21 +366,24 @@ flowchart TD
 
 ---
 
-### [C-F07] Unscoped Name Uniqueness Enforced Globally Across Entire Category Type
+### [C-F07] Unscoped Name Uniqueness Enforced Globally Across Entire Category Type - RESOLVED
 
 - **Category:** Domain Logic / Usability
-- **Severity:** Low / UX Friction
+- **Severity:** Low / UX Friction - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 2 (Domain Invariants)
-- **Location:** [save-category.service.ts](file:///c:/expo-repo/finance-app/src/modules/categories/services/save-category.service.ts#L25-L33), [categories.repository.ts](file:///c:/expo-repo/finance-app/src/modules/categories/repositories/categories.repository.ts#L201-L220)
-- **Evidence / Repro:**
-  In `getCategoryByNameAndType`:
-  ```ts
-  const rows = await db.select(...).from(categories).where(eq(categories.type, type));
-  const found = rows.find(r => r.category.name.trim().toLowerCase() === trimmedLower);
-  ```
-  This query ignores `parentId`. If a user has "Housing → Supplies", they cannot create "Office → Supplies", receiving an error: `"A expense category named "Supplies" already exists."` Migration `0002` explicitly dropped the SQLite unique constraint on `(type, name)` for this reason, and `import-categories.service.ts` scopes uniqueness to `parentId`.
-- **Remediation:**
-  Update `getCategoryByNameAndType` to accept an optional `parentId: string | null` parameter, enforcing uniqueness only within the same parent group (for subcategories) or among top-level groups (where `parentId is null`).
+- **Location:** `src/modules/categories/services/save-category.service.ts` and `src/modules/categories/repositories/categories.repository.ts`.
+- **Confirmed scope and reproduction:**
+  - The user reproduced an already-exists error when saving Supplies under a different expense group. The duplicate lookup filtered by type alone and searched the resulting rows without considering their parent.
+  - All eight C-F07 regressions failed before the fix. Besides cross-parent/group name collisions, coverage confirmed that an existing row could mask a second matching sibling during editing.
+- **Resolution:**
+  - Added a parent scope to the existing repository lookup: `parent_id IS NULL` for groups or the exact parent ID for subcategories, always with the requested type. Exclude the edited category ID in SQL so another matching sibling cannot be hidden by the current row.
+  - Reused the service's existing category lookup before duplicate validation to resolve the effective parent. Omitted `parentId` retains the saved parent during editing; explicit null checks the top-level destination. Renaming and moving validate the destination scope before writing.
+  - Kept the existing trimmed JavaScript lowercase comparison, including accented characters and Unicode whitespace, rather than changing its behavior to SQLite's default text normalization.
+  - No new files, abstractions, schema migrations, UI changes, or dependencies. Release notes remain deferred; the version is unchanged.
+- **Verification:**
+  Eight real in-memory SQLite regressions cover expense/income siblings across groups, rejected true duplicates, group/subcategory separation, type separation, Unicode normalization, unchanged edits, renames, parent moves, explicit null versus omitted parents, legacy duplicate rows, protected-category validation, unchanged rows after rejection, and valid foreign keys. Query checks assert one lookup statement, existing index usage with no temporary B-tree, and unchanged representative successful create/edit statement counts (three/five), and two reads before rejecting a conflicting edit. All 45 category tests pass across the three suites; `npx tsc --noEmit` passes with zero errors.
+- **Performance:**
+  Duplicate validation still uses one indexed query on save; it hydrates only the requested parent/type scope and compares its K sibling rows in O(K) JavaScript instead of all N rows of that type. Successful saves add no statements. A conflicting edit performs two indexed reads before rejection, including the current-row lookup needed to resolve an omitted parent. Typing, mount/focus reads, contexts, and subscriptions are unchanged. No native FPS measurement was performed.
 
 ---
 
@@ -480,7 +485,7 @@ Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
    - Eliminate the redundant `useEffect` query trigger, retaining `useFocusEffect` and reactive change subscriptions.
 5. **Fix C-F06, C-F07, C-F08 (UX, Touch Targets & Reordering):**
    - **C-F06 RESOLVED:** Use 44×44 close buttons and keyboard-aware dismissal in all four category modals; preserve picker back behavior.
-   - Scope subcategory name uniqueness checks to the same `parentId`.
+   - **C-F07 RESOLVED:** Scope names by type and effective parent, excluding the edited category from duplicate matching.
    - Exclude protected categories from drag-and-drop handles in `SortableListModal`.
 6. **Fix C-F09, C-F10, C-F11 (Localization, Defensiveness & Housekeeping):**
    - Add cycle and depth validation in `saveCategory`.
