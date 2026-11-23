@@ -22,6 +22,7 @@ export interface ConfirmModalProps {
   cancelLabel?: string;
   variant?: ConfirmModalVariant;
   pending?: boolean;
+  error?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -34,6 +35,7 @@ export function ConfirmModal({
   cancelLabel = "Cancel",
   variant = "destructive",
   pending = false,
+  error,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -99,6 +101,13 @@ export function ConfirmModal({
 
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
+
+          {error ? (
+            <View style={styles.errorBanner}>
+              <AlertTriangle color={theme.colors.danger} size={14} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.actions}>
             <Pressable
@@ -202,6 +211,25 @@ function createStyles(theme: AppTheme) {
     actions: {
       flexDirection: "row",
       gap: theme.spacing.sm,
+    },
+    errorBanner: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}15`,
+      borderColor: `${theme.colors.danger}35`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    errorText: {
+      color: theme.colors.danger,
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+      textAlign: "center",
     },
     cancelBtn: {
       alignItems: "center",

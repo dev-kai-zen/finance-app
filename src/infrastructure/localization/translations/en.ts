@@ -1834,6 +1834,7 @@ export const en = {
     deleteTransactionTitle: "Delete transaction?",
     deleteTransactionMessage:
       "This record will be moved to Trash. You can restore it later.",
+    deleteTransactionError: "Failed to delete transaction. Please try again.",
     customizeHome: "Customize Home",
     customizeModalTitle: "Customize Home Screen",
     customizeModalSubtitle:

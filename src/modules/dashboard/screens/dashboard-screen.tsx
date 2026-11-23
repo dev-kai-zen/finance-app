@@ -109,6 +109,7 @@ function DashboardScreenContent() {
     useState<TransactionListItem | null>(null);
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
   const returnToChatOnFormCloseRef = useRef(false);
 
@@ -360,15 +361,22 @@ function DashboardScreenContent() {
   };
 
   const handleDeleteTransaction = (id: string) => {
+    setDeleteError(null);
+    clearTransactionError();
     setPendingDeleteId(id);
   };
 
   const handleConfirmDeleteTransaction = async () => {
     if (!pendingDeleteId) return;
-    setInspectedTransaction(null);
+    setDeleteError(null);
     const deleted = await deleteTx(pendingDeleteId);
     if (deleted) {
+      setInspectedTransaction(null);
       setPendingDeleteId(null);
+      setDeleteError(null);
+      clearTransactionError();
+    } else {
+      setDeleteError(transactionError || t("dashboard.deleteTransactionError"));
     }
   };
 
@@ -796,8 +804,13 @@ function DashboardScreenContent() {
       <ConfirmModal
         cancelLabel={t("common.keep")}
         confirmLabel={t("common.delete")}
+        error={deleteError}
         message={t("dashboard.deleteTransactionMessage")}
-        onCancel={() => setPendingDeleteId(null)}
+        onCancel={() => {
+          setPendingDeleteId(null);
+          setDeleteError(null);
+          clearTransactionError();
+        }}
         onConfirm={() => {
           void handleConfirmDeleteTransaction();
         }}

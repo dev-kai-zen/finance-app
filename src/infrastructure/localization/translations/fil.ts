@@ -1875,6 +1875,7 @@ export const fil = {
     deleteTransactionTitle: "Burahin ang transaksyon?",
     deleteTransactionMessage:
       "Ililipat ang rekord na ito sa Basurahan. Maaari mo itong ibalik mamaya.",
+    deleteTransactionError: "Hindi maalis ang transaksyon. Pakisubukan muli.",
     customizeHome: "I-customize ang Home",
     customizeModalTitle: "I-customize ang Home Screen",
     customizeModalSubtitle:

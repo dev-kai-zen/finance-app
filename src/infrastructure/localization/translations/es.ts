@@ -1856,6 +1856,7 @@ export const es = {
     deleteTransactionTitle: "¿Eliminar transacción?",
     deleteTransactionMessage:
       "Este registro se moverá a la Papelera. Puedes restaurarlo más tarde.",
+    deleteTransactionError: "Error al eliminar la transacción. Por favor, inténtalo de nuevo.",
     customizeHome: "Personalizar Inicio",
     customizeModalTitle: "Personalizar Pantalla de Inicio",
     customizeModalSubtitle:
