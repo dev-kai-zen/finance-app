@@ -10,6 +10,8 @@
 
 **C-F02 update:** RESOLVED. Bulk preset deletion now preserves saved Quick Presets and related references atomically. The split failure is classified as defensive service coverage because the UI hides bulk deletion once any transaction exists.
 
+**C-F03 update:** RESOLVED. Inline category/subcategory creation now saves valid custom-color references. The related color-form React static-flag warning is also fixed. Release notes were intentionally deferred at the user's request.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -30,7 +32,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **4 failed / 1 passed** (Harness defect) | `writesOutsideTransaction` checks `!sqlite.isTransaction` which is `undefined` on Node's `DatabaseSync`. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **8 passed**, zero failures after C-F02 remediation | Includes C-F01, existing hook coverage, and four C-F02 data-preservation, rollback, indexing, and deferred-action regressions. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **15 passed**, zero failures after C-F03 remediation | Includes C-F01, four C-F02 regressions, seven C-F03 color/form regressions, and existing hook coverage. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -192,7 +194,7 @@ flowchart TD
 |---|---|---|
 | Open picker | Rendered in modal across transaction entry, quick entry, schedules, and filters. | Gated behind `if (!props.visible) return null;` for instant mount. |
 | Hierarchical search | Filters groups and subcategories in JS. Displays parent match with all subs, or sub matches with parent context. | Instant search with zero SQLite queries during typing. |
-| Quick-add group/sub from picker | If `enableQuickAdd: true`, allows adding a new group or subcategory directly. Opens `CategoryFormModal`. | **Finding C-F03:** `CategoryFormModal` passes raw hex color string instead of `hexColorsId`, violating `hex_colors` foreign key constraint. |
+| Quick-add group/sub from picker | If `enableQuickAdd: true`, allows adding a new group or subcategory directly. Opens `CategoryFormModal`. | **C-F03 RESOLVED:** Saves the selected color ID and opens custom-color forms without changing Hook ordering. |
 | Close picker | Taps close button or backdrop. | **Finding C-F06:** Close button is 36×36px without hit slop; does not dismiss software keyboard. |
 
 ---
@@ -251,13 +253,13 @@ flowchart TD
 
 ---
 
-### [C-F03] Custom Hex Color Foreign Key Constraint Violation in `CategoryFormModal`
+### [C-F03] Custom Hex Color Foreign Key Constraint Violation in `CategoryFormModal` - RESOLVED
 
 - **Category:** Schema Integrity / Foreign Key Violation
-- **Severity:** High
+- **Severity:** High - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 10 (Database Schemas) & Section 16 (No Broken Constraints)
 - **Location:** [category-form-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-form-modal.tsx#L97-L141), [categories.repository.ts](file:///c:/expo-repo/finance-app/src/modules/categories/repositories/categories.repository.ts#L240-L246)
-- **Evidence / Repro:**
+- **Evidence / Repro before remediation:**
   In `CategoryFormModalContent`:
   ```ts
   const handleSaveCustomColor = (input: HexColorInput) => {
@@ -284,8 +286,14 @@ flowchart TD
       : "color_slate");
   ```
   The table column `categories.hex_colors_id` references `hex_colors.id`. `"color_#FF5500"` does not exist in `hex_colors`, violating the foreign key constraint. In contrast, `CategoryGroupModal` and `SubcategoryModal` correctly pass `hexColorsId: created.id`.
-- **Remediation:**
-  Update `CategoryFormModal` to store `hexColorsId` from `created.id` and pass `hexColorsId` in `onSave`, matching the implementation in `CategoryGroupModal`.
+- **Resolution:**
+  - `CategoryFormModal` now stores the selected database color ID, submits `hexColorsId`, and derives previews/custom swatches from the existing in-memory color list. Built-in/custom swatch changes and editing preserve the selected reference.
+  - Opening the custom-color form also exposed a React Hooks violation: `HexColorFormModal` returned before its Hooks while hidden. A Hook-free visibility wrapper now mounts a separate content component, keeping Hook ordering stable and hidden content unmounted.
+  - No repository, schema, dependency, or release-note changes were needed.
+- **Verification:**
+  Seven C-F03 tests exercise expense/income category and subcategory creation through the actual form callbacks and SQLite services, built-in/custom swatch switching, editing, zero-query typing/selection, and Hook-free visibility gating. A separate React 19.2.3 renderer check reproduced one static-flag warning before the fix and zero warnings across repeated open/close cycles afterward.
+- **Performance:**
+  No additional mount/focus queries, subscriptions, or provider changes. Color preview/selection uses linear in-memory color-list lookups; typing and swatch selection execute zero SQLite queries. Closed color forms mount no content Hooks. Device frame-rate profiling remains outstanding.
 
 ---
 

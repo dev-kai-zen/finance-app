@@ -46,14 +46,17 @@ function isValidHex(hex: string): boolean {
   return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/.test(withHash);
 }
 
-export function HexColorFormModal({
+export function HexColorFormModal(props: HexColorFormModalProps) {
+  if (!props.visible) return null;
+  return <HexColorFormModalContent {...props} />;
+}
+
+function HexColorFormModalContent({
   visible,
   onClose,
   onSave,
   initialColor = null,
 }: HexColorFormModalProps) {
-  if (!visible) return null;
-
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);

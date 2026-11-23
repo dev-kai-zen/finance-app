@@ -73,33 +73,26 @@ function CategoryFormModalContent({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const walkthrough = useCategoryFormWalkthrough();
-  const { addColor } = useHexColors();
+  const { colors, addColor } = useHexColors();
   const { guideHelperEnabled } = useExperiencePreferences();
 
   const isSubcategory = Boolean(categoryToEdit?.parentId || initialParentId);
 
   const [name, setName] = useState("");
   const [type, setType] = useState<CategoryType>(initialType);
-  const [selectedColor, setSelectedColor] = useState<string>("slate");
-  const [customColors, setCustomColors] = useState<string[]>([]);
+  const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const categoricalColor =
-    selectedColor in theme.colors.categorical
-      ? theme.colors.categorical[selectedColor as keyof AppTheme["colors"]["categorical"]]
-      : selectedColor.startsWith("#")
-        ? selectedColor
-        : theme.colors.primary;
+  const customColors = colors.filter((color) => !color.isSystem);
+  const selectedHexColor = colors.find((color) => color.id === hexColorsId);
+  const categoricalColor = selectedHexColor?.hex ?? theme.colors.primary;
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
-    if (!customColors.includes(created.hex)) {
-      setCustomColors((prev) => [...prev, created.hex]);
-    }
-    setSelectedColor(created.hex);
+    setHexColorsId(created.id);
     setIsColorFormOpen(false);
     return true;
   };
@@ -109,12 +102,12 @@ function CategoryFormModalContent({
       if (categoryToEdit) {
         setName(categoryToEdit.name);
         setType(categoryToEdit.type);
-        setSelectedColor(categoryToEdit.color ?? "slate");
+        setHexColorsId(categoryToEdit.hexColorsId ?? "color_slate");
         setSelectedIcon(categoryToEdit.icon ?? "tag");
       } else {
         setName("");
         setType(initialType);
-        setSelectedColor(initialType === "income" ? "green" : "blue");
+        setHexColorsId(initialType === "income" ? "color_green" : "color_blue");
         setSelectedIcon("tag");
       }
       setLocalError(null);
@@ -133,7 +126,8 @@ function CategoryFormModalContent({
       {
         name: trimmed,
         type,
-        color: selectedColor,
+        hexColorsId,
+        color: hexColorsId,
         icon: selectedIcon,
         parentId: categoryToEdit?.parentId ?? initialParentId ?? null,
       },
@@ -331,14 +325,14 @@ function CategoryFormModalContent({
                 <View style={styles.colorPalette}>
                   {CATEGORY_COLOR_KEYS.map((colKey) => {
                     const hex = theme.colors.categorical[colKey];
-                    const isSelected = selectedColor === colKey;
+                    const isSelected = hexColorsId === `color_${colKey}`;
 
                     return (
                       <Pressable
                         key={colKey}
                         accessibilityLabel={`Select color ${colKey}`}
                         accessibilityRole="button"
-                        onPress={() => setSelectedColor(colKey)}
+                        onPress={() => setHexColorsId(`color_${colKey}`)}
                         style={[
                           styles.colorSwatch,
                           { backgroundColor: hex },
@@ -357,17 +351,17 @@ function CategoryFormModalContent({
                       </Pressable>
                     );
                   })}
-                  {customColors.map((hex) => {
-                    const isSelected = selectedColor === hex;
+                  {customColors.map((color) => {
+                    const isSelected = hexColorsId === color.id;
                     return (
                       <Pressable
-                        key={hex}
-                        accessibilityLabel={`Select custom color ${hex}`}
+                        key={color.id}
+                        accessibilityLabel={`Select custom color ${color.hex}`}
                         accessibilityRole="button"
-                        onPress={() => setSelectedColor(hex)}
+                        onPress={() => setHexColorsId(color.id)}
                         style={[
                           styles.colorSwatch,
-                          { backgroundColor: hex },
+                          { backgroundColor: color.hex },
                           isSelected
                             ? styles.colorSwatchSelected
                             : styles.colorSwatchUnselected,

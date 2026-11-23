@@ -564,3 +564,176 @@ test("C-F02: bulk deletion waits for paint and cancels pending work on blur", as
     sqlite.close();
   }
 });
+
+function loadColorFormComponent(relativeFile, react, colorContext) {
+  const file = path.resolve(__dirname, relativeFile);
+  const exported = {};
+  const theme = { colors: { primary: "#2563EB", surfaceMuted: "#EEEEEE", categorical: {
+    green: "#22C55E", teal: "#14B8A6", blue: "#2563EB", indigo: "#6366F1", purple: "#8B5CF6",
+    pink: "#EC4899", orange: "#F97316", amber: "#F59E0B", slate: "#64748B",
+  } } };
+  const native = new Proxy({
+    useWindowDimensions: () => ({ width: 390, height: 800 }),
+    StyleSheet: { create: (styles) => styles },
+  }, { get: (target, key) => target[key] ?? String(key) });
+  const code = ts.transpileModule(fs.readFileSync(file, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX }, fileName: file,
+  }).outputText;
+  vm.runInNewContext(code, {
+    exports: exported,
+    require(name) {
+      if (name === "react") return react;
+      if (name === "react/jsx-runtime") return {
+        jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: "Fragment",
+      };
+      if (name === "react-native") return native;
+      if (name === "react-native-safe-area-context") return { useSafeAreaInsets: () => ({ bottom: 0 }) };
+      if (name === "@/hooks/use-app-theme") return { useAppTheme: () => theme, useThemeStyles: () => ({}) };
+      if (name === "@/constants/layout") return { isTabletOrDesktop: () => false };
+      if (name === "@/modules/hex-colors") return { useHexColors: () => colorContext(), HexColorFormModal: "HexColorFormModal" };
+      if (name === "@/modules/settings") return { useExperiencePreferences: () => ({ guideHelperEnabled: false }) };
+      if (name === "@/modules/walkthrough") return {
+        useCategoryFormWalkthrough: () => ({}), WalkthroughTarget: "WalkthroughTarget",
+        WalkthroughRegistryProvider: "WalkthroughRegistryProvider", CategoryFormWalkthroughOverlay: "WalkthroughOverlay",
+      };
+      if (name === "../constants/categories.constants") return require("../constants/categories.constants");
+      return new Proxy({}, { get: (_target, key) => String(key) });
+    },
+  });
+  return exported;
+}
+
+function findFormElement(tree, predicate) {
+  if (!tree || typeof tree !== "object") return null;
+  if (Array.isArray(tree)) {
+    for (const child of tree) { const found = findFormElement(child, predicate); if (found) return found; }
+    return null;
+  }
+  if (predicate(tree)) return tree;
+  return findFormElement(tree.props?.children, predicate);
+}
+
+function mountCategoryColorForm(props) {
+  const { listHexColors } = require("../../hex-colors/repositories/hex-colors.repository");
+  const { createHexColor } = require("../../hex-colors/services/create-hex-color.service");
+  let colors = listHexColors(database), cursor = 0;
+  const slots = [], effects = [];
+  const react = {
+    useState(initial) {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
+      return [slots[index], (value) => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
+    },
+    useEffect(callback, deps) {
+      const index = cursor++;
+      if (!slots[index] || deps.some((value, i) => !Object.is(value, slots[index][i]))) {
+        slots[index] = deps; effects.push(callback);
+      }
+    },
+  };
+  const component = loadColorFormComponent("../components/category-form-modal.tsx", react, () => ({
+    colors, addColor(input) { const created = createHexColor(input); colors = listHexColors(database); return created; },
+  })).CategoryFormModal;
+  let tree;
+  function render() {
+    cursor = 0;
+    const element = component({ visible: true, onClose() {}, onClearError() {}, ...props });
+    tree = element.props.children.type(element.props.children.props);
+    if (effects.length) { effects.splice(0).forEach((effect) => effect()); return render(); }
+    return tree;
+  }
+  return {
+    render,
+    element(label) { render(); const found = findFormElement(tree, (node) => node.props?.accessibilityLabel === label);
+      assert.ok(found, `Missing element: ${label}`); return found; },
+    addColor(input) { this.element("Add custom color").props.onPress(); render();
+      return findFormElement(tree, (node) => node.type === "HexColorFormModal").props.onSave(input); },
+  };
+}
+
+for (const [type, parentId] of [["expense", null], ["income", null], ["expense", "cat_dining"], ["income", "cat_income_parent"]]) {
+  test(`C-F03: quick-add ${type} ${parentId ? "subcategory" : "category"} saves its actual custom color ID`, async () => {
+    setupTestDb();
+    try {
+      if (type === "income" && parentId) {
+        sqlite.prepare(`INSERT INTO categories (id, name, type, is_system, created_at, updated_at)
+          VALUES (?, 'Income parent', 'income', 0, 1, 1)`).run(parentId);
+      }
+      let saved;
+      const h = mountCategoryColorForm({ initialType: type, initialParentId: parentId,
+        onSave: async (input, id) => { saved = await saveCategory(input, id, database); return saved; } });
+      h.element("Category name").props.onChangeText("Custom color test");
+      h.addColor({ name: "Sunset Orange", hex: "#FF5500" });
+      const color = sqlite.prepare("SELECT id FROM hex_colors WHERE hex = '#FF5500'").get();
+      assert.ok(color);
+      queries = [];
+      h.element("Category name").props.onChangeText("Custom color test updated");
+      h.render();
+      assert.equal(queries.length, 0, "Typing and rendering use the cached color list");
+      await h.element(parentId ? "Create Subcategory" : "Create Category").props.onPress();
+      assert.equal(saved.hexColorsId, color.id);
+      assert.equal(saved.color, "#FF5500");
+      assert.equal(saved.parentId, parentId);
+      assert.equal(saved.type, type);
+      assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+    } finally { sqlite.close(); }
+  });
+}
+
+test("C-F03: switching built-in and custom swatches never submits a stale color ID", async () => {
+  setupTestDb();
+  try {
+    const submitted = [];
+    const h = mountCategoryColorForm({ onSave: async (input) => { submitted.push(input); return false; } });
+    h.element("Category name").props.onChangeText("Swatch test");
+    h.addColor({ name: "Sunset", hex: "#FF5500" });
+    h.addColor({ name: "Dusk", hex: "#8899AA" });
+    const colors = sqlite.prepare("SELECT id, hex FROM hex_colors WHERE is_system = 0").all();
+    queries = [];
+    for (const label of ["Select color green", "Select custom color #FF5500", "Select custom color #8899AA"]) {
+      h.element(label).props.onPress();
+      await h.element("Create Category").props.onPress();
+    }
+    assert.equal(submitted[0].hexColorsId, "color_green");
+    assert.equal(submitted[1].hexColorsId, colors.find((color) => color.hex === "#FF5500").id);
+    assert.equal(submitted[2].hexColorsId, colors.find((color) => color.hex === "#8899AA").id);
+    assert.equal(queries.length, 0, "Color selection never queries SQLite");
+  } finally { sqlite.close(); }
+});
+
+test("C-F03: editing a category preserves its saved custom color and shows its swatch", async () => {
+  setupTestDb();
+  try {
+    const { createHexColor } = require("../../hex-colors/services/create-hex-color.service");
+    const color = createHexColor({ name: "Sunset", hex: "#FF5500" });
+    const existing = await saveCategory({ name: "Existing custom", type: "expense", hexColorsId: color.id }, undefined, database);
+    let saved;
+    const h = mountCategoryColorForm({ categoryToEdit: existing,
+      onSave: async (input, id) => { saved = await saveCategory(input, id, database); return saved; } });
+    h.element("Select custom color #FF5500");
+    h.element("Category name").props.onChangeText("Renamed custom");
+    await h.element("Update Category").props.onPress();
+    assert.equal(saved.id, existing.id);
+    assert.equal(saved.name, "Renamed custom");
+    assert.equal(saved.hexColorsId, color.id);
+    assert.equal(saved.color, color.hex);
+  } finally { sqlite.close(); }
+});
+
+test("C-F03: the custom color modal keeps its visibility wrapper free of Hooks", () => {
+  let hookCalls = 0;
+  const react = { useState(initial) { hookCalls += 1; return [initial, () => {}]; },
+    useEffect() { hookCalls += 1; } };
+  const component = loadColorFormComponent("../../hex-colors/components/hex-color-form-modal.tsx", react).HexColorFormModal;
+  const props = { onClose() {}, onSave() { return true; } };
+  for (const visible of [false, true, false, true]) {
+    const element = component({ ...props, visible });
+    assert.equal(hookCalls, 0, "Opening the modal never changes the wrapper's Hook count");
+    if (visible) {
+      assert.equal(typeof element.type, "function", "Open the Hook-owning content as a separate component");
+    } else {
+      assert.equal(element, null, "Closed modals do not mount content");
+    }
+  }
+});
