@@ -574,16 +574,21 @@ test("C-F02: bulk deletion waits for paint and cancels pending work on blur", as
   }
 });
 
-function loadColorFormComponent(relativeFile, react, colorContext) {
+function loadColorFormComponent(relativeFile, react, colorContext, nativeOverrides = {}) {
   const file = path.resolve(__dirname, relativeFile);
   const exported = {};
   const theme = { colors: { primary: "#2563EB", surfaceMuted: "#EEEEEE", categorical: {
     green: "#22C55E", teal: "#14B8A6", blue: "#2563EB", indigo: "#6366F1", purple: "#8B5CF6",
     pink: "#EC4899", orange: "#F97316", amber: "#F59E0B", slate: "#64748B",
-  } } };
+  } }, spacing: { sm: 8, md: 12, lg: 16, xxl: 32 },
+    borderRadius: { small: 4, medium: 8, large: 16, round: 999 },
+    shadows: { modal: {}, card: {} }, typography: { fontSize: {}, fontWeight: {} } };
   const native = new Proxy({
     useWindowDimensions: () => ({ width: 390, height: 800 }),
     StyleSheet: { create: (styles) => styles },
+    Keyboard: { dismiss() {} },
+    Platform: { OS: "android" },
+    ...nativeOverrides,
   }, { get: (target, key) => target[key] ?? String(key) });
   const code = ts.transpileModule(fs.readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
@@ -598,14 +603,19 @@ function loadColorFormComponent(relativeFile, react, colorContext) {
       };
       if (name === "react-native") return native;
       if (name === "react-native-safe-area-context") return { useSafeAreaInsets: () => ({ bottom: 0 }) };
-      if (name === "@/hooks/use-app-theme") return { useAppTheme: () => theme, useThemeStyles: () => ({}) };
+      if (name === "@/hooks/use-app-theme") return { useAppTheme: () => theme, useThemeStyles: (createStyles) => createStyles(theme) };
       if (name === "@/constants/layout") return { isTabletOrDesktop: () => false };
-      if (name === "@/modules/hex-colors") return { useHexColors: () => colorContext(), HexColorFormModal: "HexColorFormModal" };
+      if (name === "@/modules/hex-colors") return { useHexColors: () => colorContext(), useResolveEntityColor: () => () => "#64748B", HexColorFormModal: "HexColorFormModal" };
       if (name === "@/modules/settings") return { useExperiencePreferences: () => ({ guideHelperEnabled: false }) };
       if (name === "@/modules/walkthrough") return {
         useCategoryFormWalkthrough: () => ({}), WalkthroughTarget: "WalkthroughTarget",
         WalkthroughRegistryProvider: "WalkthroughRegistryProvider", CategoryFormWalkthroughOverlay: "WalkthroughOverlay",
       };
+      if (name === "@/modules/chat-with-kai") return {
+        KaiKnowledgeSelectorRow: "KaiKnowledgeSelectorRow",
+        getCategoryKeywordsByCategoryId: async () => [], syncCategoryKeywords: async () => {},
+      };
+      if (name === "@/modules/categories/constants/categories.constants") return require("../constants/categories.constants");
       if (name === "../constants/categories.constants") return require("../constants/categories.constants");
       return new Proxy({}, { get: (_target, key) => String(key) });
     },
@@ -629,6 +639,7 @@ function mountCategoryColorForm(props) {
   let colors = listHexColors(database), cursor = 0;
   const slots = [], effects = [];
   const react = {
+    useCallback: (callback) => callback,
     useState(initial) {
       const index = cursor++;
       if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
@@ -805,5 +816,130 @@ test("C-F04: enabling queries while focused schedules once; skipQuery and blur p
   } finally {
     h.blur();
     sqlite.close();
+  }
+});
+
+function mountCategoryCloseModal(file, exportName, props = {}) {
+  const events = [], slots = [], effects = [];
+  let cursor = 0, tree;
+  const react = {
+    useCallback: (callback) => callback,
+    useMemo: (callback) => callback(),
+    useState(initial) {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
+      return [slots[index], (value) => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
+    },
+    useEffect(callback, deps) {
+      const index = cursor++;
+      if (!slots[index] || deps.some((value, i) => !Object.is(value, slots[index][i]))) {
+        slots[index] = deps; effects.push(callback);
+      }
+    },
+  };
+  const component = loadColorFormComponent("../components/" + file, react, () => ({ colors: [] }), {
+    Keyboard: { dismiss: () => events.push("dismiss") },
+  })[exportName];
+  function render() {
+    cursor = 0;
+    const element = component({ visible: true, onClearError() {}, onClose: () => events.push("close"), ...props });
+    const content = findFormElement(element, (node) => typeof node.type === "function");
+    tree = content.type(content.props);
+    if (effects.length) { effects.splice(0).forEach((effect) => effect()); return render(); }
+    return tree;
+  }
+  return {
+    events, render,
+    find(predicate) { render(); const found = findFormElement(tree, predicate); assert.ok(found, "Missing modal element"); return found; },
+    element(label) { return this.find((node) => node.props?.accessibilityLabel === label); },
+  };
+}
+
+const closeModalCases = [
+  ["category-group-modal.tsx", "CategoryGroupModal", "category group modal", "Create Category"],
+  ["subcategory-modal.tsx", "SubcategoryModal", "subcategory modal", "Create Subcategory"],
+  ["category-form-modal.tsx", "CategoryFormModal", "category form", "Create Category"],
+];
+
+for (const [file, exportName, label, saveLabel] of closeModalCases) {
+  test("C-F06: " + exportName + " has a 44px close target and dismisses the keyboard on every exit", async () => {
+    let saveResult = false;
+    const h = mountCategoryCloseModal(file, exportName, {
+      parentCategory: { id: "parent", name: "Housing", type: "expense" },
+      onSave: async () => saveResult,
+    });
+    const close = h.element("Close " + label);
+    assert.ok(close.props.style.width >= 44 && close.props.style.height >= 44);
+    for (const exit of [
+      () => h.element("Close " + label).props.onPress(),
+      () => h.element("Dismiss " + label).props.onPress(),
+      () => h.element("Cancel").props.onPress(),
+      () => h.render().props.onRequestClose(),
+    ]) {
+      h.events.length = 0;
+      exit();
+      assert.deepEqual(h.events, ["dismiss", "close"], "Dismiss keyboard before notifying the host");
+    }
+    h.find((node) => node.type === "TextInput").props.onChangeText("Supplies");
+    h.events.length = 0;
+    await h.element(saveLabel).props.onPress();
+    assert.deepEqual(h.events, [], "A failed save keeps the form open without dismissing input");
+    saveResult = { id: "saved_category" };
+    await h.element(saveLabel).props.onPress();
+    assert.deepEqual(h.events, ["dismiss", "close"], "A successful save uses the same dismissal path");
+  });
+}
+
+function mountClosePicker() {
+  const category = { id: "parent", name: "Housing", type: "expense", parentId: null,
+    subcategories: [{ id: "child", name: "Supplies", type: "expense", parentId: "parent" }] };
+  const h = mountCategoryCloseModal("category-picker-modal.tsx", "CategoryPickerModal", {
+    categories: [category], enableQuickAdd: true, onRequestAddSubcategory() {},
+    onSelectCategory: (selected) => h.events.push("select:" + selected.id),
+  });
+  return h;
+}
+
+test("C-F06: picker exits and category/subcategory selections dismiss the keyboard and clear search", () => {
+  const h = mountClosePicker();
+  const close = h.element("Close category picker");
+  assert.ok(close.props.style.width >= 44 && close.props.style.height >= 44);
+  for (const [exit, expected] of [
+    [() => h.element("Close category picker").props.onPress(), ["dismiss", "close"]],
+    [() => h.render().props.onRequestClose(), ["dismiss", "close"]],
+    [() => h.find((node) => node.type === "Pressable").props.onPress(), ["dismiss", "close"]],
+    [() => h.element("Category Housing").props.onPress(), ["select:parent", "dismiss", "close"]],
+    [() => h.element("Subcategory Supplies").props.onPress(), ["select:child", "dismiss", "close"]],
+  ]) {
+    h.find((node) => node.type === "TextInput").props.onChangeText("Supplies");
+    h.events.length = 0;
+    exit();
+    assert.deepEqual(h.events, expected);
+    assert.equal(h.find((node) => node.type === "TextInput").props.value, "");
+  }
+});
+
+test("C-F06: picker back actions leave parent selection without closing or selecting a category", () => {
+  const h = mountClosePicker();
+  for (const back of [
+    () => h.element("Back to category selection").props.onPress(),
+    () => h.render().props.onRequestClose(),
+    () => h.find((node) => node.type === "Pressable").props.onPress(),
+  ]) {
+    h.find((node) => node.type === "TextInput").props.onChangeText("Housing");
+    h.find((node) => node.props?.children?.props?.children === "Add subcategory").props.onPress();
+    h.events.length = 0;
+    back();
+    assert.deepEqual(h.events, [], "Parent-selection back must not dismiss the modal");
+    h.element("Close category picker");
+    assert.equal(h.find((node) => node.type === "TextInput").props.value, "Housing");
+  }
+});
+
+test("C-F06: closed category modals mount no content Hooks", () => {
+  const react = new Proxy({}, { get: () => () => assert.fail("Closed modal invoked a Hook") });
+  for (const [file, exportName] of [...closeModalCases, ["category-picker-modal.tsx", "CategoryPickerModal"]]) {
+    const component = loadColorFormComponent("../components/" + file, react, () => assert.fail("Closed modal read colors"))[exportName];
+    assert.equal(component({ visible: false }), null);
   }
 });

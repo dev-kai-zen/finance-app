@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -114,6 +115,11 @@ function CategoryFormModalContent({
     }
   }, [visible, categoryToEdit, initialType]);
 
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
+    onClose();
+  }, [onClose]);
+
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -135,7 +141,7 @@ function CategoryFormModalContent({
     );
 
     if (success) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -146,7 +152,7 @@ function CategoryFormModalContent({
       animationType="slide"
       transparent
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         automaticOffset
@@ -156,7 +162,7 @@ function CategoryFormModalContent({
         <Pressable
           accessibilityLabel="Dismiss category form"
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleClose}
           style={styles.backdrop}
         />
 
@@ -196,7 +202,7 @@ function CategoryFormModalContent({
               <Pressable
                 accessibilityLabel="Close category form"
                 accessibilityRole="button"
-                onPress={onClose}
+                onPress={handleClose}
                 style={styles.closeBtn}
               >
                 <Text style={styles.closeBtnText}>✕</Text>
@@ -406,7 +412,7 @@ function CategoryFormModalContent({
               <Pressable
                 accessibilityLabel="Cancel"
                 accessibilityRole="button"
-                onPress={onClose}
+                onPress={handleClose}
                 style={styles.cancelBtn}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -558,9 +564,9 @@ function createStyles(theme: AppTheme) {
     closeBtn: {
       alignItems: "center",
       borderRadius: 16,
-      height: 32,
+      height: 44,
       justifyContent: "center",
-      width: 32,
+      width: 44,
     },
     closeBtnText: {
       color: theme.colors.textMuted,

@@ -16,6 +16,8 @@
 
 **C-F05 update:** RESOLVED. Seed-test transaction tracking now works on Node v22.13.1 without relying on an unavailable SQLite property. All seven seed tests pass; application code and release notes are unchanged.
 
+**C-F06 update:** RESOLVED. Category group, subcategory, picker, and inline quick-add close buttons now have 44×44 targets. Actual modal exits dismiss the keyboard before closing; picker parent-selection back behavior is preserved. Release notes are deferred at the user's request; the version is unchanged.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -36,7 +38,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **7 passed**, zero failures after C-F05 remediation | Five original seed/rollback tests and two controls validate version-independent transaction tracking and outside-write detection. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **17 passed**, zero failures after C-F04 remediation | Includes C-F01, four C-F02 regressions, seven C-F03 regressions, two C-F04 regressions, and existing hook coverage. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **23 passed**, zero failures after C-F06 remediation | Includes six new C-F06 checks for close targets, dismissal paths, save outcomes, picker selection/back behavior, and hidden-modal gating, plus all 17 existing regressions. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -156,7 +158,7 @@ flowchart TD
 | Select color | Selects from pre-seeded `hex_colors` or opens `HexColorFormModal` to create a custom hex color. | Correctly stores `hexColorsId` in `CategoryGroupModal`. |
 | Select icon | Opens `IconPickerModal` searching Lucide icons. Defaults to `"tag"`. | Verified. Generates valid icon key. |
 | Kai Keywords | Edits keywords row. On save, syncs keywords into `chat_knowledge_keywords`. | **Finding:** Keyword sync runs after commit as a fire-and-forget side effect; errors are caught and logged but not retried. |
-| Close modal | Taps outside or presses "✕" button. | **Finding C-F06:** Close button is 32×32px (below 44px threshold) and does not call `Keyboard.dismiss()`. |
+| Close modal | Taps outside or presses "✕" button. | **C-F06 RESOLVED:** Close button is 44×44; close, Cancel, backdrop, Android back, and successful saves dismiss the keyboard before closing. |
 
 ### C. Add and edit subcategory
 
@@ -199,7 +201,7 @@ flowchart TD
 | Open picker | Rendered in modal across transaction entry, quick entry, schedules, and filters. | Gated behind `if (!props.visible) return null;` for instant mount. |
 | Hierarchical search | Filters groups and subcategories in JS. Displays parent match with all subs, or sub matches with parent context. | Instant search with zero SQLite queries during typing. |
 | Quick-add group/sub from picker | If `enableQuickAdd: true`, allows adding a new group or subcategory directly. Opens `CategoryFormModal`. | **C-F03 RESOLVED:** Saves the selected color ID and opens custom-color forms without changing Hook ordering. |
-| Close picker | Taps close button or backdrop. | **Finding C-F06:** Close button is 36×36px without hit slop; does not dismiss software keyboard. |
+| Close picker | Taps close button or backdrop. | **C-F06 RESOLVED:** Close button is 44×44; actual exits dismiss the keyboard. Returning from parent selection keeps the picker open. |
 
 ---
 
@@ -341,19 +343,24 @@ flowchart TD
 
 ---
 
-### [C-F06] Sub-44px Touch Targets and Missing Keyboard Dismissal on Close Buttons
+### [C-F06] Sub-44px Touch Targets and Missing Keyboard Dismissal on Close Buttons - RESOLVED
 
 - **Category:** UI Ergonomics / Mobile Accessibility
-- **Severity:** Medium
+- **Severity:** Medium - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 19.8 (Touch Target Ergonomics & Keyboard Tap Persistence)
-- **Location:** [category-group-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-group-modal.tsx#L495-L501), [subcategory-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/subcategory-modal.tsx#L501-L507), [category-picker-modal.tsx](file:///c:/expo-repo/finance-app/src/modules/categories/components/category-picker-modal.tsx#L567-L572)
-- **Evidence / Repro:**
-  - `closeBtn` in `CategoryGroupModal` is 32×32px with no hit slop.
-  - `closeBtn` in `SubcategoryModal` is 32×32px with no hit slop.
-  - `closeBtn` in `CategoryPickerModal` is 36×36px with no hit slop.
-  - In all three modals, `onClose` does not invoke `Keyboard.dismiss()`, allowing the active keyboard responder to swallow the first tap.
-- **Remediation:**
-  Add `hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}` to all modal close buttons and ensure close handlers call `Keyboard.dismiss()`.
+- **Location:** CategoryGroupModal, SubcategoryModal, CategoryPickerModal, and CategoryFormModal in `src/modules/categories/components/`.
+- **Confirmed scope and reproduction:**
+  - The group, subcategory, and inline quick-add forms had 32×32 close buttons; the picker had a 36×36 button. None had hit slop or explicit keyboard dismissal on actual exits.
+  - Four new component-callback regressions failed on those undersized targets before the production changes. The audit's reported first-tap keyboard symptom was not reproduced on a native device in this pass.
+- **Resolution:**
+  - Set all four close buttons to 44×44, keeping their existing icons. Explicit button sizing avoids relying on hit slop that can be clipped by a small parent header.
+  - Added a memoized local close handler to each component. Close, Cancel, backdrop, Android back requests, and successful saves dismiss the keyboard before invoking the host callback. Failed saves keep the form open.
+  - Picker category/subcategory selection also uses the close handler and clears search. Back actions from parent selection return to category selection without closing the picker or clearing its search.
+  - Included the inline quick-add form because inspection confirmed the same defect. No shared component, service, repository, dependency, or schema changes were required. Release notes are deferred at the user's request; the version is unchanged.
+- **Verification:**
+  Six C-F06 checks pass, covering actual close-button dimensions, all dismissal callbacks and their order, successful/failed saves, picker category/subcategory selection, all three parent-selection back paths, and Hook-free hidden wrappers. All 37 category tests pass across the three suites, and `npx tsc --noEmit` passes with zero errors. Native keyboard/touch checks and release-device profiling remain outstanding.
+- **Performance:**
+  Constant-time dismissal handlers add no SQLite queries, subscriptions, providers, or context updates. Mount/focus query counts and category processing complexity are unchanged; hidden modal content remains unmounted. No measured FPS improvement is claimed.
 
 ---
 
@@ -472,7 +479,7 @@ Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
 4. **Fix C-F04 (Duplicate Query Removal in `useCategories`):**
    - Eliminate the redundant `useEffect` query trigger, retaining `useFocusEffect` and reactive change subscriptions.
 5. **Fix C-F06, C-F07, C-F08 (UX, Touch Targets & Reordering):**
-   - Add 44px hit slops and `Keyboard.dismiss()` to all modal close buttons.
+   - **C-F06 RESOLVED:** Use 44×44 close buttons and keyboard-aware dismissal in all four category modals; preserve picker back behavior.
    - Scope subcategory name uniqueness checks to the same `parentId`.
    - Exclude protected categories from drag-and-drop handles in `SortableListModal`.
 6. **Fix C-F09, C-F10, C-F11 (Localization, Defensiveness & Housekeeping):**

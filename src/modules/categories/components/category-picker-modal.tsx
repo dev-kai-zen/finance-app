@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -127,10 +128,15 @@ function CategoryPickerModalContent({
     return result;
   }, [hierarchicalCategories, type, selectedType, searchQuery]);
 
-  const handleSelect = (category: Category) => {
-    onSelectCategory(category);
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
     setSearchQuery("");
     onClose();
+  }, [onClose]);
+
+  const handleSelect = (category: Category) => {
+    onSelectCategory(category);
+    handleClose();
   };
 
   React.useEffect(() => {
@@ -145,8 +151,7 @@ function CategoryPickerModalContent({
       setSubcategoryParentMode(false);
       return;
     }
-    setSearchQuery("");
-    onClose();
+    handleClose();
   };
 
   const effectiveType = type ?? selectedType;
@@ -568,9 +573,9 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.round,
-      height: 36,
+      height: 44,
       justifyContent: "center",
-      width: 36,
+      width: 44,
     },
     typeTabsContainer: {
       backgroundColor: theme.colors.surfaceMuted,

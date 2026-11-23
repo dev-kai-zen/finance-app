@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -122,6 +123,11 @@ function SubcategoryModalContent({
     return true;
   };
 
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
+    onClose();
+  }, [onClose]);
+
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -158,7 +164,7 @@ function SubcategoryModalContent({
           console.error("Failed to sync subcategory keywords:", e);
         }
       }
-      onClose();
+      handleClose();
     }
   };
 
@@ -167,7 +173,7 @@ function SubcategoryModalContent({
   return (
     <Modal
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       transparent
       visible={visible}
     >
@@ -179,7 +185,7 @@ function SubcategoryModalContent({
         <Pressable
           accessibilityLabel="Dismiss subcategory modal"
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleClose}
           style={styles.backdrop}
         />
 
@@ -198,7 +204,7 @@ function SubcategoryModalContent({
             <Pressable
               accessibilityLabel="Close subcategory modal"
               accessibilityRole="button"
-              onPress={onClose}
+              onPress={handleClose}
               style={styles.closeBtn}
             >
               <Text style={styles.closeBtnText}>✕</Text>
@@ -391,7 +397,7 @@ function SubcategoryModalContent({
               accessibilityLabel="Cancel"
               accessibilityRole="button"
               disabled={pending}
-              onPress={onClose}
+              onPress={handleClose}
               style={styles.cancelBtn}
             >
               <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -501,9 +507,9 @@ function createStyles(theme: AppTheme) {
     closeBtn: {
       alignItems: "center",
       borderRadius: 16,
-      height: 32,
+      height: 44,
       justifyContent: "center",
-      width: 32,
+      width: 44,
     },
     closeBtnText: {
       color: theme.colors.textMuted,
