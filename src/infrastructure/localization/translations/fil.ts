@@ -1281,6 +1281,8 @@ export const fil = {
         "Pabilisin ang Dashboard, pag-refresh ng mga subscription, at CSV export, at ayusin ang kabuuan ng maraming kategorya.",
       fixItem12:
         "Ayusin ang naka-iskedyul na bayad sa subscription na nagdaragdag sa balanse sa halip na magbawas.",
+      fixItem13:
+        "Ayusin ang nakatagong Create at Cancel na mga button kapag nagdaragdag ng kategorya o subcategory mula sa transaksyon.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

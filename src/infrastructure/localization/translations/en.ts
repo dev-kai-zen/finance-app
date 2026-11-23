@@ -1250,6 +1250,8 @@ export const en = {
         "Improve Dashboard loading, subscription refreshes, and CSV exports, and fix totals for large category selections.",
       fixItem12:
         "Fix scheduled subscription payments increasing account balances instead of reducing them.",
+      fixItem13:
+        "Fix hidden Create and Cancel buttons when adding categories or subcategories from transaction forms.",
     },
     v170: {
       date: "November 18, 2026",

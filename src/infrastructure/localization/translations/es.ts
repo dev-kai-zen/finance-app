@@ -1267,6 +1267,8 @@ export const es = {
         "Mejorar la carga del panel, las suscripciones y las exportaciones CSV; corregir totales al seleccionar muchas categorías.",
       fixItem12:
         "Corrige los pagos programados de suscripciones que aumentaban el saldo en lugar de reducirlo.",
+      fixItem13:
+        "Corrige los botones Crear y Cancelar ocultos al añadir categorías o subcategorías desde formularios de transacciones.",
     },
     v170: {
       date: "18 de noviembre de 2026",

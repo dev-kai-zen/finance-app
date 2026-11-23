@@ -745,6 +745,7 @@ function createStyles(theme: AppTheme) {
     },
     footerRow: {
       flexDirection: "row",
+      flexShrink: 0,
       gap: 10,
       paddingTop: 8,
     },
@@ -754,7 +755,6 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: 12,
       borderWidth: 1,
-      flex: 1,
       height: 46,
       justifyContent: "center",
     },
@@ -767,7 +767,6 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
       borderRadius: 12,
-      flex: 2,
       height: 46,
       justifyContent: "center",
     },
