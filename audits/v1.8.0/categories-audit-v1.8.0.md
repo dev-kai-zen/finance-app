@@ -12,6 +12,8 @@
 
 **C-F03 update:** RESOLVED. Inline category/subcategory creation now saves valid custom-color references. The related color-form React static-flag warning is also fixed. Release notes were intentionally deferred at the user's request.
 
+**C-F04 update:** RESOLVED. Category loading now schedules once on focused mount/query activation. Existing cancellation had already prevented duplicate reads in the normal path; the audit now distinguishes redundant scheduling from duplicate SQL.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -32,7 +34,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **4 failed / 1 passed** (Harness defect) | `writesOutsideTransaction` checks `!sqlite.isTransaction` which is `undefined` on Node's `DatabaseSync`. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **15 passed**, zero failures after C-F03 remediation | Includes C-F01, four C-F02 regressions, seven C-F03 color/form regressions, and existing hook coverage. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **17 passed**, zero failures after C-F04 remediation | Includes C-F01, four C-F02 regressions, seven C-F03 regressions, two C-F04 regressions, and existing hook coverage. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -297,35 +299,22 @@ flowchart TD
 
 ---
 
-### [C-F04] Duplicate Mount and Focus Queries in `useCategories` Violating Rule 19.5
+### [C-F04] Redundant Category Refresh Scheduling on Mount - RESOLVED
 
-- **Category:** Performance Engineering / 60–120fps Standard
-- **Severity:** Medium
-- **Rule Reference:** AGENTS.md Section 19.5 ("No Duplicate Mount + Focus Queries: Never pair useEffect(() => refresh(), [refresh]) with useFocusEffect for the same query")
-- **Location:** [use-categories.ts](file:///c:/expo-repo/finance-app/src/modules/categories/hooks/use-categories.ts#L65-L80)
-- **Evidence / Repro:**
-  In `use-categories.ts`:
-  ```ts
-  useFocusEffect(useCallback(() => {
-    focusedRef.current = true;
-    if (!skipQuery) void refresh();
-    const unsubscribe = skipQuery ? undefined : subscribeCategoryChanges(() => { void refresh(); });
-    return () => {
-      focusedRef.current = false;
-      unsubscribe?.();
-      cancelPending();
-    };
-  }, [cancelPending, refresh, skipQuery]));
-
-  useEffect(() => {
-    if (!skipQuery && focusedRef.current) {
-      void refresh();
-    }
-  }, [refresh, skipQuery]);
-  ```
-  Both `useFocusEffect` and `useEffect` invoke `refresh()`. When the screen gains focus, `useFocusEffect` marks `focusedRef.current = true` and calls `refresh()`, and any change to `refresh` callback identity immediately triggers the redundant `useEffect` query.
-- **Remediation:**
-  Remove the redundant `useEffect` query trigger, relying solely on `useFocusEffect` and the `subscribeCategoryChanges` listener for reactive updates.
+- **Category:** Performance / Lifecycle Ownership
+- **Severity:** Low - **RESOLVED**
+- **Rule Reference:** AGENTS.md Section 19.5 (No Duplicate Mount + Focus Queries)
+- **Location:** `src/modules/categories/hooks/use-categories.ts`.
+- **Confirmed scope and reproduction:**
+  - Opening Categories for the first time while focused triggered `refresh()` from both `useFocusEffect` and a separate `useEffect`. Enabling queries while focused caused the same redundant scheduling.
+  - Instrumented React checks showed two scheduled loads, one cancellation, and one repository read on initial mount/query activation. Existing cancellation normally prevented a second database read. Returning to an already mounted screen scheduled one load and performed one read.
+  - The original finding overstated duplicate SQL execution. This was unnecessary callback scheduling/cancellation; no data-integrity failure or measurable frame-rate regression was demonstrated.
+- **Resolution:**
+  Removed the redundant `useEffect` and its unused import. The focus effect remains the lifecycle refresh owner. Category-change subscriptions, explicit mutation refreshes, post-paint scheduling, blur cancellation, stale-result protection, and `skipQuery` behavior remain intact. No service, repository, schema, or release-note changes were needed.
+- **Verification:**
+  Two new C-F04 regressions assert exactly one scheduled deferred load/read on mount, refocus, and focused query activation; no extra load on ordinary re-render; zero reads for mutation-only hosts; unsubscribe on blur; and cancellation before a pending read executes. Both tests failed before the production change and pass afterward. The test harness now separates passive effects from scheduled paint work and records cancellations accurately. All 17 category-change tests pass, including existing mutation refresh, event coalescing, and stale-result regressions.
+- **Performance:**
+  Removes one redundant scheduled callback/cancellation on initial focused mount and query activation. Each successful refresh still performs one category/color join query; category hydration and sorting complexity are unchanged. No new queries, contexts, or subscriptions. Native frame-rate profiling was not performed and no measured FPS improvement is claimed.
 
 ---
 

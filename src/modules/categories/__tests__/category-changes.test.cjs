@@ -202,13 +202,14 @@ const { saveCategory } = require('../services/save-category.service');
 const { notifyCategoryChanges } = require('../services/category-changes.service');
 function mountCategories(options, overrides = {}) {
   let cursor = 0, focused = true, focusCallback, activeCallback, cleanup;
-  const slots = [], pending = new Set();
+  let scheduled = 0, cancelled = 0;
+  const slots = [], pending = new Set(), effects = new Set();
   const same = (a,b) => a && a.length===b.length && a.every((v,i)=>Object.is(v,b[i]));
   const react = {
     useState(initial) { const i=cursor++; if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return[slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;}]; },
     useRef(initial) { const i=cursor++;return slots[i]??(slots[i]={current:initial}); },
     useCallback(callback,deps) { const i=cursor++;if(!same(slots[i]?.deps,deps))slots[i]={callback,deps};return slots[i].callback; },
-    useEffect(callback,deps) { const i=cursor++;if(!same(slots[i]?.deps,deps)){slots[i]={callback,deps};pending.add(callback);} },
+    useEffect(callback,deps) { const i=cursor++;if(!same(slots[i]?.deps,deps)){slots[i]={callback,deps};effects.add(callback);} },
   };
   const file = path.resolve(__dirname,'../hooks/use-categories.ts');
   const localRequire = Module.createRequire(file), exports = {};
@@ -217,17 +218,25 @@ function mountCategories(options, overrides = {}) {
     require(name) {
       if(name==='react')return react;
       if(name==='expo-router')return{useFocusEffect:cb=>{focusCallback=cb;}};
-      if(name==='@/utils/schedule-after-paint')return{scheduleAfterPaint:cb=>{pending.add(cb);return()=>pending.delete(cb);}};
+      if(name==='@/utils/schedule-after-paint')return{scheduleAfterPaint:cb=>{
+        scheduled += 1;
+        let didCancel = false, ran = false;
+        const run = () => { if (!didCancel) { ran = true; cb(); } };
+        pending.add(run);
+        return () => { if (!ran && !didCancel) { didCancel = true; cancelled += 1; pending.delete(run); } };
+      }};
       if(name==='../repositories/categories.repository' && overrides.listCategories) return { listCategories: overrides.listCategories };
       return localRequire(name);
     },
   });
   return {
-    render(){cursor=0;const value=exports.useCategories(options);if(focused&&activeCallback!==focusCallback){cleanup?.();activeCallback=focusCallback;cleanup=focusCallback();}return value;},
+    render(nextOptions=options){options=nextOptions;cursor=0;const value=exports.useCategories(options);if(focused&&activeCallback!==focusCallback){cleanup?.();activeCallback=focusCallback;cleanup=focusCallback();}const jobs=[...effects];effects.clear();jobs.forEach(cb=>cb());return value;},
     async flush(){const jobs=[...pending];pending.clear();jobs.forEach(cb=>cb());await new Promise(resolve=>setImmediate(resolve));},
     blur(){cleanup?.();cleanup=null;activeCallback=null;focused=false;},
     focus(){focused=true;},
     get pending(){return pending.size;},
+    get scheduled(){return scheduled;},
+    get cancelled(){return cancelled;},
   };
 }
 
@@ -735,5 +744,66 @@ test("C-F03: the custom color modal keeps its visibility wrapper free of Hooks",
     } else {
       assert.equal(element, null, "Closed modals do not mount content");
     }
+  }
+});
+
+test("C-F04: first mount and refocus each schedule exactly one deferred category read", async () => {
+  setupTestDb();
+  const h = mountCategories();
+  const categoryReadCount = () => queries.filter((query) => /^select\b.*from "categories"/i.test(query)).length;
+  try {
+    queries = [];
+    assert.equal(h.render().loading, true);
+    assert.equal(h.scheduled, 1, "Mount has one refresh owner");
+    assert.equal(h.cancelled, 0, "Mount does not replace an identical pending refresh");
+    assert.equal(categoryReadCount(), 0, "The first frame performs no category read");
+    await h.flush();
+    assert.equal(categoryReadCount(), 1);
+    assert.equal(h.render().loading, false);
+    assert.equal(h.scheduled, 1, "An ordinary re-render does not schedule another load");
+    h.blur();
+    notifyCategoryChanges();
+    assert.equal(h.pending, 0, "Blur unsubscribes from category changes");
+    h.focus();
+    h.render();
+    assert.equal(h.scheduled, 2);
+    await h.flush();
+    assert.equal(categoryReadCount(), 2, "Refocusing performs one fresh category read");
+  } finally {
+    h.blur();
+    sqlite.close();
+  }
+});
+
+test("C-F04: enabling queries while focused schedules once; skipQuery and blur prevent reads", async () => {
+  setupTestDb();
+  const h = mountCategories({ skipQuery: true });
+  try {
+    queries = [];
+    h.render();
+    notifyCategoryChanges();
+    await h.flush();
+    assert.equal(h.scheduled, 0);
+    assert.equal(queries.length, 0);
+    h.render({ skipQuery: false });
+    assert.equal(h.scheduled, 1, "The focus effect owns query activation");
+    assert.equal(h.cancelled, 0);
+    assert.equal(queries.length, 0);
+    await h.flush();
+    assert.equal(queries.length, 1);
+    h.render({ skipQuery: true });
+    queries = [];
+    notifyCategoryChanges();
+    await h.flush();
+    assert.equal(queries.length, 0);
+    h.render({ skipQuery: false });
+    assert.equal(h.scheduled, 2);
+    h.blur();
+    await h.flush();
+    assert.equal(h.cancelled, 1);
+    assert.equal(queries.length, 0, "Blur cancels the pending read before it executes");
+  } finally {
+    h.blur();
+    sqlite.close();
   }
 });
