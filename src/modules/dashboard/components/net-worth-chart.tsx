@@ -93,14 +93,14 @@ export function NetWorthChart({
 
   return (
     <View
-      accessibilityLabel="Net worth history chart showing net worth, assets, and liabilities"
+      accessibilityLabel={t("dashboard.netWorthChartAccessibility")}
       style={styles.container}
       onLayout={handleLayout}
     >
       {width > 0 ? (
         <Pressable
-          accessibilityHint="Opens full screen inspection view"
-          accessibilityLabel="Inspect net worth chart"
+          accessibilityHint={t("dashboard.netWorthChartHint")}
+          accessibilityLabel={t("dashboard.inspectNetWorthChart")}
           accessibilityRole="button"
           onPress={onPressChart}
           style={({ pressed }) => [
@@ -275,9 +275,9 @@ export function NetWorthChart({
       ) : null}
 
       <View style={styles.legend}>
-        <LegendItem color={theme.colors.info} label="Net Worth" />
-        <LegendItem color={theme.colors.success} label="Assets" />
-        <LegendItem color={theme.colors.danger} label="Liabilities" />
+        <LegendItem color={theme.colors.info} label={t("dashboard.netWorth")} />
+        <LegendItem color={theme.colors.success} label={t("dashboard.assets")} />
+        <LegendItem color={theme.colors.danger} label={t("dashboard.liabilities")} />
       </View>
     </View>
   );

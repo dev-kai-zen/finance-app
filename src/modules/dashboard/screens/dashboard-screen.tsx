@@ -262,6 +262,7 @@ function DashboardScreenContent() {
     handleNeverAskAgain,
   } = useInAppReviewMilestone({
     enabled:
+      workspaceState.mode === "personal" &&
       !showCongratulationsModal &&
       !walkthrough.isWalkthroughActive &&
       !isVersionHistoryPending &&
@@ -589,7 +590,7 @@ function DashboardScreenContent() {
       }
       floatingAction={
         <TransactionSpeedDialFab
-          accessibilityLabel="Record new transaction"
+          accessibilityLabel={t("dashboard.recordNewTransaction")}
           fabRef={fabRef}
           style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
           onPressForm={() => {

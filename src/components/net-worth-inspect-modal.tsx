@@ -343,7 +343,7 @@ function NetWorthInspectModalContent({
         {/* Modal Header */}
         <View style={styles.header}>
           <Pressable
-            accessibilityLabel="Close"
+            accessibilityLabel={t("common.close")}
             accessibilityRole="button"
             hitSlop={8}
             onPress={onClose}
@@ -370,7 +370,9 @@ function NetWorthInspectModalContent({
               return (
                 <Pressable
                   key={option}
-                  accessibilityLabel={`Show ${option} net worth history`}
+                  accessibilityLabel={t("dashboard.showPeriodHistory", {
+                    period: option,
+                  })}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => {
@@ -422,7 +424,7 @@ function NetWorthInspectModalContent({
                   selectedYear === "all" && styles.yearPillTextSelected,
                 ]}
               >
-                All Years
+                {t("dashboard.allYears")}
               </Text>
             </Pressable>
             {availableYears.map((yr) => {
@@ -703,7 +705,9 @@ function NetWorthInspectModalContent({
                       return (
                         <Pressable
                           key={`touch-${idx}`}
-                          accessibilityLabel={`Select ${pt.label}`}
+                          accessibilityLabel={t("dashboard.selectPoint", {
+                            label: pt.label,
+                          })}
                           accessibilityRole="button"
                           onPress={() => {
                             triggerHaptic("light");

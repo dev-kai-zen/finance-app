@@ -65,9 +65,19 @@ export interface CustomizeDashboardModalProps {
 }
 
 const QUICK_NEUTRAL_SWATCHES = [
-  { id: "quick_white", name: "White", hex: "#FFFFFF" },
-  { id: "quick_dark", name: "Dark Slate", hex: "#0F172A" },
-];
+  {
+    id: "quick_white",
+    name: "White",
+    nameKey: "dashboard.colorWhite",
+    hex: "#FFFFFF",
+  },
+  {
+    id: "quick_dark",
+    name: "Dark Slate",
+    nameKey: "dashboard.colorDarkSlate",
+    hex: "#0F172A",
+  },
+] as const;
 
 // isLightColor imported from @/utils/color-contrast
 
@@ -592,10 +602,14 @@ function CustomizeDashboardModalContent({
                         draftLayout.quoteBackgroundColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
+                      const label =
+                        "nameKey" in color && color.nameKey
+                          ? t(color.nameKey as never)
+                          : color.name;
                       return (
                         <Pressable
                           key={`bg-${color.id}`}
-                          accessibilityLabel={color.name}
+                          accessibilityLabel={label}
                           accessibilityRole="button"
                           onPress={() =>
                             applyDraftQuoteColors(
@@ -621,7 +635,7 @@ function CustomizeDashboardModalContent({
                     })}
 
                     <Pressable
-                      accessibilityLabel="Add custom color"
+                      accessibilityLabel={t("dashboard.addCustomColor")}
                       accessibilityRole="button"
                       onPress={() => {
                         setColorPickerTarget("background");
@@ -688,10 +702,14 @@ function CustomizeDashboardModalContent({
                         draftLayout.quoteTextColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
+                      const label =
+                        "nameKey" in color && color.nameKey
+                          ? t(color.nameKey as never)
+                          : color.name;
                       return (
                         <Pressable
                           key={`txt-${color.id}`}
-                          accessibilityLabel={color.name}
+                          accessibilityLabel={label}
                           accessibilityRole="button"
                           onPress={() =>
                             applyDraftQuoteColors(
@@ -717,7 +735,7 @@ function CustomizeDashboardModalContent({
                     })}
 
                     <Pressable
-                      accessibilityLabel="Add custom color"
+                      accessibilityLabel={t("dashboard.addCustomColor")}
                       accessibilityRole="button"
                       onPress={() => {
                         setColorPickerTarget("text");

@@ -3,6 +3,7 @@ import { useFocusEffect } from "expo-router";
 
 import { useExperiencePreferences } from "@/modules/settings";
 import { getTransactionCount } from "@/modules/transactions";
+import { isPersonalWorkspace } from "@/modules/onboarding";
 
 import { MIN_TRANSACTIONS_FOR_REVIEW_PROMPT } from "../constants/support-development.constants";
 import { requestInAppReview } from "../services/request-in-app-review.service";
@@ -23,6 +24,7 @@ export function useInAppReviewMilestone({
       if (!enabled) return;
       if (isPostponedInSession.current) return;
       if (experience.isPromptDismissed("inAppReview10MilestoneDismissed")) return;
+      if (!isPersonalWorkspace()) return;
 
       try {
         const count = getTransactionCount();

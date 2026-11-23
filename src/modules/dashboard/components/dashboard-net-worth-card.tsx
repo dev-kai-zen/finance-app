@@ -135,7 +135,7 @@ export function DashboardNetWorthCard({
       <View style={styles.header}>
         <View style={styles.titleGroup}>
           <Text style={styles.label}>
-            {simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
+            {simpleHomeLabels ? t("dashboard.moneyYouHave") : t("dashboard.netWorth")}
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -143,7 +143,9 @@ export function DashboardNetWorthCard({
             ref={collapseRef as any}
             collapsable={false}
             accessibilityLabel={
-              chartVisible ? "Hide net worth chart" : "Show net worth chart"
+              chartVisible
+                ? t("dashboard.hideNetWorthChart")
+                : t("dashboard.showNetWorthChart")
             }
             accessibilityRole="button"
             hitSlop={5}
@@ -214,9 +216,9 @@ export function DashboardNetWorthCard({
             ]}
           >
             {!valuesVisible
-              ? "Hidden"
+              ? t("dashboard.hidden")
               : monthlyChangePercentage === null
-                ? "No prior month"
+                ? t("dashboard.noPriorMonth")
                 : `${monthlyChangePercentage >= 0 ? "+" : ""}${monthlyChangePercentage}%`}
           </Text>
         </View>
@@ -229,7 +231,9 @@ export function DashboardNetWorthCard({
               return (
                 <Pressable
                   key={option}
-                  accessibilityLabel={`Show ${option} net worth history`}
+                  accessibilityLabel={t("dashboard.showPeriodHistory", {
+                    period: option,
+                  })}
                   accessibilityRole="tab"
                   accessibilityState={{ selected }}
                   onPress={() => {
@@ -276,7 +280,7 @@ export function DashboardNetWorthCard({
                     selectedYear === "all" && styles.yearPillTextSelected,
                   ]}
                 >
-                  All Years
+                  {t("dashboard.allYears")}
                 </Text>
               </Pressable>
               {availableYears.map((yr) => {
@@ -346,7 +350,7 @@ export function DashboardNetWorthCard({
         <View style={[styles.breakdownCard, styles.assetCard]}>
           <View style={styles.breakdownLabelRow}>
             <View style={[styles.breakdownDot, styles.assetDot]} />
-            <Text style={styles.breakdownLabel}>Assets</Text>
+            <Text style={styles.breakdownLabel}>{t("dashboard.assets")}</Text>
           </View>
           <Text
             adjustsFontSizeToFit
@@ -367,7 +371,7 @@ export function DashboardNetWorthCard({
         <View style={[styles.breakdownCard, styles.liabilityCard]}>
           <View style={styles.breakdownLabelRow}>
             <View style={[styles.breakdownDot, styles.liabilityDot]} />
-            <Text style={styles.breakdownLabel}>Liabilities</Text>
+            <Text style={styles.breakdownLabel}>{t("dashboard.liabilities")}</Text>
           </View>
           <Text
             adjustsFontSizeToFit
@@ -409,7 +413,7 @@ export function DashboardNetWorthCard({
         }}
         periods={PERIODS}
         points={activePoints}
-        title={simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
+        title={simpleHomeLabels ? t("dashboard.moneyYouHave") : t("dashboard.netWorth")}
         visible={inspectModalVisible}
         availableYears={availableYears}
         selectedYear={selectedYear}
