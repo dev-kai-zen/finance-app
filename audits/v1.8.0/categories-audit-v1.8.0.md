@@ -14,6 +14,8 @@
 
 **C-F04 update:** RESOLVED. Category loading now schedules once on focused mount/query activation. Existing cancellation had already prevented duplicate reads in the normal path; the audit now distinguishes redundant scheduling from duplicate SQL.
 
+**C-F05 update:** RESOLVED. Seed-test transaction tracking now works on Node v22.13.1 without relying on an unavailable SQLite property. All seven seed tests pass; application code and release notes are unchanged.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -33,7 +35,7 @@
 | Check | Result in this pass | Limits / Details |
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
-| `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **4 failed / 1 passed** (Harness defect) | `writesOutsideTransaction` checks `!sqlite.isTransaction` which is `undefined` on Node's `DatabaseSync`. |
+| `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **7 passed**, zero failures after C-F05 remediation | Five original seed/rollback tests and two controls validate version-independent transaction tracking and outside-write detection. |
 | `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **17 passed**, zero failures after C-F04 remediation | Includes C-F01, four C-F02 regressions, seven C-F03 regressions, two C-F04 regressions, and existing hook coverage. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
@@ -318,18 +320,24 @@ flowchart TD
 
 ---
 
-### [C-F05] Broken Automated Test Harness in `seed-defaults.test.cjs` and `category-changes.test.cjs`
+### [C-F05] Seed Test Transaction Tracking Incompatible with Older Node Runtimes - RESOLVED
 
 - **Category:** Test Suite Integrity
-- **Severity:** Medium
+- **Severity:** Medium - **RESOLVED**
 - **Rule Reference:** AGENTS.md Section 16.9 (Verify Code & Test Reliability)
-- **Location:** [seed-defaults.test.cjs](file:///c:/expo-repo/finance-app/src/modules/categories/__tests__/seed-defaults.test.cjs#L151), [category-changes.test.cjs](file:///c:/expo-repo/finance-app/src/modules/categories/__tests__/category-changes.test.cjs#L51-L55)
-- **Evidence / Repro:**
-  Running `node --test src/modules/categories/__tests__/*.test.cjs` results in 7 failed tests:
-  1. `seed-defaults.test.cjs` checks `!sqlite.isTransaction`. In Node's built-in `node:sqlite` `DatabaseSync`, `isTransaction` is `undefined`, causing `writesOutsideTransaction` to falsely evaluate to 51/139.
-  2. `category-changes.test.cjs` mocks `react` via `createMock()`, which does not provide `useEffect`, throwing `TypeError: (0, react_1.useEffect) is not a function`.
-- **Remediation:**
-  Track transaction state with an explicit in-memory boolean flag (`inTransaction`) in `seed-defaults.test.cjs`, and supply standard React lifecycle stubs in `category-changes.test.cjs`.
+- **Location:** `src/modules/categories/__tests__/seed-defaults.test.cjs`.
+- **Confirmed scope and reproduction:**
+  - On Node v22.13.1, running `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` previously produced four failures and one pass. The adapter counted valid transactional category/currency inserts as outside writes, reporting values such as 51 and 139 instead of zero.
+  - The adapter relied on `sqlite.isTransaction`, which is undefined in this runtime. That property was added in Node v22.16.0/v24.0.0; `!undefined` falsely flagged every tracked write.
+  - The original finding also included React mocks in `category-changes.test.cjs`. That portion had already been repaired; its 17 tests pass and needed no changes for this remediation.
+- **Resolution:**
+  - Added an explicit `inTransaction` flag to the seed-test adapter, reset for each fresh test connection.
+  - Centralized bookkeeping for successful SQL execution across the adapter paths, including writes returning rows. Successful BEGIN activates tracking; COMMIT/END and full ROLLBACK clear it; ROLLBACK TO preserves the outer transaction state. Failed statements do not change the tracking counters or state.
+  - Kept all original seed, exact-row, caller-transaction, rollback, retry, and commit-count assertions. No production code, schema, dependency, or release-note changes were needed.
+- **Verification:**
+  All seven seed tests pass: the five original tests plus two C-F05 controls. Controls prove that INSERT/UPDATE/DELETE outside a transaction are detected, transactional writes are excluded, returning writes are counted, reads are ignored, rejected BEGIN does not increment the transaction count, nested rollback preserves tracking, and full rollback/commit clear it before later writes or retry.
+- **Performance:**
+  Test-only bookkeeping; zero application runtime, mount/focus query, render, or frame-rate impact.
 
 ---
 

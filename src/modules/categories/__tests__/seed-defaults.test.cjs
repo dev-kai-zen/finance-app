@@ -12,6 +12,7 @@ let database;
 let transactionCount = 0;
 let commitCount = 0;
 let writesOutsideTransaction = 0;
+let inTransaction = false;
 const originalResolve = Module._resolveFilename;
 const originalLoad = Module._load;
 
@@ -130,7 +131,22 @@ function aliasSelectColumns(query) {
     .join(", ")}${query.slice(fromStart)}`;
 }
 
+function trackExecutedStatement(query) {
+  if (/^\s*begin\b/i.test(query)) {
+    inTransaction = true;
+    transactionCount += 1;
+  } else if (/^\s*(commit|end)\b/i.test(query)) {
+    inTransaction = false;
+    commitCount += 1;
+  } else if (/^\s*rollback\b(?!\s+to\b)/i.test(query)) {
+    inTransaction = false;
+  } else if (/^\s*(insert|update|delete)\b/i.test(query) && !inTransaction) {
+    writesOutsideTransaction += 1;
+  }
+}
+
 function connect() {
+  inTransaction = false;
   commitCount = 0; writesOutsideTransaction = 0;
   sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys=ON");
@@ -140,24 +156,22 @@ function connect() {
     {
       execSync(query) {
         sqlite.exec(query);
+        trackExecutedStatement(query);
       },
       prepareSync(query) {
         return {
           executeSync(params) {
-            if (/^\s*begin\b/i.test(query)) {
-              transactionCount += 1;
-            }
-            if (/^\s*commit\b/i.test(query)) commitCount++;
-            if (/^\s*(insert|update|delete)\b/i.test(query) && !sqlite.isTransaction) writesOutsideTransaction++;
             const statement = sqlite.prepare(query);
             if (/^\s*(select|pragma|with)\b/i.test(query) || /\breturning\b/i.test(query)) {
               const rows = statement.all(...params);
+              trackExecutedStatement(query);
               return {
                 getAllSync: () => rows,
                 getFirstSync: () => rows[0] ?? null,
               };
             }
             const result = statement.run(...params);
+            trackExecutedStatement(query);
             return {
               changes: Number(result.changes),
               lastInsertRowId: Number(result.lastInsertRowid),
@@ -165,6 +179,7 @@ function connect() {
           },
           executeForRawResultSync(params) {
             const rows = sqlite.prepare(aliasSelectColumns(query)).all(...params);
+            trackExecutedStatement(query);
             return { getAllSync: () => rows.map((row) => Object.values(row)) };
           },
         };
@@ -245,4 +260,54 @@ test('P3-01: currency failure rolls back a fresh seed and a retry succeeds', () 
   sqlite.exec('DROP TRIGGER fail_currency_seed');seedCurrenciesIfEmpty(database);
   assert.equal(commitCount,1);assert.equal(writesOutsideTransaction,0);
   assert.equal(sqlite.prepare('SELECT count(*) AS n FROM currencies').get().n,Object.keys(CURRENCY_NAMES).length);
+});
+
+test('C-F05: successful transactional writes are excluded and outside writes are counted', () => {
+  const { sql } = require('drizzle-orm');
+  database.transaction(tx => {
+    tx.run(sql`INSERT INTO categories (id,name,type,created_at,updated_at) VALUES ('inside','Inside','expense',1,1)`);
+    tx.run(sql`UPDATE categories SET name='Updated inside' WHERE id='inside'`);
+    assert.equal(writesOutsideTransaction, 0);
+  });
+  assert.equal(transactionCount, 1);
+  assert.equal(commitCount, 1);
+  database.run(sql`INSERT INTO categories (id,name,type,created_at,updated_at) VALUES ('outside','Outside','expense',1,1)`);
+  assert.equal(writesOutsideTransaction, 1);
+  database.run(sql`UPDATE categories SET name='Updated outside' WHERE id='outside'`);
+  assert.equal(writesOutsideTransaction, 2);
+  database.run(sql`DELETE FROM categories WHERE id='outside'`);
+  assert.equal(writesOutsideTransaction, 3);
+  database.get(sql`INSERT INTO categories (id,name,type,created_at,updated_at) VALUES ('returning','Returning','expense',1,1) RETURNING id`);
+  assert.equal(writesOutsideTransaction, 4, 'Writes returning rows are still counted');
+  database.all(sql`SELECT id FROM categories`);
+  assert.equal(writesOutsideTransaction, 4, 'Reads do not count as writes');
+});
+
+test('C-F05: failed BEGIN and nested rollback preserve state; outer rollback and commit clear it', () => {
+  const { sql } = require('drizzle-orm');
+  assert.throws(() => database.transaction(tx => {
+    assert.throws(() => tx.run(sql`BEGIN`), error => /within a transaction/.test(error.cause?.message ?? error.message));
+    tx.run(sql`INSERT INTO categories (id,name,type,created_at,updated_at) VALUES ('rolled_back','Rollback','expense',1,1)`);
+    assert.equal(writesOutsideTransaction, 0);
+    assert.throws(() => tx.transaction(nested => {
+      nested.run(sql`UPDATE categories SET name='Nested change' WHERE id='rolled_back'`);
+      throw new Error('nested failed');
+    }), /nested failed/);
+    tx.run(sql`UPDATE categories SET name='After nested rollback' WHERE id='rolled_back'`);
+    assert.equal(writesOutsideTransaction, 0, 'ROLLBACK TO does not end the outer transaction');
+    throw new Error('outer failed');
+  }), /outer failed/);
+  assert.equal(transactionCount, 1, 'A rejected BEGIN is not counted as a new transaction');
+  assert.equal(commitCount, 0);
+  assert.equal(sqlite.prepare('SELECT count(*) AS n FROM categories').get().n, 0);
+  database.run(sql`INSERT INTO categories (id,name,type,created_at,updated_at) VALUES ('after_rollback','After rollback','expense',1,1)`);
+  assert.equal(writesOutsideTransaction, 1, 'Outer rollback clears the active state');
+  database.transaction(tx => {
+    tx.run(sql`UPDATE categories SET name='Retry' WHERE id='after_rollback'`);
+    assert.equal(writesOutsideTransaction, 1);
+  });
+  assert.equal(transactionCount, 2);
+  assert.equal(commitCount, 1);
+  database.run(sql`DELETE FROM categories WHERE id='after_rollback'`);
+  assert.equal(writesOutsideTransaction, 2, 'Commit clears the active state');
 });
