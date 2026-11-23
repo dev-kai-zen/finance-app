@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, isNull, ne, notInArray } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
-import { categories, hexColors, transactions } from "@/infrastructure/database/schema";
+import { categories, hexColors } from "@/infrastructure/database/schema";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
@@ -356,14 +356,14 @@ export function insertCategoryPreset(
     .run();
 }
 
-export async function detachCustomChildrenFromPresetGroups(
+export function detachCustomChildrenFromPresetGroups(
   db: DbContext,
   parentIds: string[],
   presetIds: string[],
-): Promise<void> {
+): void {
   if (parentIds.length === 0 || presetIds.length === 0) return;
 
-  await db
+  db
     .update(categories)
     .set({ parentId: null, updatedAt: new Date() })
     .where(
@@ -371,20 +371,15 @@ export async function detachCustomChildrenFromPresetGroups(
         inArray(categories.parentId, parentIds),
         notInArray(categories.id, presetIds),
       ),
-    );
+    )
+    .run();
 }
 
-export async function deleteCategoryPresetData(
+export function deleteCategoryPresetData(
   db: DbContext,
   id: string,
-  fallbackId: string,
-): Promise<void> {
-  await db
-    .update(transactions)
-    .set({ categoryId: fallbackId, updatedAt: new Date() })
-    .where(eq(transactions.categoryId, id));
-
-  await db.delete(categories).where(eq(categories.id, id));
+): void {
+  db.delete(categories).where(eq(categories.id, id)).run();
 }
 
 export async function reorderCategoriesInDb(

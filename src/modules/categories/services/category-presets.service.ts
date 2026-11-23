@@ -1,7 +1,8 @@
 import { notifyCategoryChanges } from "./category-changes.service";
-import { db, type AppDatabase, type DbContext } from "@/infrastructure/database/client";
+import { db, type AppDatabase } from "@/infrastructure/database/client";
 import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import { reassignScheduledTransactionCategoryReferences } from "@/modules/scheduled-transactions";
+import { reassignTransactionCategoryReferences } from "@/modules/transactions";
 import {
   DEFAULT_SEED_CATEGORIES,
   isProtectedCategoryId,
@@ -42,27 +43,30 @@ export async function deleteCategoryPresets(
     .map((category) => category.id)
     .concat([...REMOVED_PRESET_IDS]);
 
-  await client.transaction(async (tx) => {
-    await detachCustomChildrenFromPresetGroups(tx, presetGroupIds, presetIds);
+  client.transaction((tx) => {
+    detachCustomChildrenFromPresetGroups(tx, presetGroupIds, presetIds);
 
     // Delete children first so the self-referencing parent foreign key remains valid.
     for (const category of deletablePresets.filter((item) => item.parentId)) {
       const fallbackId = category.type === "income" ? INCOME_FALLBACK_ID : EXPENSE_FALLBACK_ID;
-      reassignScheduledTransactionCategoryReferences(category.id, fallbackId, tx as unknown as DbContext);
-      await deleteCategoryPresetData(tx, category.id, fallbackId);
+      reassignTransactionCategoryReferences(category.id, fallbackId, tx);
+      reassignScheduledTransactionCategoryReferences(category.id, fallbackId, tx);
+      deleteCategoryPresetData(tx, category.id);
     }
 
     for (const category of deletablePresets.filter((item) => !item.parentId)) {
       const fallbackId = category.type === "income" ? INCOME_FALLBACK_ID : EXPENSE_FALLBACK_ID;
-      reassignScheduledTransactionCategoryReferences(category.id, fallbackId, tx as unknown as DbContext);
-      await deleteCategoryPresetData(tx, category.id, fallbackId);
+      reassignTransactionCategoryReferences(category.id, fallbackId, tx);
+      reassignScheduledTransactionCategoryReferences(category.id, fallbackId, tx);
+      deleteCategoryPresetData(tx, category.id);
     }
 
     // Remove the old standalone Groceries preset from databases created by
     // the previous preset set.
     for (const id of REMOVED_PRESET_IDS) {
-      reassignScheduledTransactionCategoryReferences(id, EXPENSE_FALLBACK_ID, tx as unknown as DbContext);
-      await deleteCategoryPresetData(tx, id, EXPENSE_FALLBACK_ID);
+      reassignTransactionCategoryReferences(id, EXPENSE_FALLBACK_ID, tx);
+      reassignScheduledTransactionCategoryReferences(id, EXPENSE_FALLBACK_ID, tx);
+      deleteCategoryPresetData(tx, id);
     }
   });
   invalidateChatKeywordsCache();

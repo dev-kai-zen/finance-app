@@ -8,6 +8,8 @@
 
 **Result:** Categories remediation in progress. **C-F01 is RESOLVED**: deleting a category now safely reassigns linked scheduled transactions (`transaction_schedules`) and actionable occurrence template snapshots to the fallback category without foreign-key constraint errors, verified with passing automated regression tests and 0 TypeScript compilation errors.
 
+**C-F02 update:** RESOLVED. Bulk preset deletion now preserves saved Quick Presets and related references atomically. The split failure is classified as defensive service coverage because the UI hides bulk deletion once any transaction exists.
+
 **Changes made:** Implemented `reassignScheduledTransactionCategoryReferences` in `@/modules/scheduled-transactions`, called it inside `deleteCategory` and `deleteCategoryPresets`, updated test B06 to verify scheduled transaction reassignment, fixed the test runner React mock for `category-changes.test.cjs`, and verified clean compilation (`npx tsc --noEmit`).
 
 ---
@@ -28,7 +30,7 @@
 |---|---|---|
 | `node --test src/modules/categories/__tests__/categories.test.cjs` | **7 passed**, zero failures; ~1.5s | Verifies default seeding, subcategory links with `parentId`, protected deletion prevention, sort order, and reordering. |
 | `node --test src/modules/categories/__tests__/seed-defaults.test.cjs` | **4 failed / 1 passed** (Harness defect) | `writesOutsideTransaction` checks `!sqlite.isTransaction` which is `undefined` on Node's `DatabaseSync`. |
-| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **3 failed / 1 passed** (Harness defect) | Node mock environment misses `useEffect`, throwing `(0, react_1.useEffect) is not a function`. |
+| `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **8 passed**, zero failures after C-F02 remediation | Includes C-F01, existing hook coverage, and four C-F02 data-preservation, rollback, indexing, and deferred-action regressions. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
 | Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
@@ -182,7 +184,7 @@ flowchart TD
 |---|---|---|
 | Presets button visibility | Gated behind `hasExistingTransactions === false`. | Prevents accidental preset overwrites once ledger history exists. |
 | Load category presets | Batch inserts `DEFAULT_SEED_CATEGORIES` using `onConflictDoNothing()`. | Safe. Existing customized categories are preserved. |
-| Delete category presets | Deletes non-system preset categories, reassigning transactions to "Others". | **Finding C-F02:** Directly queries `transactions` table in `categories.repository.ts` (Rule 4/12 violation) and fails to reassign splits, presets, or schedules, risking foreign key crashes. |
+| Delete category presets | Available only before any transactions exist; removes built-in categories while preserving custom categories. | **C-F02 RESOLVED:** Reassigns Quick Presets, schedules, and defensive transaction/split references through public services in one atomic transaction. |
 
 ### G. Universal Category Picker & Quick Add
 
@@ -224,32 +226,28 @@ flowchart TD
 
 ---
 
-### [C-F02] Preset Deletion Violates Repository Boundaries and Omits Split/Schedule Reassignment
+### [C-F02] Bulk Preset Deletion Loses Quick Preset Categories and Bypasses Domain Ownership - RESOLVED
 
-- **Category:** Architecture Boundary (Rule 4 & Rule 12) / Foreign Key Crash
-- **Severity:** High
-- **Rule Reference:** AGENTS.md Section 4 (Cross-Module Communication via Services) & Section 12
-- **Location:** [categories.repository.ts](file:///c:/expo-repo/finance-app/src/modules/categories/repositories/categories.repository.ts#L377-L388), [category-presets.service.ts](file:///c:/expo-repo/finance-app/src/modules/categories/services/category-presets.service.ts#L48-L68)
-- **Evidence / Repro:**
-  In `categories.repository.ts`:
-  ```ts
-  export async function deleteCategoryPresetData(
-    db: DbContext,
-    id: string,
-    fallbackId: string,
-  ): Promise<void> {
-    await db
-      .update(transactions)
-      .set({ categoryId: fallbackId, updatedAt: new Date() })
-      .where(eq(transactions.categoryId, id));
-
-    await db.delete(categories).where(eq(categories.id, id));
-  }
-  ```
-  1. `categories.repository.ts` directly imports and mutates the `transactions` schema table, violating Rule 4 and Rule 12.
-  2. It ONLY updates `transactions.categoryId`. It fails to reassign `transaction_entries` (splits), which have `onDelete: "restrict"`. If a user created a split transaction with a preset category (e.g. `cat_sub_food_groceries`), calling `deleteCategoryPresets` throws `FOREIGN KEY constraint failed`.
-- **Remediation:**
-  Refactor `deleteCategoryPresetData` to delegate transaction reassignment to `reassignTransactionCategoryReferences` exported by `@/modules/transactions`, removing direct `transactions` table references from `categories.repository.ts`.
+- **Category:** Data Preservation / Architecture Boundary / Atomicity
+- **Severity:** Medium - **RESOLVED**
+- **Rule Reference:** AGENTS.md Sections 4 (Cross-Module Services), 13 (Transactions), and 19 (Performance)
+- **Location:** `src/modules/categories/services/category-presets.service.ts`, `src/modules/categories/repositories/categories.repository.ts`, and `src/modules/categories/hooks/use-categories.ts`.
+- **Confirmed scope and reproduction:**
+  - The Categories screen exposes **Manage category presets > Delete category presets** only when the `transactions` table is empty, including Trash. Individual category deletion is a separate path and already reassigns references correctly.
+  - Before recording a first transaction, a user can save a Quick Preset using a built-in category, then delete the category presets. The old bulk implementation cleared that Quick Preset's category through `ON DELETE SET NULL` instead of assigning the appropriate Others category.
+  - Split entries can block the old bulk service with a foreign-key error, but the current UI restriction prevents this scenario through normal navigation. This is service-level defensive coverage, not a normally reachable UI crash.
+  - Schedule reassignment was already added under C-F01; it was retained in this fix.
+  - SQL tracing showed the old async transaction callback committed before its awaited writes. A failure during category deletion left earlier deletions, reference changes, and custom-child detachment committed.
+- **Resolution:**
+  - The Categories service now calls `reassignTransactionCategoryReferences` through `@/modules/transactions` for built-in subcategories, groups, and the legacy Groceries category. Quick Presets, direct transactions, and split entries use the correct expense/income fallback.
+  - The Categories repository no longer imports or updates the transactions table. Its deletion and custom-child detachment helpers execute synchronously with `.run()` inside one synchronous Drizzle transaction callback.
+  - Existing schedule and due/failed occurrence reassignment remains inside the same transaction. Posted occurrence history, protected Others categories, and custom categories remain intact; custom children become top-level categories.
+  - Cache invalidation and category notification occur only after commit. Failed batches roll back in full and support retry.
+  - The hook defers deletion until after the pending state can paint, ignores repeated pending taps, and cancels the scheduled write on blur/unmount. The zero-transaction UI restriction remains unchanged.
+- **Verification:**
+  Four C-F02 regression tests in `category-changes.test.cjs` cover zero-transaction Quick Presets and schedules, income/expense and legacy fallbacks, custom/protected data preservation, posted history, repeated deletion, rollback/retry, notification timing, and deferred/cancelled writes. The service-level fixture includes 1,000 extra transactions; SQL statements stay bounded, no ledger is hydrated into JavaScript, category indexes are used, and foreign-key checks pass.
+- **Performance:**
+  No additional mount/focus queries, contexts, or subscriptions. The transaction reassignment service adds two indexed updates per category for split entries and Quick Presets. Existing schedule snapshot processing still scans due/failed occurrences per category; device frame-rate verification remains outstanding, so no measured 60-120fps claim is made.
 
 ---
 

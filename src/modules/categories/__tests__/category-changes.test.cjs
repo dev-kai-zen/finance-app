@@ -344,3 +344,223 @@ test("B06: deleteCategory safely reassigns split transaction entries, direct tra
   }
 });
 
+
+const { loadCategoryPresets, deleteCategoryPresets } = require("../services/category-presets.service");
+const { subscribeCategoryChanges } = require("../services/category-changes.service");
+
+const PRESET_REFERENCE_CASES = [
+  { id: "expense", type: "expense", from: "cat_sub_food_groceries", to: "cat_exp_others" },
+  { id: "income", type: "income", from: "cat_inc_salary", to: "cat_inc_others" },
+  { id: "legacy", type: "expense", from: "cat_exp_groceries", to: "cat_exp_others" },
+  { id: "custom", type: "expense", from: "cat_custom", to: "cat_custom" },
+  { id: "protected", type: "income", from: "cat_inc_others", to: "cat_inc_others" },
+];
+
+async function setupPresetDeletionFixture() {
+  setupTestDb();
+  await loadCategoryPresets(database);
+  const now = 1700000000000;
+  const insertCategory = sqlite.prepare(`INSERT INTO categories
+    (id, name, type, parent_id, is_system, sort_order, created_at, updated_at)
+    VALUES (?, ?, 'expense', ?, ?, 0, ?, ?)`);
+  insertCategory.run("cat_custom", "Custom", null, 0, now, now);
+  insertCategory.run("cat_custom_child", "Custom child", "cat_exp_food", 0, now, now);
+  insertCategory.run("cat_exp_groceries", "Legacy groceries", null, 1, now, now);
+  insertCategory.run("cat_legacy_child", "Legacy custom child", "cat_exp_groceries", 0, now, now);
+
+  for (const item of PRESET_REFERENCE_CASES) {
+    const amount = item.type === "income" ? 20000 : -10000;
+    sqlite.prepare(`INSERT INTO transaction_presets
+      (id, transaction_name, type, account_id, category_id, amount_minor_units, currency_code, created_at, updated_at)
+      VALUES (?, ?, ?, 'acc_1', ?, ?, 'PHP', ?, ?)`)
+      .run(`preset_${item.id}`, item.id, item.type, item.from, amount, now, now);
+    sqlite.prepare(`INSERT INTO transaction_schedules
+      (id, status, transaction_type, account_id, category_id, amount_minor_units, currency_code,
+       frequency, starts_at, time_zone, created_at, updated_at)
+      VALUES (?, ?, ?, 'acc_1', ?, ?, 'PHP', 'monthly', ?, 'Asia/Manila', ?, ?)`)
+      .run(`schedule_${item.id}`, item.type === "income" ? "paused" : "active", item.type, item.from, amount, now, now, now);
+    for (const [index, status] of ["due", "failed", "posted"].entries()) {
+      sqlite.prepare(`INSERT INTO transaction_schedule_occurrences
+        (id, schedule_id, sequence_number, nominal_due_at, template_snapshot, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(`occ_${item.id}_${status}`, `schedule_${item.id}`, index + 1, now + index * 86400000,
+          JSON.stringify({ categoryId: item.from, amountMinorUnits: amount, name: item.id }), status, now, now);
+    }
+  }
+}
+
+function presetDeletionSnapshot() {
+  return Object.fromEntries([
+    "categories", "accounts", "transactions", "transaction_entries", "transaction_presets",
+    "transaction_schedules", "transaction_schedule_occurrences",
+  ].map((table) => [table, sqlite.prepare(`SELECT * FROM ${table} ORDER BY id`).all().map((row) => ({ ...row }))]));
+}
+
+function assertReassignedRows(before, after) {
+  const fallbacks = new Map(PRESET_REFERENCE_CASES.map((item) => [item.from, item.to]));
+  assert.deepEqual(after, before.map((row, index) => ({
+    ...row,
+    category_id: fallbacks.get(row.category_id) ?? row.category_id,
+    updated_at: fallbacks.get(row.category_id) !== row.category_id && fallbacks.has(row.category_id)
+      ? after[index].updated_at : row.updated_at,
+  })));
+}
+
+test("C-F02: bulk deletion preserves Quick Presets and schedules before the first transaction", async () => {
+  await setupPresetDeletionFixture();
+  let notifications = 0;
+  const unsubscribe = subscribeCategoryChanges(() => {
+    assert.equal(queries.at(-1), "commit", "Notify only after the transaction commits");
+    notifications += 1;
+  });
+  try {
+    assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
+    const before = presetDeletionSnapshot();
+    queries = [];
+    await deleteCategoryPresets(database);
+    const after = presetDeletionSnapshot();
+    assertReassignedRows(before.transaction_presets, after.transaction_presets);
+    assertReassignedRows(before.transaction_schedules, after.transaction_schedules);
+    assert.deepEqual(after.accounts, before.accounts);
+    assert.deepEqual(after.categories, before.categories
+      .filter((row) => (!row.id.startsWith("cat_exp_") && !row.id.startsWith("cat_inc_") && !row.id.startsWith("cat_sub_"))
+        || ["cat_exp_others", "cat_inc_others"].includes(row.id))
+      .map((row) => ({ ...row, parent_id: row.parent_id ? null : row.parent_id,
+        updated_at: row.parent_id ? after.categories.find((category) => category.id === row.id).updated_at : row.updated_at })));
+    for (const [index, row] of before.transaction_schedule_occurrences.entries()) {
+      const actual = after.transaction_schedule_occurrences[index];
+      if (row.status === "posted") {
+        assert.deepEqual(actual, row, "Historical occurrence snapshots remain unchanged");
+      } else {
+        const snapshot = JSON.parse(row.template_snapshot);
+        const expectedCategory = PRESET_REFERENCE_CASES.find((item) => item.from === snapshot.categoryId).to;
+        assert.deepEqual(JSON.parse(actual.template_snapshot), { ...snapshot, categoryId: expectedCategory });
+        assert.deepEqual(actual, { ...row, template_snapshot: actual.template_snapshot, updated_at: actual.updated_at });
+      }
+    }
+    assert.equal(notifications, 1);
+    assert.equal(queries[0], "begin");
+    assert.equal(queries.at(-1), "commit");
+    assert.equal(queries.filter((query) => /^(begin|commit)$/i.test(query)).length, 2);
+    assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+    queries = [];
+    await deleteCategoryPresets(database);
+    assert.deepEqual(presetDeletionSnapshot(), after, "Repeated deletion leaves the remaining data intact");
+  } finally {
+    unsubscribe();
+    sqlite.close();
+  }
+});
+
+test("C-F02: service-level deletion preserves direct and split transactions with bounded indexed writes", async () => {
+  await setupPresetDeletionFixture();
+  try {
+    const now = 1700000000000;
+    const insertTransaction = sqlite.prepare(`INSERT INTO transactions
+      (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
+      VALUES (?, 'acc_1', ?, ?, ?, ?, ?, ?, ?)`);
+    for (const item of PRESET_REFERENCE_CASES) {
+      const amount = item.type === "income" ? 20000 : -10000;
+      insertTransaction.run(`direct_${item.id}`, item.from, item.type, amount, item.id, now, now, now);
+      insertTransaction.run(`split_${item.id}`, null, item.type, amount, item.id, now, now, now);
+      sqlite.prepare(`INSERT INTO transaction_entries
+        (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)`)
+        .run(`entry_${item.id}`, `split_${item.id}`, item.from, Math.abs(amount), now, now);
+    }
+    for (let index = 0; index < 1000; index += 1) {
+      insertTransaction.run(`extra_${index}`, "cat_sub_food_groceries", "expense", -100, "Large fixture", now, now, now);
+    }
+    const before = presetDeletionSnapshot();
+    queries = [];
+    await deleteCategoryPresets(database);
+    const after = presetDeletionSnapshot();
+    assertReassignedRows(before.transactions, after.transactions);
+    assertReassignedRows(before.transaction_entries, after.transaction_entries);
+    assertReassignedRows(before.transaction_presets, after.transaction_presets);
+    assert.deepEqual(after.accounts, before.accounts);
+    assert.equal(queries[0], "begin");
+    assert.equal(queries.at(-1), "commit");
+    assert.ok(queries.length < 450, "SQL statement count stays bounded despite 1,000 additional transactions");
+    assert.ok(!queries.some((query) => /^select\b.*\bfrom "(?:transactions|transaction_entries|transaction_presets)"/i.test(query)),
+      "Reassignment never hydrates the ledger or presets into JavaScript");
+    for (const table of ["transactions", "transaction_entries", "transaction_presets"]) {
+      const plan = sqlite.prepare(`EXPLAIN QUERY PLAN UPDATE ${table} SET category_id = ? WHERE category_id = ?`)
+        .all("cat_exp_others", "cat_sub_food_groceries").map((row) => row.detail).join("\n");
+      assert.match(plan, /USING (?:COVERING )?INDEX .*category/i);
+      assert.doesNotMatch(plan, /TEMP B-TREE/i);
+    }
+    assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("C-F02: a mid-deletion failure rolls back references, removed categories, and detached custom children", async () => {
+  await setupPresetDeletionFixture();
+  let notifications = 0;
+  const unsubscribe = subscribeCategoryChanges(() => { notifications += 1; });
+  try {
+    sqlite.exec(`
+      INSERT INTO transactions
+        (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
+      VALUES ('rollback_direct', 'acc_1', 'cat_sub_food_groceries', 'expense', -10000, 'Direct', 1, 1, 1),
+             ('rollback_split', 'acc_1', NULL, 'expense', -10000, 'Split', 1, 1, 1);
+      INSERT INTO transaction_entries
+        (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+      VALUES ('rollback_entry', 'rollback_split', 'cat_sub_food_groceries', 10000, 1, 1);
+    `);
+    const before = presetDeletionSnapshot();
+    sqlite.exec(`CREATE TRIGGER fail_preset_deletion BEFORE DELETE ON categories
+      WHEN OLD.id = 'cat_exp_food'
+      BEGIN SELECT RAISE(ABORT, 'Injected preset deletion failure'); END;`);
+    queries = [];
+    await assert.rejects(deleteCategoryPresets(database), /Injected preset deletion failure/);
+    assert.deepEqual(presetDeletionSnapshot(), before);
+    assert.equal(notifications, 0, "Failed deletion does not notify consumers");
+    assert.equal(queries[0], "begin");
+    assert.equal(queries.at(-1), "rollback");
+    assert.ok(!queries.includes("commit"));
+    sqlite.exec("DROP TRIGGER fail_preset_deletion");
+    queries = [];
+    await deleteCategoryPresets(database);
+    assert.equal(notifications, 1, "Retry commits and notifies once");
+    assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+  } finally {
+    unsubscribe();
+    sqlite.close();
+  }
+});
+
+test("C-F02: bulk deletion waits for paint and cancels pending work on blur", async () => {
+  await setupPresetDeletionFixture();
+  const h = mountCategories({ skipQuery: true });
+  try {
+    h.render();
+    await h.flush();
+    const before = presetDeletionSnapshot();
+    queries = [];
+    const cancelled = h.render().deleteCategoryPresets();
+    assert.equal(h.render().saving, true);
+    assert.equal(queries.length, 0, "The pending state can paint before any database work");
+    assert.equal(await h.render().deleteCategoryPresets(), false, "Ignore repeated taps while pending");
+    h.blur();
+    assert.equal(await cancelled, false);
+    await h.flush();
+    assert.deepEqual(presetDeletionSnapshot(), before);
+    assert.equal(queries.length, 0, "Blur cancels the scheduled write");
+    h.focus();
+    h.render();
+    await h.flush();
+    const deleted = h.render().deleteCategoryPresets();
+    assert.equal(queries.length, 0);
+    await h.flush();
+    assert.equal(await deleted, true);
+    assert.equal(h.render().saving, false);
+    assert.equal(queries[0], "begin");
+    assert.equal(queries.at(-1), "commit");
+  } finally {
+    h.blur();
+    sqlite.close();
+  }
+});

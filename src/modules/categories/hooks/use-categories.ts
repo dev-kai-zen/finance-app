@@ -26,6 +26,7 @@ export function useCategories(options?: UseCategoriesOptions) {
   const focusedRef = useRef(false);
   const requestIdRef = useRef(0);
   const cancelPendingRef = useRef<(() => void) | null>(null);
+  const cancelPresetDeletionRef = useRef<(() => void) | null>(null);
   const cancelPending = useCallback(() => {
     ++requestIdRef.current;
     cancelPendingRef.current?.();
@@ -70,6 +71,8 @@ export function useCategories(options?: UseCategoriesOptions) {
       focusedRef.current = false;
       unsubscribe?.();
       cancelPending();
+      cancelPresetDeletionRef.current?.();
+      cancelPresetDeletionRef.current = null;
     };
   }, [cancelPending, refresh, skipQuery]));
 
@@ -153,9 +156,18 @@ export function useCategories(options?: UseCategoriesOptions) {
   }, [refresh]);
 
   const removePresets = useCallback(async (): Promise<boolean> => {
+    if (cancelPresetDeletionRef.current) return false;
     try {
       setSaving(true);
       setError(null);
+      const ready = await new Promise<boolean>((resolve) => {
+        const cancelPaint = scheduleAfterPaint(() => {
+          cancelPresetDeletionRef.current = null;
+          resolve(true);
+        });
+        cancelPresetDeletionRef.current = () => { cancelPaint(); resolve(false); };
+      });
+      if (!ready) return false;
       await deleteCategoryPresetsService();
       await refresh();
       return true;
