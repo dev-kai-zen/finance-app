@@ -39,11 +39,13 @@ export type DatePreset =
 
 export interface TransactionFilterState {
   type: TransactionType | "all";
+  flow?: "inflow" | "outflow";
   datePreset: DatePreset;
   customDateFrom: string | null;
   customDateTo: string | null;
   accountIds: string[];
   categoryIds?: string[];
+  exactCategory?: boolean;
   labelIds?: string[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";

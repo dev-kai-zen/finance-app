@@ -499,10 +499,10 @@ function DashboardScreenContent() {
             currencyCode={currencyPreferences.defaultCurrency}
             onPressReports={() => router.navigate("/reports" as any)}
             onPressIncome={() =>
-              router.navigate("/transactions?type=income&datePreset=this_month" as any)
+              router.navigate("/transactions?flow=inflow&datePreset=this_month" as any)
             }
             onPressExpense={() =>
-              router.navigate("/transactions?type=expense&datePreset=this_month" as any)
+              router.navigate("/transactions?flow=outflow&datePreset=this_month" as any)
             }
           />
         );
@@ -532,7 +532,7 @@ function DashboardScreenContent() {
             }
             onPressCategory={(categoryId) =>
               router.navigate(
-                `/transactions?categoryId=${encodeURIComponent(categoryId)}&datePreset=this_month` as any,
+                `/transactions?categoryId=${encodeURIComponent(categoryId)}&datePreset=this_month&exactCategory=true` as any,
               )
             }
           />

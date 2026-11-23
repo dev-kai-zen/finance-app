@@ -471,6 +471,85 @@ test("F03: SQLite filter predicates match account, category+split, label, search
   sqlite.close();
 });
 
+test("D-F04: flow direction filter and uncategorized category queries match signed amounts and NULL categories", () => {
+  connectAndMigrate();
+  const baseTime = Date.UTC(2026, 9, 1, 12, 0, 0);
+  const typeId = sqlite.prepare("SELECT id FROM account_types LIMIT 1").get().id;
+
+  sqlite
+    .prepare(
+      "INSERT INTO accounts (id, name, account_type_id, currency_code, opening_balance_minor_units, opening_balance_at, is_archived, sort_order, hide_from_selection, hide_from_reports, pocket_enabled, created_at, updated_at) VALUES (?, ?, ?, 'PHP', 100000, ?, 0, 0, 0, 0, 0, ?, ?)",
+    )
+    .run("acc_test", "Main Account", typeId, baseTime, baseTime, baseTime);
+
+  const insertCat = sqlite.prepare(
+    "INSERT INTO categories (id, name, type, icon, hex_colors_id, parent_id, sort_order, is_system, created_at, updated_at) VALUES (?, ?, ?, 'tag', NULL, NULL, 0, 0, ?, ?)",
+  );
+  insertCat.run("cat_food", "Food", "expense", baseTime, baseTime);
+  insertCat.run("cat_salary", "Salary", "income", baseTime, baseTime);
+
+  const insertTx = sqlite.prepare(
+    "INSERT INTO transactions (id, account_id, category_id, pocket_id, transaction_group_id, type, currency_code, amount_minor_units, name, note, occurred_at, created_at, updated_at, deleted_at) VALUES (?, 'acc_test', ?, NULL, ?, ?, 'PHP', ?, ?, NULL, ?, ?, ?, NULL)",
+  );
+
+  // Normal income (+50000)
+  insertTx.run("tx_inc", "cat_salary", null, "income", 50000, "Salary", baseTime + 1000, baseTime + 1000, baseTime + 1000);
+  // Normal expense (-1000)
+  insertTx.run("tx_exp_normal", "cat_food", null, "expense", -1000, "Dinner", baseTime + 2000, baseTime + 2000, baseTime + 2000);
+  // Expense refund (+200) -> positive amount on an expense
+  insertTx.run("tx_exp_refund", "cat_food", null, "expense", 200, "Dinner Refund", baseTime + 3000, baseTime + 3000, baseTime + 3000);
+  // Negative income deduction (-50) -> negative amount on an income
+  insertTx.run("tx_inc_negative", "cat_salary", null, "income", -50, "Tax Adjustment", baseTime + 4000, baseTime + 4000, baseTime + 4000);
+  // Uncategorized expense (-300) -> category_id is NULL
+  insertTx.run("tx_uncategorized", null, null, "expense", -300, "Unknown Item", baseTime + 5000, baseTime + 5000, baseTime + 5000);
+  // Transfer legs
+  insertTx.run("tx_tr_out", null, "grp_flow", "transfer", -5000, "Transfer Out", baseTime + 6000, baseTime + 6000, baseTime + 6000);
+  insertTx.run("tx_tr_in", null, "grp_flow", "transfer", 5000, "Transfer In", baseTime + 6000, baseTime + 6000, baseTime + 6000);
+
+  // 1. Flow Inflow: matches income (+50000) AND expense refund (+200), excludes transfers & negative rows
+  const inflowResult = collectAllPages({ flow: "inflow" }, 10);
+  assert.deepEqual(
+    inflowResult.items.map((i) => i.id).sort(),
+    ["tx_exp_refund", "tx_inc"],
+  );
+
+  // 2. Flow Outflow: matches normal expense (-1000), deduction (-50), and uncategorized expense (-300)
+  const outflowResult = collectAllPages({ flow: "outflow" }, 10);
+  assert.deepEqual(
+    outflowResult.items.map((i) => i.id).sort(),
+    ["tx_exp_normal", "tx_inc_negative", "tx_uncategorized"],
+  );
+
+  // 3. Category "uncategorized": matches tx_uncategorized where categoryId IS NULL
+  const uncatResult = collectAllPages({ categoryIds: ["uncategorized"] }, 10);
+  assert.deepEqual(
+    uncatResult.items.map((i) => i.id),
+    ["tx_uncategorized"],
+  );
+
+  // 4. Combined real category and "uncategorized"
+  const combinedCatResult = collectAllPages({ categoryIds: ["cat_food", "uncategorized"] }, 10);
+  assert.deepEqual(
+    combinedCatResult.items.map((i) => i.id).sort(),
+    ["tx_exp_normal", "tx_exp_refund", "tx_uncategorized"],
+  );
+
+  // 5. listTransactions baseline compatibility
+  const baselineInflow = listTransactions({ flow: "inflow" }, database);
+  assert.deepEqual(
+    baselineInflow.map((i) => i.id).sort(),
+    ["tx_exp_refund", "tx_inc"],
+  );
+
+  const baselineUncat = listTransactions({ categoryId: "uncategorized" }, database);
+  assert.deepEqual(
+    baselineUncat.map((i) => i.id),
+    ["tx_uncategorized"],
+  );
+
+  sqlite.close();
+});
+
 test("F03: findTransactionListItemById hydrates standalone, split, outLeg, and inLeg transfer IDs", () => {
   connectAndMigrate();
   seedMixedLedger();

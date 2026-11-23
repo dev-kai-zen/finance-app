@@ -5,18 +5,22 @@ export default function TransactionsRoute() {
   const {
     accountId,
     categoryId,
+    exactCategory,
     datePreset,
     action,
     type,
+    flow,
     search,
     inspectId,
     labelId,
   } = useLocalSearchParams<{
     accountId?: string;
     categoryId?: string;
+    exactCategory?: string;
     datePreset?: string;
     action?: string;
     type?: string;
+    flow?: string;
     search?: string;
     inspectId?: string;
     labelId?: string;
@@ -27,6 +31,7 @@ export default function TransactionsRoute() {
     typeof categoryId === "string" && categoryId.length > 0
       ? categoryId
       : undefined;
+  const initialExactCategory = exactCategory === "true";
   const initialDatePreset =
     typeof datePreset === "string" && datePreset.length > 0
       ? datePreset
@@ -35,6 +40,8 @@ export default function TransactionsRoute() {
     typeof action === "string" && action.length > 0 ? action : undefined;
   const initialType =
     typeof type === "string" && type.length > 0 ? type : undefined;
+  const initialFlow =
+    flow === "inflow" || flow === "outflow" ? flow : undefined;
   const initialSearch =
     typeof search === "string" && search.length > 0 ? search : undefined;
   const initialInspectId =
@@ -48,9 +55,11 @@ export default function TransactionsRoute() {
     <TransactionsScreen
       initialAccountId={initialAccountId}
       initialCategoryId={initialCategoryId}
+      initialExactCategory={initialExactCategory}
       initialDatePreset={initialDatePreset}
       initialAction={initialAction}
       initialType={initialType}
+      initialFlow={initialFlow}
       initialSearch={initialSearch}
       initialInspectId={initialInspectId}
       initialLabelId={initialLabelId}

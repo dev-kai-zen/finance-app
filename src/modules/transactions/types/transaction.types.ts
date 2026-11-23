@@ -193,6 +193,7 @@ export interface UpdateTransferInput {
 
 export interface TransactionFilter {
   type?: "all" | "income" | "expense" | "transfer";
+  flow?: "inflow" | "outflow";
   accountId?: string;
   categoryId?: string;
   searchQuery?: string;
@@ -216,6 +217,7 @@ export interface TransactionPageCursor {
 
 export interface TransactionPageFilter {
   type?: "all" | "income" | "expense" | "transfer";
+  flow?: "inflow" | "outflow";
   accountIds?: string[];
   categoryIds?: string[];
   labelIds?: string[];

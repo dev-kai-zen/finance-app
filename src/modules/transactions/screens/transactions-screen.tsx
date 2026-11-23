@@ -169,6 +169,8 @@ function initialFilterState(
   accountId?: string,
   initialType?: string,
   initialLabelId?: string,
+  initialFlow?: "inflow" | "outflow",
+  initialExactCategory?: boolean,
 ): TransactionFilterState {
   const filterType =
     initialType === "expense" || initialType === "income" || initialType === "transfer"
@@ -180,14 +182,23 @@ function initialFilterState(
     datePreset === "this_year"
       ? datePreset
       : "all";
-  if (!accountId && !categoryId && !initialLabelId && filterType === "all" && validPreset === "all") {
+  if (
+    !accountId &&
+    !categoryId &&
+    !initialLabelId &&
+    !initialFlow &&
+    filterType === "all" &&
+    validPreset === "all"
+  ) {
     return DEFAULT_TRANSACTION_FILTERS;
   }
   return {
     ...DEFAULT_TRANSACTION_FILTERS,
     ...(accountId ? { accountIds: [accountId] } : {}),
     ...(categoryId ? { categoryIds: [categoryId] } : {}),
+    ...(initialExactCategory ? { exactCategory: true } : {}),
     ...(initialLabelId ? { labelIds: [initialLabelId] } : {}),
+    ...(initialFlow ? { flow: initialFlow } : {}),
     datePreset: validPreset,
     type: filterType,
   };
@@ -195,10 +206,12 @@ function initialFilterState(
 
 export interface TransactionsScreenProps {
   initialCategoryId?: string;
+  initialExactCategory?: boolean;
   initialDatePreset?: string;
   initialAccountId?: string;
   initialAction?: string;
   initialType?: string;
+  initialFlow?: "inflow" | "outflow";
   initialSearch?: string;
   initialInspectId?: string;
   initialLabelId?: string;
@@ -214,10 +227,12 @@ export function TransactionsScreen(props: TransactionsScreenProps = {}) {
 
 function TransactionsScreenContent({
   initialCategoryId,
+  initialExactCategory,
   initialDatePreset,
   initialAccountId,
   initialAction,
   initialType,
+  initialFlow,
   initialSearch,
   initialInspectId,
   initialLabelId,
@@ -240,6 +255,8 @@ function TransactionsScreenContent({
       initialAction !== "new" ? initialAccountId : undefined,
       initialAction !== "new" ? initialType : undefined,
       initialAction !== "new" ? initialLabelId : undefined,
+      initialAction !== "new" ? initialFlow : undefined,
+      initialAction !== "new" ? initialExactCategory : undefined,
     ),
   );
 
@@ -265,6 +282,9 @@ function TransactionsScreenContent({
     if (!filterState.categoryIds || filterState.categoryIds.length === 0) {
       return undefined;
     }
+    if (filterState.exactCategory) {
+      return filterState.categoryIds;
+    }
     const matchingCatIds = new Set<string>();
     for (const catId of filterState.categoryIds) {
       matchingCatIds.add(catId);
@@ -276,12 +296,13 @@ function TransactionsScreenContent({
       }
     }
     return Array.from(matchingCatIds);
-  }, [categories, filterState.categoryIds]);
+  }, [categories, filterState.categoryIds, filterState.exactCategory]);
 
   const pageFilter = useMemo<TransactionPageFilter>(() => {
     const dateRange = resolveDateRangeForFilter(filterState);
     return {
       type: filterState.type,
+      flow: filterState.flow,
       accountIds:
         filterState.accountIds.length > 0 ? filterState.accountIds : undefined,
       categoryIds: expandedCategoryIds,
@@ -485,7 +506,7 @@ function TransactionsScreenContent({
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useEffect(() => {
-    if (initialAction !== "new" && initialType) {
+    if (initialAction !== "new" && (initialType || initialFlow)) {
       setFilterState(
         initialFilterState(
           initialCategoryId,
@@ -493,11 +514,13 @@ function TransactionsScreenContent({
           initialAccountId,
           initialType,
           initialLabelId,
+          initialFlow,
+          initialExactCategory,
         ),
       );
     } else if (
       initialAction !== "new" &&
-      (initialAccountId || initialCategoryId || initialDatePreset || initialLabelId)
+      (initialAccountId || initialCategoryId || initialDatePreset || initialLabelId || initialExactCategory)
     ) {
       setFilterState(
         initialFilterState(
@@ -506,6 +529,8 @@ function TransactionsScreenContent({
           initialAccountId,
           undefined,
           initialLabelId,
+          undefined,
+          initialExactCategory,
         ),
       );
     }
@@ -514,6 +539,8 @@ function TransactionsScreenContent({
     initialAction,
     initialCategoryId,
     initialDatePreset,
+    initialExactCategory,
+    initialFlow,
     initialLabelId,
     initialType,
   ]);
@@ -668,6 +695,7 @@ function TransactionsScreenContent({
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filterState.type !== "all") count += 1;
+    if (filterState.flow) count += 1;
     if (filterState.datePreset !== "all") count += 1;
     if (filterState.accountIds.length > 0) count += 1;
     if (filterState.categoryIds && filterState.categoryIds.length > 0) count += 1;
@@ -1268,6 +1296,23 @@ function TransactionsScreenContent({
               </Pressable>
             ) : null}
 
+            {filterState.flow ? (
+              <Pressable
+                style={styles.activeFilterChip}
+                onPress={() =>
+                  setFilterState((prev) => ({ ...prev, flow: undefined }))
+                }
+                accessibilityRole="button"
+              >
+                <Text style={styles.activeFilterChipText}>
+                  {filterState.flow === "inflow"
+                    ? t("dashboard.cashflowIncome")
+                    : t("dashboard.cashflowExpenses")}
+                </Text>
+                <X size={13} color={theme.colors.primary} />
+              </Pressable>
+            ) : null}
+
             {filterState.datePreset !== "all" ? (
               <Pressable
                 style={styles.activeFilterChip}
@@ -1323,7 +1368,9 @@ function TransactionsScreenContent({
                 ...(c.subcategories ?? []),
               ]);
               const catName =
-                allCats.find((c) => c.id === catId)?.name ?? "Category";
+                catId === "uncategorized"
+                  ? t("common.uncategorized")
+                  : allCats.find((c) => c.id === catId)?.name ?? "Category";
               return (
                 <Pressable
                   key={`cat-${catId}`}
@@ -1334,6 +1381,7 @@ function TransactionsScreenContent({
                       categoryIds: (prev.categoryIds ?? []).filter(
                         (id) => id !== catId,
                       ),
+                      exactCategory: false,
                     }))
                   }
                   accessibilityRole="button"

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 
 export type { DbContext };
@@ -287,6 +287,13 @@ export function listTransactions(
   if (filter?.type && filter.type !== "all") {
     conditions.push(eq(transactions.type, filter.type));
   }
+  if (filter?.flow === "inflow") {
+    conditions.push(ne(transactions.type, "transfer"));
+    conditions.push(gt(transactions.amountMinorUnits, 0));
+  } else if (filter?.flow === "outflow") {
+    conditions.push(ne(transactions.type, "transfer"));
+    conditions.push(lt(transactions.amountMinorUnits, 0));
+  }
   if (filter?.accountId) {
     conditions.push(
       or(
@@ -300,16 +307,21 @@ export function listTransactions(
     );
   }
   if (filter?.categoryId) {
-    conditions.push(
-      or(
-        eq(transactions.categoryId, filter.categoryId),
-        sql`EXISTS (
-          SELECT 1 FROM ${transactionEntries} split_entry
-          WHERE split_entry.transaction_id = ${transactions.id}
-            AND split_entry.category_id = ${filter.categoryId}
-        )`,
-      ),
-    );
+    if (filter.categoryId === "uncategorized") {
+      conditions.push(ne(transactions.type, "transfer"));
+      conditions.push(isNull(transactions.categoryId));
+    } else {
+      conditions.push(
+        or(
+          eq(transactions.categoryId, filter.categoryId),
+          sql`EXISTS (
+            SELECT 1 FROM ${transactionEntries} split_entry
+            WHERE split_entry.transaction_id = ${transactions.id}
+              AND split_entry.category_id = ${filter.categoryId}
+          )`,
+        ),
+      );
+    }
   }
   if (filter?.labelIds && filter.labelIds.length > 0) {
     conditions.push(
@@ -597,6 +609,14 @@ function buildTransactionPageConditions(
     conditions.push(eq(transactions.type, filter.type));
   }
 
+  if (filter?.flow === "inflow") {
+    conditions.push(ne(transactions.type, "transfer"));
+    conditions.push(gt(transactions.amountMinorUnits, 0));
+  } else if (filter?.flow === "outflow") {
+    conditions.push(ne(transactions.type, "transfer"));
+    conditions.push(lt(transactions.amountMinorUnits, 0));
+  }
+
   if (filter?.accountIds && filter.accountIds.length > 0) {
     const accountIds = filter.accountIds;
     const siblingAccountMatches = sql.join(
@@ -623,20 +643,44 @@ function buildTransactionPageConditions(
 
   if (filter?.categoryIds && filter.categoryIds.length > 0) {
     const categoryIds = filter.categoryIds;
-    const splitCatMatches = sql.join(
-      categoryIds.map((id) => sql`${id}`),
-      sql`, `,
-    );
-    conditions.push(
-      or(
-        inArray(transactions.categoryId, categoryIds),
-        sql`EXISTS (
-          SELECT 1 FROM transaction_entries split_entry
-          WHERE split_entry.transaction_id = "transactions"."id"
-            AND split_entry.category_id IN (${splitCatMatches})
-        )`,
-      )!,
-    );
+    const hasUncategorized = categoryIds.includes("uncategorized");
+    const realCategoryIds = categoryIds.filter((id) => id !== "uncategorized");
+
+    if (hasUncategorized && realCategoryIds.length === 0) {
+      conditions.push(ne(transactions.type, "transfer"));
+      conditions.push(isNull(transactions.categoryId));
+    } else if (hasUncategorized && realCategoryIds.length > 0) {
+      const splitCatMatches = sql.join(
+        realCategoryIds.map((id) => sql`${id}`),
+        sql`, `,
+      );
+      conditions.push(
+        or(
+          inArray(transactions.categoryId, realCategoryIds),
+          and(ne(transactions.type, "transfer"), isNull(transactions.categoryId)),
+          sql`EXISTS (
+            SELECT 1 FROM transaction_entries split_entry
+            WHERE split_entry.transaction_id = "transactions"."id"
+              AND split_entry.category_id IN (${splitCatMatches})
+          )`,
+        )!,
+      );
+    } else {
+      const splitCatMatches = sql.join(
+        categoryIds.map((id) => sql`${id}`),
+        sql`, `,
+      );
+      conditions.push(
+        or(
+          inArray(transactions.categoryId, categoryIds),
+          sql`EXISTS (
+            SELECT 1 FROM transaction_entries split_entry
+            WHERE split_entry.transaction_id = "transactions"."id"
+              AND split_entry.category_id IN (${splitCatMatches})
+          )`,
+        )!,
+      );
+    }
   }
 
   if (filter?.labelIds && filter.labelIds.length > 0) {
