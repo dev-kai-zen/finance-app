@@ -396,7 +396,19 @@ test("P3-05: Dashboard balances skip management scans and retain amounts", () =>
     queries = [];
     const summary = getDashboardSummary(f.db, f.date, { includeNetWorthHistory: false, includeRecentTransactions: false, includeCategoryBreakdown: false });
     assert.deepEqual(summary.accountsWithBalances, lean);
+    assert.equal(typeof summary.currencyCode, "string");
+    assert.ok(summary.currencyCode.length > 0);
     assert.equal(queries.filter(sql => sql.includes('from "accounts"')).length, 1, "Fetch account snapshot once");
     assert.ok(!queries.some(sql => sql.includes('from "schedules"')));
+  } finally { sqlite.close(); }
+});
+
+test("D-F06: getDashboardSummary includes atomic currencyCode snapshot", () => {
+  const f = fixture();
+  try {
+    const { getDashboardSummary } = require("../repositories/dashboard.repository");
+    const summary = getDashboardSummary(f.db, f.date, { includeNetWorthHistory: false, includeRecentTransactions: false, includeCategoryBreakdown: false });
+    assert.equal(typeof summary.currencyCode, "string");
+    assert.ok(["PHP", "USD", "EUR"].includes(summary.currencyCode));
   } finally { sqlite.close(); }
 });

@@ -428,6 +428,7 @@ export const es = {
     keepEditing: "Seguir editando",
     account: "Cuenta",
     uncategorized: "Sin categoría",
+    retry: "Reintentar",
   },
   accounts: {
     expand: "Expandir",

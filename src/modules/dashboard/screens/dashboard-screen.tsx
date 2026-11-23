@@ -202,12 +202,14 @@ function DashboardScreenContent() {
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
-      refreshDashboard();
-      refreshAccounts();
-      void refreshCategories();
-      refreshPresets();
+      await Promise.allSettled([
+        refreshDashboard(),
+        refreshAccounts(),
+        refreshCategories(),
+        refreshPresets(),
+      ]);
     } finally {
-      setTimeout(() => setIsPullRefreshing(false), 500);
+      setIsPullRefreshing(false);
     }
   }, [refreshDashboard, refreshAccounts, refreshCategories, refreshPresets]);
 
@@ -467,7 +469,7 @@ function DashboardScreenContent() {
         return (
           <DashboardNetWorthCard
             key="netWorth"
-            currencyCode={currencyPreferences.defaultCurrency}
+            currencyCode={summary.currencyCode ?? currencyPreferences.defaultCurrency}
             history={summary.netWorthHistory}
             homeMode={homeMode}
             monthlyChangePercentage={summary.netWorthChangePercentage}
@@ -496,7 +498,7 @@ function DashboardScreenContent() {
           <DashboardCashflowCard
             key="cashflow"
             cashflow={summary.monthlyCashflow}
-            currencyCode={currencyPreferences.defaultCurrency}
+            currencyCode={summary.currencyCode ?? currencyPreferences.defaultCurrency}
             onPressReports={() => router.navigate("/reports" as any)}
             onPressIncome={() =>
               router.navigate("/transactions?flow=inflow&datePreset=this_month" as any)
@@ -524,7 +526,7 @@ function DashboardScreenContent() {
           <DashboardTopCategoriesCard
             key="topCategories"
             categories={summary.topSpendingCategories}
-            currencyCode={currencyPreferences.defaultCurrency}
+            currencyCode={summary.currencyCode ?? currencyPreferences.defaultCurrency}
             onViewAll={() =>
               router.navigate(
                 "/transactions?type=expense&datePreset=this_month" as any,
@@ -541,7 +543,7 @@ function DashboardScreenContent() {
         return (
           <RecentTransactionsCard
             key="recentTransactions"
-            currencyCode={currencyPreferences.defaultCurrency}
+            currencyCode={summary.currencyCode ?? currencyPreferences.defaultCurrency}
             onPressTransaction={(tx) => setInspectedTransaction(tx)}
             onViewAll={handleViewAllTransactions}
             transactions={recentTx}
@@ -581,6 +583,25 @@ function DashboardScreenContent() {
       }
     >
       <View style={styles.container}>
+        {summary && dashboardError ? (
+          <View style={styles.backgroundErrorBanner}>
+            <Text style={styles.backgroundErrorText} numberOfLines={2}>
+              {dashboardError}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void refreshDashboard()}
+              style={({ pressed }) => [
+                styles.backgroundErrorRetryBtn,
+                pressed && styles.customizeHomeBtnPressed,
+              ]}
+            >
+              <Text style={styles.backgroundErrorRetryText}>
+                {t("common.retry")}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
         {workspaceState.status === "completed" &&
         workspaceState.mode === "personal" &&
         workspaceState.setupStrategy === "manual" ? (
@@ -850,6 +871,35 @@ function createStyles(theme: AppTheme) {
       ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(0,0,0,0.01)",
       zIndex: 99999,
+    },
+    backgroundErrorBanner: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}15`,
+      borderColor: `${theme.colors.danger}35`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    backgroundErrorText: {
+      color: theme.colors.danger,
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    backgroundErrorRetryBtn: {
+      backgroundColor: theme.colors.danger,
+      borderRadius: theme.borderRadius.small,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    backgroundErrorRetryText: {
+      color: theme.colors.surface,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     container: {
       gap: theme.spacing.lg,

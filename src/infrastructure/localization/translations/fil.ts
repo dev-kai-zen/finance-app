@@ -427,6 +427,7 @@ export const fil = {
     keepEditing: "Ipagpatuloy ang Pag-edit",
     account: "Account",
     uncategorized: "Walang kategorya",
+    retry: "Subukan Muli",
   },
   accounts: {
     expand: "I-expand",

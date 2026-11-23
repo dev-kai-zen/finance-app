@@ -421,6 +421,7 @@ export const en = {
     keepEditing: "Keep Editing",
     account: "Account",
     uncategorized: "Uncategorized",
+    retry: "Retry",
   },
   accounts: {
     expand: "Expand",

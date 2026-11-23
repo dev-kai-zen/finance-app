@@ -41,6 +41,7 @@ export type NetWorthHistory = Record<
 };
 
 export interface DashboardSummary {
+  currencyCode: string;
   netWorthMinorUnits: number;
   totalAssetsMinorUnits: number;
   totalLiabilitiesMinorUnits: number;

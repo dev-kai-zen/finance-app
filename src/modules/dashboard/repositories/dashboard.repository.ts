@@ -229,6 +229,7 @@ export function getDashboardSummary(
       : null;
 
   return {
+    currencyCode: homeCurrency,
     netWorthMinorUnits: netWorth,
     totalAssetsMinorUnits: totalAssets,
     totalLiabilitiesMinorUnits: totalLiabilities,
