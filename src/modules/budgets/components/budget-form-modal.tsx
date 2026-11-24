@@ -111,9 +111,16 @@ function BudgetFormModalContent({
   const [budgetCurrencyCode] = useState(
     () => initialBudget?.currencyCode ?? preferences.defaultCurrency,
   );
-  const [categoryId, setCategoryId] = useState<string>(
-    () => initialBudget?.categoryId ?? "",
-  );
+  const [categoryId, setCategoryId] = useState<string>(() => {
+    if (initialBudget) return initialBudget.categoryId;
+    const budgetedCategoryIds = new Set(
+      existingBudgets.map((b) => b.categoryId),
+    );
+    const availableExpense = categories.find(
+      (c) => c.type === "expense" && !budgetedCategoryIds.has(c.id),
+    );
+    return availableExpense?.id || "";
+  });
   const [isEnabled, setIsEnabled] = useState<boolean>(
     () => initialBudget?.isEnabled ?? true,
   );
@@ -181,54 +188,9 @@ function BudgetFormModalContent({
 
   const frequencyScrollRef = useRef<ScrollView>(null);
   const initialSnapshotRef = useRef<string>("");
-
-  const frequencyOptions = useMemo(() => {
-    const selected = FREQUENCY_OPTIONS.find((opt) => opt.key === frequency);
-    const rest = FREQUENCY_OPTIONS.filter((opt) => opt.key !== frequency);
-    return selected ? [selected, ...rest] : FREQUENCY_OPTIONS;
-  }, [frequency]);
-
-  const handleSelectFrequency = (nextFrequency: BudgetFrequency) => {
-    setFrequency(nextFrequency);
-    frequencyScrollRef.current?.scrollTo({ x: 0, animated: true });
-  };
-
-  useEffect(() => {
-    let defaultCategoryId = "";
-    if (initialBudget) {
-      setCategoryId(initialBudget.categoryId);
-      setIsEnabled(initialBudget.isEnabled);
-      setAmountCents(initialBudget.amountMinorUnits);
-      setFrequency(initialBudget.frequency);
-      setAllowRollover(initialBudget.allowRollover);
-      setRolloverMode(initialBudget.rolloverMode);
-      setNotifyOnExceeded(initialBudget.notifyOnExceeded);
-      setMonthlyTargets(
-        initialBudget.monthlyTargets?.map((t) => ({
-          year: t.year,
-          month: t.month,
-          amountMinorUnits: t.amountMinorUnits,
-        })) || [],
-      );
-    } else {
-      const budgetedCategoryIds = new Set(
-        existingBudgets.map((b) => b.categoryId),
-      );
-      const availableExpense = categories.find(
-        (c) => c.type === "expense" && !budgetedCategoryIds.has(c.id),
-      );
-      defaultCategoryId = availableExpense?.id || "";
-      setCategoryId(defaultCategoryId);
-      setIsEnabled(true);
-      setAmountCents(0);
-      setFrequency("monthly");
-      setAllowRollover(false);
-      setRolloverMode("positive_only");
-      setNotifyOnExceeded(false);
-      setMonthlyTargets([]);
-    }
+  if (!initialSnapshotRef.current) {
     initialSnapshotRef.current = JSON.stringify({
-      categoryId: initialBudget ? initialBudget.categoryId : defaultCategoryId,
+      categoryId: initialBudget ? initialBudget.categoryId : categoryId,
       isEnabled: initialBudget ? initialBudget.isEnabled : true,
       amountMinorUnits: initialBudget ? initialBudget.amountMinorUnits : 0,
       frequency: initialBudget ? initialBudget.frequency : "monthly",
@@ -241,8 +203,44 @@ function BudgetFormModalContent({
         amountMinorUnits: t.amountMinorUnits,
       })) || [],
     });
-    setErrorNotification(null);
-  }, [initialBudget, categories, existingBudgets, visible]);
+  }
+
+  const frequencyOptions = useMemo(() => {
+    const selected = FREQUENCY_OPTIONS.find((opt) => opt.key === frequency);
+    const rest = FREQUENCY_OPTIONS.filter((opt) => opt.key !== frequency);
+    return selected ? [selected, ...rest] : FREQUENCY_OPTIONS;
+  }, [frequency]);
+
+  const handleSelectFrequency = (nextFrequency: BudgetFrequency) => {
+    setFrequency(nextFrequency);
+    frequencyScrollRef.current?.scrollTo({ x: 0, animated: true });
+  };
+
+  // If a new budget opened before categories finished loading, assign the first unbudgeted category once ready
+  useEffect(() => {
+    if (!initialBudget && !categoryId && categories.length > 0) {
+      const budgetedCategoryIds = new Set(
+        existingBudgets.map((b) => b.categoryId),
+      );
+      const availableExpense = categories.find(
+        (c) => c.type === "expense" && !budgetedCategoryIds.has(c.id),
+      );
+      if (availableExpense?.id) {
+        setCategoryId(availableExpense.id);
+        if (initialSnapshotRef.current) {
+          try {
+            const parsed = JSON.parse(initialSnapshotRef.current);
+            if (!parsed.categoryId) {
+              parsed.categoryId = availableExpense.id;
+              initialSnapshotRef.current = JSON.stringify(parsed);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+  }, [initialBudget, categoryId, categories, existingBudgets]);
 
   useEffect(() => {
     if (visible) {

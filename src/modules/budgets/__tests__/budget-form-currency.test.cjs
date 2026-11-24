@@ -253,3 +253,63 @@ test("BUD-F01: closed budget forms do not read currency preferences", () => {
   assert.equal(h.preferenceReads, reads);
   h.unmount();
 });
+
+test("BUD-F06: background supporting data refresh preserves unsaved form changes in edit and new modes", () => {
+  // 1. Edit mode: start with initialBudget of 5,000 PHP (500000 cents)
+  const initial = {
+    id: "b_food",
+    categoryId: "food",
+    currencyCode: "PHP",
+    frequency: "monthly",
+    amountMinorUnits: 500000,
+    isEnabled: true,
+    allowRollover: false,
+    rolloverMode: "positive_only",
+    notifyOnExceeded: false,
+    monthlyTargets: [],
+  };
+  const h = form("PHP", initial);
+  let tree = h.render();
+  const calculator = find(tree, node => node.type === "AmountCalculatorModal");
+  // User changes amount to 15,000 PHP (1500000 cents)
+  enterAmount(calculator.props, "15000");
+  tree = h.render();
+  assert.equal(find(tree, node => node.type === "AmountCalculatorField").props.amountMinorUnits, 1500000);
+
+  // Now simulate background data refresh (e.g. useBudgets updates budgets or useCategories updates categories)
+  // Passing new array instances for existingBudgets and categories:
+  h.props.existingBudgets = [{ ...initial }];
+  h.props.categories = [{ id: "food", name: "Food Renamed", type: "expense" }, { id: "travel", name: "Travel", type: "expense" }];
+  h.render();
+  tree = h.render();
+
+  // The draft amount must remain 15,000 PHP, NOT revert to 5,000 PHP!
+  assert.equal(find(tree, node => node.type === "AmountCalculatorField").props.amountMinorUnits, 1500000);
+  assert.equal(find(tree, node => node.type === "FullScreenFormModal").props.isDirty, true);
+
+  h.save(tree);
+  assert.equal(h.saved[0].amountMinorUnits, 1500000);
+  h.unmount();
+
+  // 2. New budget mode: start with no budget
+  const hNew = form("PHP", null);
+  tree = hNew.render();
+  const calcNew = find(tree, node => node.type === "AmountCalculatorModal");
+  enterAmount(calcNew.props, "8000");
+  tree = hNew.render();
+  assert.equal(find(tree, node => node.type === "AmountCalculatorField").props.amountMinorUnits, 800000);
+
+  // Background refresh triggers with new categories / existingBudgets
+  hNew.props.existingBudgets = [];
+  hNew.props.categories = [{ id: "food", name: "Food", type: "expense" }, { id: "transport", name: "Transport", type: "expense" }];
+  hNew.render();
+  tree = hNew.render();
+
+  // The draft amount in new budget mode must remain 8,000 PHP, NOT revert to 0!
+  assert.equal(find(tree, node => node.type === "AmountCalculatorField").props.amountMinorUnits, 800000);
+  assert.equal(find(tree, node => node.type === "FullScreenFormModal").props.isDirty, true);
+
+  hNew.save(tree);
+  assert.equal(hNew.saved[0].amountMinorUnits, 800000);
+  hNew.unmount();
+});
