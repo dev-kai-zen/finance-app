@@ -273,10 +273,27 @@ function BudgetsScreenContent({
     }
   }, [budgets, initialCategoryId, loading, router]);
 
-  const handleOpenEdit = (status: BudgetStatus) => {
+  const handleOpenEdit = useCallback((status: BudgetStatus) => {
     setBudgetToEdit(status.budget);
     setIsFormOpen(true);
-  };
+  }, []);
+
+  const handleToggle = useCallback(
+    (budgetId: string, isEnabled: boolean) => {
+      void toggleBudget(budgetId, isEnabled);
+    },
+    [toggleBudget],
+  );
+
+  const handleViewTransactions = useCallback(
+    (status: BudgetStatus) => {
+      router.push({
+        pathname: "/transactions",
+        params: { budgetScope: JSON.stringify(getTransactionScope(status)) },
+      });
+    },
+    [getTransactionScope, router],
+  );
 
   const handleSave = async (input: CategoryBudgetInput) => {
     const isFirstBudget = budgets.length === 0;
@@ -526,14 +543,9 @@ function BudgetsScreenContent({
                 {filteredStatuses.map((status, index) => (
                   <BudgetCard
                     key={status.budget.id}
-                    onPress={() => handleOpenEdit(status)}
-                    onToggle={(val) => toggleBudget(status.budget.id, val)}
-                    onViewTransactions={() =>
-                      router.push({
-                        pathname: "/transactions",
-                        params: { budgetScope: JSON.stringify(getTransactionScope(status)) },
-                      })
-                    }
+                    onPress={handleOpenEdit}
+                    onToggle={handleToggle}
+                    onViewTransactions={handleViewTransactions}
                     status={status}
                     toggleRef={index === 0 ? firstItemToggleRef : undefined}
                   />

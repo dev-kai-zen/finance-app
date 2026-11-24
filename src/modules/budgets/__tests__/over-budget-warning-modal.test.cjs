@@ -130,10 +130,20 @@ test('BUD-F04: live indicator shows zero-limit excess and never a zero-limit nea
     '@/utils/currency':currency, '../repositories/category-budgets.repository':{}, './calculate-category-budget.service':{},
   }).evaluateBudgetSnapshot;
   let reads=0,slot=0;const cache=[];
+  let stateSlot=0;const stateCache=[];
+  let effectSlot=0;const effectCache=[];
   const snapshot={hasBudget:true,isEnabled:true,effectiveBudgetCents:0,currentSpentCents:0,remainingBeforeCents:0,expenseCurrency:'PHP',budgetCurrencyCode:'PHP',categoryName:'Food',periodLabel:'November 2026',notifyOnExceeded:true,ratesMap:new Map()};
   const theme={colors:{danger:'red',warning:'orange',success:'green'},spacing:{},borderRadius:{}};
   const {BudgetLiveIndicator}=load('../components/budget-live-indicator.tsx', {
-    react:{memo:c=>c,useMemo:(fn,deps)=>{const i=slot++;if(!cache[i]||deps.some((v,j)=>v!==cache[i].deps[j]))cache[i]={deps,value:fn()};return cache[i].value;}},
+    react:{
+      memo:c=>c,
+      useMemo:(fn,deps)=>{const i=slot++;if(!cache[i]||deps.some((v,j)=>v!==cache[i].deps[j]))cache[i]={deps,value:fn()};return cache[i].value;},
+      useState:(initial)=>{const i=stateSlot++;if(!(i in stateCache))stateCache[i]=typeof initial==='function'?initial():initial;return [stateCache[i],next=>{stateCache[i]=typeof next==='function'?next(stateCache[i]):next;}];},
+      useEffect:(effect,deps)=>{const i=effectSlot++;if(!effectCache[i]||deps.some((v,j)=>v!==effectCache[i].deps[j])){effectCache[i]={deps,cleanup:effect?.()};}},
+    },
+    '@/utils/schedule-after-paint':{
+      scheduleAfterPaint:cb=>{cb();return ()=>{};},
+    },
     'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',CheckCircle2:'CheckCircle2'},
@@ -141,7 +151,12 @@ test('BUD-F04: live indicator shows zero-limit excess and never a zero-limit nea
     '@/utils/currency':currency,
     '../services/check-budget-exceeded.service':{getBudgetLiveSnapshot:()=>{reads++;return snapshot;},evaluateBudgetSnapshot:evaluator},
   });
-  const render=amount=>{slot=0;return BudgetLiveIndicator({categoryId:'food',amountMinorUnits:amount});};
+  const render=amount=>{
+    slot=0;stateSlot=0;effectSlot=0;
+    BudgetLiveIndicator({categoryId:'food',amountMinorUnits:amount});
+    slot=0;stateSlot=0;effectSlot=0;
+    return BudgetLiveIndicator({categoryId:'food',amountMinorUnits:amount});
+  };
   const zero=JSON.stringify(render(0)); assert.doesNotMatch(zero,/Near |% used/);
   const expense=JSON.stringify(render(10000));assert.match(expense,/Exceeds November 2026 budget by/);assert.match(expense,/100.00/);
   assert.doesNotMatch(expense,/% used|NaN|Infinity/);
@@ -152,7 +167,7 @@ test('BUD-F04: live indicator shows zero-limit excess and never a zero-limit nea
 test('BUD-F04: zero-limit card shows monetary excess without 100% text', () => {
   const theme={colors:{danger:'red'},spacing:{},borderRadius:{}};
   const {BudgetCard}=load('../components/budget-card.tsx', {
-    react:{memo:c=>c}, 'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
+    react:{memo:c=>c,useCallback:cb=>cb}, 'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View',Pressable:'Pressable'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',ArrowRight:'ArrowRight',RotateCw:'RotateCw'},
     '@/components':{IconHelper:'IconHelper',ThemedSwitch:'ThemedSwitch'},
@@ -163,4 +178,124 @@ test('BUD-F04: zero-limit card shows monetary excess without 100% text', () => {
   const tree=BudgetCard({status:{budget:{isEnabled:true,currencyCode:'PHP',frequency:'custom_monthly'},category:{name:'Food'},effectiveTargetCents:0,spentCents:10000,remainingCents:-10000,percentage:100,isExceeded:true},onPress:()=>{},onToggle:()=>{}});
   assert.ok(JSON.stringify(tree).includes('Over by'));
   assert.equal(find(tree,node=>node.type==='Text' && String(JSON.stringify(node.props.children)).includes('%')),undefined);
+});
+
+test('BUD-F12: live indicator defers SQLite query after paint and cancels pending request on category switch', () => {
+  let reads=0;
+  let slot=0;const cache=[];
+  let stateSlot=0;const stateCache=[];
+  let effectSlot=0;const effectCache=[];
+  let scheduledCb=null;
+  const cancelledCalls=[];
+  const snapshot={hasBudget:true,isEnabled:true,effectiveBudgetCents:10000,currentSpentCents:2000,remainingBeforeCents:8000,expenseCurrency:'PHP',budgetCurrencyCode:'PHP',categoryName:'Food',periodLabel:'November 2026',notifyOnExceeded:true,ratesMap:new Map()};
+  const theme={colors:{danger:'red',warning:'orange',success:'green'},spacing:{},borderRadius:{}};
+
+  const {BudgetLiveIndicator}=load('../components/budget-live-indicator.tsx', {
+    react:{
+      memo:c=>c,
+      useMemo:(fn,deps)=>{const i=slot++;if(!cache[i]||deps.some((v,j)=>v!==cache[i].deps[j]))cache[i]={deps,value:fn()};return cache[i].value;},
+      useState:(initial)=>{const i=stateSlot++;if(!(i in stateCache))stateCache[i]=typeof initial==='function'?initial():initial;return [stateCache[i],next=>{stateCache[i]=typeof next==='function'?next(stateCache[i]):next;}];},
+      useEffect:(effect,deps)=>{
+        const i=effectSlot++;
+        if(!effectCache[i]||deps.some((v,j)=>v!==effectCache[i].deps[j])){
+          effectCache[i]?.cleanup?.();
+          effectCache[i]={deps,cleanup:effect?.()};
+        }
+      },
+    },
+    '@/utils/schedule-after-paint':{
+      scheduleAfterPaint:cb=>{
+        scheduledCb=cb;
+        return ()=>{ cancelledCalls.push(true); };
+      },
+    },
+    'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
+    'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View'},
+    'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',CheckCircle2:'CheckCircle2'},
+    '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
+    '@/utils/currency':currency,
+    '../services/check-budget-exceeded.service':{
+      getBudgetLiveSnapshot:()=>{reads++;return snapshot;},
+      evaluateBudgetSnapshot:(snap,amount)=>({hasBudget:true,isEnabled:true,effectiveBudgetCents:snap.effectiveBudgetCents,newSpentCents:amount,remainingAfterCents:snap.effectiveBudgetCents-amount,exceeds:amount>snap.effectiveBudgetCents,exceededByCents:Math.max(0,amount-snap.effectiveBudgetCents),budgetCurrencyCode:'PHP',periodLabel:snap.periodLabel}),
+    },
+  });
+
+  // 1. Initial render does NOT run SQL synchronously during render pass
+  slot=0;stateSlot=0;effectSlot=0;
+  const initialTree=BudgetLiveIndicator({categoryId:'food',amountMinorUnits:5000});
+  assert.equal(reads,0,'Render phase must not execute SQLite snapshot queries synchronously');
+  assert.equal(initialTree,null,'Initial tree is null before snapshot commits');
+  assert.ok(typeof scheduledCb==='function','Snapshot query must be scheduled after paint');
+
+  // 2. Painting runs the scheduled callback and populates snapshot
+  scheduledCb();
+  assert.equal(reads,1,'Invoking scheduled callback executes snapshot query');
+
+  slot=0;stateSlot=0;effectSlot=0;
+  const paintedTree=BudgetLiveIndicator({categoryId:'food',amountMinorUnits:5000});
+  assert.ok(paintedTree!==null,'Tree renders once snapshot state is set');
+  assert.equal(reads,1,'Subsequent render does not re-query database');
+
+  // 3. Fast category change cancels the in-flight scheduled snapshot
+  slot=0;stateSlot=0;effectSlot=0;
+  BudgetLiveIndicator({categoryId:'transport',amountMinorUnits:5000});
+  assert.equal(cancelledCalls.length,1,'Switching category must cancel stale scheduled query');
+});
+
+test('BUD-F12: BudgetCard forwards parameterized callbacks to stable parent handlers', () => {
+  const theme={colors:{danger:'red',primary:'blue'},spacing:{},borderRadius:{}};
+  let pressedStatus=null;
+  let toggledBudgetId=null;
+  let toggledValue=null;
+  let viewedTransactionsStatus=null;
+
+  const {BudgetCard}=load('../components/budget-card.tsx', {
+    react:{memo:c=>c,useCallback:cb=>cb},
+    'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
+    'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View',Pressable:'Pressable'},
+    'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',ArrowRight:'ArrowRight',RotateCw:'RotateCw'},
+    '@/components':{IconHelper:'IconHelper',ThemedSwitch:'ThemedSwitch'},
+    '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
+    '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
+    '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null},
+    '@/utils/currency':currency,
+  });
+
+  const testStatus={
+    budget:{id:'b-1',isEnabled:true,currencyCode:'PHP',frequency:'monthly'},
+    category:{name:'Groceries',icon:'cart'},
+    periodLabel:'November 2026',
+    effectiveTargetCents:50000,
+    spentCents:25000,
+    remainingCents:25000,
+    percentage:50,
+    isExceeded:false,
+    isNearLimit:false,
+    rolloverCents:0,
+  };
+
+  const tree=BudgetCard({
+    status:testStatus,
+    onPress:(s)=>{pressedStatus=s;},
+    onToggle:(id,val)=>{toggledBudgetId=id;toggledValue=val;},
+    onViewTransactions:(s)=>{viewedTransactionsStatus=s;},
+  });
+
+  // Verify press handler dispatches status
+  assert.ok(tree.props.onPress,'Card pressable has onPress');
+  tree.props.onPress();
+  assert.equal(pressedStatus,testStatus,'onPress receives status');
+
+  // Verify switch onValueChange dispatches budgetId and value
+  const switchElement=find(tree,node=>node.type==='ThemedSwitch');
+  assert.ok(switchElement,'Switch element found');
+  switchElement.props.onValueChange(false);
+  assert.equal(toggledBudgetId,'b-1');
+  assert.equal(toggledValue,false);
+
+  // Verify view transactions link dispatches status
+  const viewLink=find(tree,node=>node.type==='Pressable' && node.props.accessibilityRole==='button' && node!==tree);
+  assert.ok(viewLink,'View transactions pressable found');
+  viewLink.props.onPress();
+  assert.equal(viewedTransactionsStatus,testStatus,'onViewTransactions receives status');
 });

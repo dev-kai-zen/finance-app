@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, AlertTriangle, ArrowRight, RotateCw } from "lucide-react-native";
 import { IconHelper, ThemedSwitch } from "@/components";
@@ -11,9 +11,9 @@ import type { BudgetStatus } from "../types/budget.types";
 
 export interface BudgetCardProps {
   status: BudgetStatus;
-  onPress: () => void;
-  onToggle: (isEnabled: boolean) => void;
-  onViewTransactions?: () => void;
+  onPress: (status: BudgetStatus) => void;
+  onToggle: (budgetId: string, isEnabled: boolean) => void;
+  onViewTransactions?: (status: BudgetStatus) => void;
   toggleRef?: React.Ref<View>;
 }
 
@@ -53,6 +53,21 @@ export const BudgetCard = memo(function BudgetCard({
     rolloverCents,
   } = status;
 
+  const handlePress = useCallback(() => {
+    onPress(status);
+  }, [onPress, status]);
+
+  const handleToggle = useCallback(
+    (isEnabled: boolean) => {
+      onToggle(budget.id, isEnabled);
+    },
+    [budget.id, onToggle],
+  );
+
+  const handleViewTransactions = useCallback(() => {
+    onViewTransactions?.(status);
+  }, [onViewTransactions, status]);
+
   const categoryColor =
     resolveEntityColor(category.hexColorsId) ||
     category.color ||
@@ -72,7 +87,7 @@ export const BudgetCard = memo(function BudgetCard({
     <Pressable
       accessibilityLabel={`${category.name} budget`}
       accessibilityRole="button"
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.card,
         !budget.isEnabled && styles.cardDisabled,
@@ -118,7 +133,7 @@ export const BudgetCard = memo(function BudgetCard({
         >
           <ThemedSwitch
             accessibilityLabel={`Toggle ${category.name} budget`}
-            onValueChange={onToggle}
+            onValueChange={handleToggle}
             value={budget.isEnabled}
           />
         </View>
@@ -190,7 +205,7 @@ export const BudgetCard = memo(function BudgetCard({
           {onViewTransactions ? (
             <Pressable
               accessibilityRole="button"
-              onPress={onViewTransactions}
+              onPress={handleViewTransactions}
               style={styles.transactionsLink}
             >
               <Text style={styles.transactionsLinkText}>View transactions</Text>

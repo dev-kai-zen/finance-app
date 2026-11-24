@@ -345,7 +345,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** Actual summary values and hierarchy exclusions remain identical; static boundary check rejects cross-feature repository imports. Preserve the passed transaction/database context.
 - **Performance:** Keep one category read and O(category count) map construction; no extra query or provider subscription.
 
-### [BUD-F12] Initial live snapshot queries run during render; card memoization receives unstable callbacks
+### [BUD-F12] Initial live snapshot queries run during render; card memoization receives unstable callbacks — FIX IMPLEMENTED
 
 - **Evidence:** [BudgetLiveIndicator:31](../../src/modules/budgets/components/budget-live-indicator.tsx#L31) executes `getBudgetLiveSnapshot` in `useMemo`, synchronously on first appearance or category/date/currency change. Existing snapshot tests assert up to twelve statements in their fixture. Amount-only changes correctly run zero SQL.
 - **Other render work:** [BudgetsScreen:523](../../src/modules/budgets/screens/budgets-screen.tsx#L523) eagerly maps every card inside a scroll view and supplies three fresh callbacks to memoized rows. This defeats parent-driven memoization even when statuses are unchanged. Data size and device impact have not been measured.

@@ -1,12 +1,14 @@
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   evaluateBudgetSnapshot,
   getBudgetLiveSnapshot,
+  type BudgetLiveSnapshot,
 } from "../services/check-budget-exceeded.service";
 
 export interface BudgetLiveIndicatorProps {
@@ -28,14 +30,25 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
   const styles = useThemeStyles(createStyles);
   const occurredAtMs = occurredAt ? occurredAt.getTime() : null;
 
-  const snapshot = useMemo(() => {
-    if (!categoryId) return null;
-    return getBudgetLiveSnapshot({
-      categoryId,
-      expenseCurrencyCode,
-      occurredAt: occurredAtMs !== null ? new Date(occurredAtMs) : undefined,
-      excludeTransactionId,
+  const [snapshot, setSnapshot] = useState<BudgetLiveSnapshot | null>(null);
+
+  useEffect(() => {
+    if (!categoryId) {
+      setSnapshot(null);
+      return;
+    }
+
+    const cancel = scheduleAfterPaint(() => {
+      const liveSnapshot = getBudgetLiveSnapshot({
+        categoryId,
+        expenseCurrencyCode,
+        occurredAt: occurredAtMs !== null ? new Date(occurredAtMs) : undefined,
+        excludeTransactionId,
+      });
+      setSnapshot(liveSnapshot);
     });
+
+    return cancel;
   }, [categoryId, expenseCurrencyCode, occurredAtMs, excludeTransactionId]);
 
   const result = useMemo(() => {
