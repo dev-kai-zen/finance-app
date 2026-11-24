@@ -2,11 +2,15 @@
 
 **Date:** November 23, 2026 — Asia/Manila
 
-**Reviewed commit:** `2c6e368`
+**Original reviewed commit:** `2c6e368`
 
-**Stage:** 1 — Audit Categories Complete (Ready for Review & Validation)
+**Automated revalidation commit:** `17329a2`
 
-**Result:** Categories remediation in progress. **C-F01 is RESOLVED**: deleting a category now safely reassigns linked scheduled transactions (`transaction_schedules`) and actionable occurrence template snapshots to the fallback category without foreign-key constraint errors, verified with passing automated regression tests and 0 TypeScript compilation errors.
+**Sign-off update:** November 24, 2026 - Asia/Manila
+
+**Stage:** 5 - Functional Sign-Off (Remaining Native Validation and Performance Follow-Up Pending)
+
+**Result:** Functionally signed off within the evidence scope below. C-F01 through C-F11 are resolved; all 65 category tests, 7 related walkthrough/sorting tests, and TypeScript checking passed during revalidation. User-reported manual checks confirm one-tap form dismissal, keyboard/system-back behavior, successful saving with the keyboard open, and picker/nested-form navigation. Untested native scenarios, card memoization, and release-device performance profiling remain open; sustained 60–120fps compliance is not verified.
 
 **C-F02 update:** RESOLVED. Bulk preset deletion now preserves saved Quick Presets and related references atomically. The split failure is classified as defensive service coverage because the UI hides bulk deletion once any transaction exists.
 
@@ -37,10 +41,10 @@
 | Stage | Status | Deliverable |
 |---|---|---|
 | 1. Audit Categories | **Complete** | Action map, layer ownership map, architectural findings, performance assessment, and validation checklist. |
-| 2. Validate Categories | **Complete** | Expanded automated test suite verifying deletion reassignment, schedule protections, custom hex color insertion, touch targets, reordering, scoping, hierarchy validation, and AST localization. |
+| 2. Validate Categories | **Automated complete; native partial** | Automated regressions pass. User-reported native passes and remaining checks are recorded below. |
 | 3. Review findings together | **Complete** | Architectural findings C-F01 through C-F11 reviewed, agreed, and validated. |
 | 4. Fix approved issues | **Complete** | Implemented approved fixes for C-F01 through C-F11, test runner mocks, and full localization extraction. |
-| 5. Feature Sign-Off | **Complete** | All 65 tests in category suites pass, `npx tsc --noEmit` passes with 0 errors, validating 60–120fps compliance. |
+| 5. Feature Sign-Off | **Functional sign-off; follow-up pending** | Accepted within the recorded functional scope. Remaining native checks, Section 19.6 card memoization, and release-device FPS profiling remain open; no performance-rule exception is recorded. |
 
 ### Evidence used
 
@@ -51,7 +55,30 @@
 | `node --test src/modules/categories/__tests__/category-changes.test.cjs` | **51 passed**, zero failures after C-F11 remediation | Comprehensive regressions for C-F01 through C-F11 including AST localization checks and defensive hierarchy validation. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Compile-time type integrity across the entire application codebase. |
 | Source code inspection | All screens, hooks, components, modals, services, repositories, schemas, and routes traced | Identified missing schedule reassignment, direct cross-module SQL in preset cleanup, unlocalized strings, and touch-target violations. |
-| Native UI / performance assessment | Evaluated against Section 19 60–120fps standards | Single-pass $O(N)$ tree construction in JS, lightweight memory footprint, deferred paints, and debounced modal search verified. |
+| Related walkthrough/sorting tests | **7 passed**, zero failures during revalidation | `categories-walkthrough.test.cjs` and `sortable-list-dirty.test.cjs`; automated behavior checks only. |
+| Native UI assessment | **User-reported partial pass**, November 24, 2026 | See the manual verification record below. Device, OS, installed build, and exact forms exercised were not supplied. |
+| Performance assessment | **Source inspection only; profiling pending** | Deferred category reads, in-memory picker search, and modal visibility guards inspected. Sorting adds work beyond O(N) tree construction; no device timings or sustained FPS measurements were captured. |
+
+### Manual verification and sign-off scope - November 24, 2026
+
+These results were reported by the user during device testing, not independently observed by the agent. They apply to the interactions exercised; platform-wide coverage is not established without device/OS/build details and the exact forms tested.
+
+| Scenario | Status | Reported evidence / remaining scope |
+|---|---|---|
+| Close a form with the keyboard open | **Manually verified** | One tap closes the form. Repeat coverage across every category form and dismissal control was not specified. |
+| System Back with the keyboard open | **Manually verified** | First Back hides the keyboard; the next closes the form. This is expected keyboard-first behavior. |
+| Save a valid category with the keyboard open | **Manually verified** | Save hides the keyboard, displays Saving, and successfully saves the category. |
+| Close-button activation | **Manually verified** | Tapping X closes the form. This confirms activation, not measured target dimensions or all layout conditions. |
+| Picker selection and nested forms | **User-reported pass** | Selection happens once; parent-selection back returns to the picker; nested dialogs preserve the underlying draft. |
+| Invalid input and error recovery | **Not yet manually verified** | Empty/duplicate input, draft preservation after failure, and successful correction/retry were not reported. |
+| Touch dimensions and responsive/accessibility layout | **Partially verified** | Automated checks cover configured 44×44 close targets. Small screens, large system text, long names, and localized layouts remain unverified on device. |
+| Reorder persistence and cancellation | **Automated coverage; native pending** | Drag behavior, save/reopen/restart persistence, and cancelling unsaved changes were not reported from device testing. |
+| Offline, navigation, and background/resume | **Native pending** | No manual results were supplied for these scenarios. |
+| Sustained 60–120fps | **Not measured** | Release-device traces with representative and large fixtures remain pending. |
+
+**Open follow-up:** `CategoryGroupCard` remains un-memoized and receives inline screen callbacks (Section 19.6). No measured frame-rate defect has been established, but the code requirement remains open. Functional sign-off does not mark this work or untested scenarios complete, and does not assert full Section 19 compliance.
+
+**Runtime impact of this update:** Documentation only; zero changes to queries, rendering, navigation, or application behavior. Release notes and application versions are unchanged.
 
 ---
 
@@ -153,8 +180,8 @@ flowchart TD
 
 | Action | Execution and purpose | Assessment / Findings |
 |---|---|---|
-| Open screen / refocus | `useFocusEffect` schedules `refresh()` via `scheduleAfterPaint`. Subscribes to `subscribeCategoryChanges`. Checks `hasTransactions()` for preset button visibility. | **Finding C-F04:** `useCategories` pairs `useFocusEffect` with `useEffect(() => refresh(), [refresh])`, triggering duplicate queries on focus/mount transitions. |
-| Switch Expense / Income tabs | `setSelectedType("expense" \| "income")` updates local state. Filters in-memory category list. | Fast $O(N)$ filter in JavaScript. Smooth 60fps tab transition. |
+| Open screen / refocus | `useFocusEffect` schedules `refresh()` via `scheduleAfterPaint`. Subscribes to `subscribeCategoryChanges`. Checks `hasTransactions()` for preset button visibility. | **C-F04 RESOLVED:** One deferred category load is scheduled per focused mount/refocus/query activation; the separate screen-level transaction-existence check still runs on focus. |
+| Switch Expense / Income tabs | `setSelectedType("expense" \| "income")` updates local state. Filters in-memory category list. | In-memory $O(N)$ filtering with no tab-specific database read. Native transition frame rate remains unmeasured. |
 | Expand / collapse groups | Toggles `expandedGroups` record in local state. Groups default to expanded if undefined. | Pure presentation state. Does not trigger database queries. |
 | Empty state display | Renders `PageEmptyState` when `currentCategories.length === 0` with "+ Add First Group" button. | Clean presentation when all user categories of that type are deleted. |
 | Quick deep-link to category | Route param `categoryId` looks up group or subcategory, expands parent, opens edit modal, and clears route param. | Verified. Correctly matches group or subcategory and resets params. |
@@ -368,7 +395,7 @@ flowchart TD
   - Picker category/subcategory selection also uses the close handler and clears search. Back actions from parent selection return to category selection without closing the picker or clearing its search.
   - Included the inline quick-add form because inspection confirmed the same defect. No shared component, service, repository, dependency, or schema changes were required. Release notes are deferred at the user's request; the version is unchanged.
 - **Verification:**
-  Six C-F06 checks pass, covering actual close-button dimensions, all dismissal callbacks and their order, successful/failed saves, picker category/subcategory selection, all three parent-selection back paths, and Hook-free hidden wrappers. All 37 category tests pass across the three suites, and `npx tsc --noEmit` passes with zero errors. Native keyboard/touch checks and release-device profiling remain outstanding.
+  Six C-F06 checks pass, covering actual close-button dimensions, all dismissal callbacks and their order, successful/failed saves, picker category/subcategory selection, all three parent-selection back paths, and Hook-free hidden wrappers. All 37 category tests pass across the three suites, and `npx tsc --noEmit` passes with zero errors. Subsequent user-reported keyboard, close activation, successful-save, and picker checks are recorded in Section 1. Full form/device coverage, responsive layout checks, and release-device profiling remain outstanding.
 - **Performance:**
   Constant-time dismissal handlers add no SQLite queries, subscriptions, providers, or context updates. Mount/focus query counts and category processing complexity are unchanged; hidden modal content remains unmounted. No measured FPS improvement is claimed.
 
@@ -485,28 +512,30 @@ flowchart TD
 Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
 
 1. **JS Thread Bounding on Mount & Focus:**
-   `useCategories` executes `listCategories` via `scheduleAfterPaint`, deferring query execution until after screen mount transition animations have finished. Initial frame rate stays at 60–120fps.
+   `useCategories` schedules `listCategories` with `scheduleAfterPaint` (double requestAnimationFrame), allowing the shell/loading state to paint first. This does not guarantee that navigation animations have finished or that subsequent work stays within the frame budget. The screen also performs a synchronous transaction-existence check on focus. Release-device timing and frame-rate profiling remain pending.
 2. **Algorithmic Complexity & SQL Scans:**
-   `listCategories` runs exactly **one** SQLite query joining `categories` with `hex_colors`, ordered by `type` and `sort_order` (covered by composite indexes). The resulting flat array ($<100$ items) is structured into parent-child trees using a single-pass `Map<string, Category[]>` in $O(N)$ time.
+   `listCategories` runs **one** SQLite query joining `categories` with `hex_colors`, ordered by type, sort order, and name. The schema defines separate type, parent, and sort-order indexes; composite coverage of the full ordering has not been established. Tree construction uses an O(N) Map pass, followed by parent and sibling sorting (O(N log N) worst case). Category counts are user-controlled; query plans and runtime timings need separate evidence.
 3. **Modal Gating:**
    `CategoryPickerModal`, `CategoryGroupModal`, and `SubcategoryModal` all contain outer `if (!props.visible) return null;` early returns, preventing internal hooks from executing queries while modals are closed.
 4. **Live Typing & Search Responsiveness:**
-   Search in `CategoryPickerModal` operates purely in memory on the loaded hierarchical list. Keystrokes execute in $<1$ms without triggering SQLite scans.
+   Search in `CategoryPickerModal` filters the loaded hierarchical list in memory without keystroke-triggered SQLite queries. Filtering is O(N), excluding string-length costs; no sub-millisecond device timing has been measured.
 5. **Component Memoization & Render Cascades:**
-   `CategoryGroupCard` is currently un-memoized. While adequate for typical category counts ($10\text{--}25$ groups), wrapping `CategoryGroupCard` in `React.memo` and stabilizing row callbacks will eliminate render cascades when parent walkthrough or ad states change.
+   `CategoryGroupCard` remains un-memoized and receives inline callbacks from the screen. This is an open Section 19.6 requirement. Memoizing the card and stabilizing its props can reduce avoidable parent-driven renders; React Native DevTools and release-device traces are needed to assess the actual impact. No new root-context or route subscriptions are proposed.
 
 ---
 
-## 7. Stage 2 Validation & Remediation Plan
+## 7. Stage 2 Validation & Remediation Record
 
-### Remediation Sequence
+The sequence below records completed C-F01 through C-F11 work; current pending items are listed in Section 1.
+
+### Completed Remediation Sequence
 
 1. **Fix C-F05 (Test Harness Repairs):**
    - Repair `seed-defaults.test.cjs` to track `inTransaction` via transaction statements rather than undefined `sqlite.isTransaction`.
    - Add standard React lifecycle stubs to `category-changes.test.cjs` so existing tests execute and pass cleanly.
 2. **Fix C-F01 & C-F02 (Referential Integrity & Cross-Module Boundaries):**
    - Update `reassignTransactionCategoryReferences` to handle scheduled transactions or add appropriate safety guards.
-   - Refactor `deleteCategoryPresetData` in `categories.repository.ts` to call the public transactions reassignment service, removing the direct `transactions` table dependency.
+   - Orchestrate public transaction/schedule reassignment services from `deleteCategoryPresets`, keeping the repository focused on category persistence and removing direct foreign-domain table access.
 3. **Fix C-F03 (Hex Color ID in `CategoryFormModal`):**
    - Update `CategoryFormModal` to capture `created.id` on custom color creation and pass `hexColorsId` to `onSave`.
 4. **Fix C-F04 (Duplicate Query Removal in `useCategories`):**
@@ -522,7 +551,7 @@ Evaluating Categories against the Section 19 engineering rules in `AGENTS.md`:
 
 ### Validation Test Expansion
 
-Add automated regression tests in `src/modules/categories/__tests__/` asserting:
+Automated regression coverage in `src/modules/categories/__tests__/` verifies:
 - Deleting a category with active scheduled transactions safely reassigns references without SQLite errors.
 - Creating a custom color in `CategoryFormModal` inserts a valid `hex_colors` foreign key.
 - Creating identical subcategory names under different parent groups succeeds.
