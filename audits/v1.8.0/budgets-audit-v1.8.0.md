@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `c73f893` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — BUD-F01 through BUD-F03 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
+**Stage:** Remediation in progress — BUD-F01 through BUD-F04 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Existing tests pass, but targeted fixtures confirm warning/card inconsistencies, incorrect rollover previews during date edits, and an incorrect widget amount label. Source tracing also identifies currency input, drill-down, draft preservation, recovery, architecture, localization, and performance gaps.
 
-**Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs; BUD-F03 checks complete expenses and lists all exceeded budgets before saving. All three have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
+**Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs; BUD-F03 checks complete expenses and lists all exceeded budgets before saving. BUD-F04 aligns zero-limit previews, confirmations, cards, and alerts. All four have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -19,7 +19,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | 1. Audit Budgets | Complete | Feature inventory, ownership map, financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Budgets | Partial | Existing suites executed; four database-backed defect probes and one extracted UI-handler probe executed. Additional regression cases specified below. |
 | 3. Review findings and policies | Pending | Agree on rollover history, mixed-frequency summaries, notification behavior, and privacy scope. |
-| 4. Remediate findings | In progress | BUD-F01 through BUD-F03 implemented and regression-tested; manual verification pending. Other findings remain open. |
+| 4. Remediate findings | In progress | BUD-F01 through BUD-F04 implemented and regression-tested; manual verification pending. Other findings remain open. |
 | 5. Feature sign-off | Pending | Financial/UI parity, failure recovery, localization, and measured device performance. |
 
 ### Evidence used
@@ -31,6 +31,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | BUD-F01 follow-up combined regression run | **46 passed**, zero failures/skips; approximately 10.2 seconds | Ten new currency cases plus the 36 existing budget/walkthrough and related cases above. TypeScript also passed after the production fix. |
 | BUD-F02 follow-up regression run | **157 passed**, zero failures/skips; approximately 18.6 seconds | All Budgets, Transactions, and Walkthrough suites. Includes 16 BUD-F02 cases and an extended existing 10,000-row fixture; TypeScript passed. Tests cover actual SQLite allocations, period/ownership parity, routes, privacy labels, scope clearing, and CSV fields. Native rendering/FPS remain unmeasured. |
 | BUD-F03 follow-up regression run | **184 passed**, zero failures/skips; approximately 30.6 seconds | Budgets, Transactions, Walkthroughs, Widgets, and Notifications suites. Includes 13 new BUD-F03 cases: actual grouped SQLite checks, edit/currency parity, chunking, deferred-read cancellation/retry, confirmation content, localization, and single-submit behavior. TypeScript passed; native layout and frame timing remain unmeasured. |
+| BUD-F04 follow-up regression run | **191 passed**, zero failures/skips; approximately 28 seconds | All Budgets, Transactions, Notifications, Widgets, and Walkthrough suites, including seven new zero-limit cases. TypeScript passed. Native notification delivery, layout, and frame timing remain pending. |
 | Related refund, split, form, widget, and reminder-settings suites | **23 passed**, zero failures/skips; approximately 5.7 seconds | Refund aggregation, split persistence, save guards, daily/biweekly DST boundaries, widget configuration, and reminder settings. Does not establish split-warning or widget financial-display correctness. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Repository-wide compile-time integrity. |
 | Isolated actual-service probes | **Four mismatches reproduced** | Zero target, shared-parent split checks, moving an expense from the previous period, and widget remaining/over direction. Uses Drizzle and in-memory SQLite with the existing migration-backed budget harness. |
@@ -130,7 +131,7 @@ flowchart TD
 | Remove | Confirmation calls local delete; FK cascade removes monthly targets. | Screen ignores returned failure and closes edit/confirmation even when delete fails. |
 | View transactions | Passes the displayed period and exact budget-owned category IDs through a validated scope parameter. | BUD-F02 fixed. Scoped rows expose category shares; daily totals use those shares while inspection/editing retain full transactions. |
 | Type an expense | Indicator memoizes a snapshot by category/date/currency/exclusion, then evaluates amounts in pure JS. | Zero-query amount typing is covered; initial snapshot still queries during render. Refund indicator uses expense semantics. |
-| Save an expense / split | Form defers one complete-expense check after paint, grouping lines by owning budget and presenting all applicable warnings before save. | BUD-F03 fixed. Zero-target and previous-period rollover-edit mismatches remain open as BUD-F04/BUD-F05. |
+| Save an expense / split | Form defers one complete-expense check after paint, grouping lines by owning budget and presenting all applicable warnings before save. | BUD-F03 fixed. BUD-F04 aligns zero-limit checks; previous-period rollover-edit mismatches remain open as BUD-F05. |
 | Receive threshold notification | Post-commit transaction path invokes notification service without awaiting it. | Month-based deduplication conflicts with non-monthly periods; split transactions with null parent category bypass this path. |
 | Inspect Android widget | Widget snapshot calls public summary service and formats in home currency. | “Over” direction can contradict remaining amount; monthly label includes other frequencies. |
 | Search / deep link | Non-empty debounced general search enables `useBudgets`; existing budget link opens edit form. | Empty search skips reads. Non-empty search calculates all budget statuses despite consuming only budget records. |
@@ -149,14 +150,14 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-**BUD-F01 through BUD-F03 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
+**BUD-F01 through BUD-F04 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | BUD-F01 | High | Input currency/precision differs from stored budget currency | Fixed; 10 regression tests pass; manual check pending |
 | BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Fixed; automated period/ownership/SQL parity verified; manual check pending |
 | BUD-F03 | High | Split lines bypass a shared budget warning | Fixed; grouped checks and confirmation workflow verified automatically; manual check pending |
-| BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Executable |
+| BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Fixed; seven regression cases pass; manual check pending |
 | BUD-F05 | Medium | Moving an expense out of the previous period leaves it in rollover preview | Executable |
 | BUD-F06 | Medium | Background refresh resets an open form draft | Source-confirmed |
 | BUD-F07 | Medium | Apply-all discards other-year custom targets | Executable handler + persistence source |
@@ -258,13 +259,35 @@ The transaction form calls the public complete-expense checker for ordinary and 
 6. Turn off one budget's alert and repeat: only the other exceeded budget should be listed. Pause the Groceries budget and try another split: its allocation should instead consume Food's budget. Ordinary unsplit expenses should still warn when they exceed an enabled budget; positive expense refunds should not trigger these save-time expense warnings.
 7. Start Save with the keyboard open: it should dismiss before the check. Verify Cancel/backdrop/back dismisses the warning on the first tap. Switch to Filipino/Spanish and confirm its labels/actions translate. Device-check the skeleton, retained draft/scroll position, and small-screen/landscape scrolling; these native behaviors were not exercised by the automated harness.
 
-### [BUD-F04] Zero effective targets are exceeded on cards but never in warnings
+### [BUD-F04] Zero effective targets are exceeded on cards but never in warnings — FIX IMPLEMENTED
 
 - **Problem / reproduction:** With effective target zero and existing spending 450,000, adding 10,000 returns `newSpentCents=460000`, **`exceeds=false`**, while summary reports **one exceeded budget**.
 - **Cause:** [evaluateBudgetSnapshot:191](../../src/modules/budgets/services/check-budget-exceeded.service.ts#L191) forces `exceeds=false` when target is zero. Status calculation instead compares `spentCents > effectiveTargetCents`. Zero targets are reachable through custom monthly amounts and full deficit rollover, even though ordinary form amounts must be positive.
-- **Smallest fix:** Use the same positive-spending-versus-effective-target rule across preview and status. Review notification service's separate zero-target early exit against the agreed zero-limit policy.
-- **Regression proof:** Zero base/custom target, deficit reducing target to zero, zero pending spending, and positive spending. Assert indicator, confirmation, card, and summary parity.
-- **Performance:** O(1) comparison; zero new queries.
+- **Fix policy:** Zero is a real limit for an enabled budget. Positive net spending exceeds it; zero or negative net spending does not. No-budget and disabled-budget checks still return false. Positive targets retain strict greater-than comparison for save warnings and the existing inclusive 80%/100% notification thresholds.
+- **Performance:** O(1) comparison; zero new SQL statements, subscriptions, mount/focus queries, or per-keystroke database work. Baseline acquisition and the existing deferred save workflow are unchanged. BUD-F12's render-time baseline acquisition remains open; no device FPS claim is made.
+
+**Implemented fix — November 24, 2026:** `evaluateBudgetSnapshot` compares new spending directly with the effective target after its existing no-budget/disabled guard. The live indicator uses no percentage for a zero limit and cannot mark zero spending as near the limit. The confirmation and card show monetary excess without a fictitious 100% suffix. Notifications handle zero-limit overspending before percentage calculations, show the actual monetary excess and period, and respect permissions, global threshold settings, and the zero-limit budget's alert opt-out. Positive-limit notification behavior is preserved.
+
+The existing notification deduplication key and post-commit dispatch remain unchanged. Period/sibling/split delivery gaps are still BUD-F10, and full localization is still BUD-F13. No migration, stored-value conversion, release note, or version change is included.
+
+**Automated proof:**
+
+- [budgets-summary.test.cjs](../../src/modules/budgets/__tests__/budgets-summary.test.cjs): real SQLite custom zero monthly targets and full rollover clamping to zero; combined sibling split amounts; preview/post-save summary parity; pure zero/credit/equality/one-minor-unit-over boundaries; disabled/no-budget guards; repeated evaluations add no SQL.
+- [over-budget-warning-modal.test.cjs](../../src/modules/budgets/__tests__/over-budget-warning-modal.test.cjs): actual confirmation, live indicator, and card rendering use monetary amounts for zero limits; zero spending is not near-limit; positive-limit percentages remain; amount changes reuse the indicator baseline.
+- [budget-threshold.test.cjs](../../src/modules/notifications/__tests__/budget-threshold.test.cjs): stubbed native scheduler verifies zero-limit content, post-commit amount zero, existing deduplication, zero/credit/disabled/opt-out silence, permission/global/web guards, and positive 80%/100% thresholds. No real notifications are sent by tests.
+- Before production changes, targeted assertions reproduced the incorrect comparison, false 100% display, zero-limit near warning, and suppressed notification. All seven new cases pass after the fix. The full 191-test regression run and `npx tsc --noEmit` pass.
+
+**Manual verification guide (native app):**
+
+1. Use a test account and an unused expense category with no applicable parent budget or existing current-month spending. The amounts below assume PHP; a new budget inherits Settings → Currency Setup → Default Currency when its form opens. Existing budgets retain their saved currency.
+2. In Budgets, create an enabled budget for that category. Set the default amount to **1,000**, choose **Custom (12-Mo)**, then tap the current month's target and confirm **0** in its calculator. Leave **Rollover Budget** off. Enable **Over-Budget Alert** (Pro required), and save. Reopen it once to confirm the current-month target is still zero.
+3. Create a normal expense of **100**, dated today, using the same category and a PHP account. Before saving, the live indicator should say the budget is exceeded by **PHP 100**, showing a zero limit. It must not say near-limit, 100% used, NaN, or Infinity.
+4. Tap Save. Expect a confirmation showing **Budget Limit 0**, **Current Spending 0**, **This Expense 100**, **New Total 100**, and **Over by 100**, with no percentage after the excess. Choose **Cancel & Edit**: no transaction should have been saved. Save again and choose **Proceed Anyway**: exactly one transaction should appear; the budget card should show **Spent 100**, **Budget 0**, and **Over by 100**, without a 100% suffix in its warning.
+5. For a notification check, start with a fresh test category/budget that has not already sent a budget alert this month. Enable **Settings → Reminders → Budget Threshold Warnings**, grant system notification permission, and repeat the normal expense save with the budget's Over-Budget Alert enabled. Expect one **Budget Exceeded** notification mentioning the category, period, and **100** monetary excess, with no percentage. Another expense in that category/month should not produce another threshold-100 notification in the same app process. Use an unsplit expense here; split dispatch is separately tracked by BUD-F10.
+6. Repeat with **Over-Budget Alert** off: the live indicator/card should still identify the excess, while the save confirmation and zero-limit notification stay silent. Pausing the budget should suppress its checks; resume it for subsequent tests.
+7. Rollover alternative (Pro): use a fresh monthly budget of **1,000**, starting no later than the previous month. Enable **Rollover Budget → Full (Include Deficit)**. Add **2,500** spending in the previous month; the current effective target should clamp to **0**. A new current-month expense of **100** must produce the same zero-limit warning and saved-card result.
+8. Positive-limit regression: use another fresh budget of **1,000**, with rollover off. A proposed total of **1,000** must not trigger the save confirmation; **1,000.01** must warn. Native threshold notifications still trigger at **800** and **1,000**, subject to permissions/settings and their existing deduplication.
+9. Check that typing remains responsive and that the save-time skeleton/header remain responsive. Use React Native DevTools Profiler and a release build with large fixtures to measure the 8.3–16.6ms frame budget; automated tests do not establish device frame rates.
 
 ### [BUD-F05] Date edits do not exclude the old transaction from previous-period spending
 
@@ -440,7 +463,7 @@ Add focused cases to the existing budget suites and the owning consumers' suites
 
 ## 11. Mandatory pre-change gate for remediation
 
-The initial audit was documentation-only. BUD-F01 through BUD-F03 remediation answered these four questions before production edits and first reproduced issues with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
+The initial audit was documentation-only. BUD-F01 through BUD-F04 remediation answered these four questions before production edits and first reproduced issues with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
 
 1. **What is the actual problem?** State the exact incorrect amount/interaction and show a failing regression or the concrete source/executable evidence above. Convert source-only UI scenarios into a focused reproduction before changing behavior.
 2. **Why does the implementation cause it?** Identify the cited function and complete caller path. For split warnings, for example: transaction form loop → independent snapshot checks → same unchanged ledger baseline.

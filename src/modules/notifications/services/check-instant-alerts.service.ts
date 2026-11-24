@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { formatCurrency } from "@/utils/currency";
 import * as Notifications from "expo-notifications";
 import {
   calculateCategoryBudgetStatus,
@@ -39,14 +40,18 @@ export async function checkAndNotifyBudgetThreshold(options: {
       occurredAt,
     });
 
-    if (!result.hasBudget || !result.isEnabled || result.effectiveBudgetCents <= 0) {
+    if (!result.hasBudget || !result.isEnabled) {
       return;
     }
 
-    const percent = (result.newSpentCents / result.effectiveBudgetCents) * 100;
+    const zeroLimit = result.effectiveBudgetCents === 0;
+    if (zeroLimit && (!result.exceeds || !result.notifyOnExceeded)) return;
+    const percent = result.effectiveBudgetCents > 0
+      ? (result.newSpentCents / result.effectiveBudgetCents) * 100
+      : 0;
     const yearMonth = `${occurredAt.getFullYear()}-${occurredAt.getMonth() + 1}`;
 
-    if (percent >= 100) {
+    if (zeroLimit || percent >= 100) {
       const alertKey = `${NOTIFICATION_IDENTIFIERS.BUDGET_ALERT_PREFIX}100-${categoryId}-${yearMonth}`;
       if (deliveredAlertKeys.has(alertKey)) return;
       deliveredAlertKeys.add(alertKey);
@@ -59,8 +64,10 @@ export async function checkAndNotifyBudgetThreshold(options: {
       await Notifications.scheduleNotificationAsync({
         identifier: alertKey,
         content: {
-          title: "Budget Exceeded (100% Limit)",
-          body: `You have reached 100% of your ${result.categoryName} budget for this month.`,
+          title: zeroLimit ? "Budget Exceeded" : "Budget Exceeded (100% Limit)",
+          body: zeroLimit
+            ? `You are ${formatCurrency(result.exceededByCents, result.budgetCurrencyCode, false)} over your zero-limit ${result.categoryName} budget for ${result.periodLabel}.`
+            : `You have reached 100% of your ${result.categoryName} budget for this month.`,
           sound: true,
           data: data as unknown as Record<string, unknown>,
           categoryIdentifier: "budget",

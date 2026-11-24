@@ -112,3 +112,55 @@ test("BUD-F03: warning text and interpolation keys exist in English, Filipino an
     assert.deepEqual(value.match(/%\{\w+\}/g)?.sort(), catalogs.en.transactions[key].match(/%\{\w+\}/g)?.sort());
   }
 });
+
+
+test('BUD-F04: zero-limit confirmation displays monetary excess without a fictitious percentage', () => {
+  const h=harness();
+  const tree=h.render({results:[{...result,effectiveBudgetCents:0,currentSpentCents:0,additionalExpenseCents:10000,newSpentCents:10000,exceededByCents:10000}]});
+  assert.ok(JSON.stringify(tree).includes(currency.formatCurrency(10000,'PHP',false)));
+  assert.equal(find(tree,node=>node.type==='Text' && String(JSON.stringify(node.props.children)).includes('%')),undefined);
+  assert.doesNotMatch(JSON.stringify(tree),/NaN|Infinity/);
+  assert.ok(find(h.render({results:[result]}),node=>node.type==='Text' && JSON.stringify(node.props.children).includes('102')),'Positive-limit percentage is retained');
+});
+
+
+test('BUD-F04: live indicator shows zero-limit excess and never a zero-limit near warning', () => {
+  const evaluator=load('../services/check-budget-exceeded.service.ts', {
+    '@/infrastructure/database/client':{}, '@/modules/categories':{}, '@/modules/currencies':{},
+    '@/utils/currency':currency, '../repositories/category-budgets.repository':{}, './calculate-category-budget.service':{},
+  }).evaluateBudgetSnapshot;
+  let reads=0,slot=0;const cache=[];
+  const snapshot={hasBudget:true,isEnabled:true,effectiveBudgetCents:0,currentSpentCents:0,remainingBeforeCents:0,expenseCurrency:'PHP',budgetCurrencyCode:'PHP',categoryName:'Food',periodLabel:'November 2026',notifyOnExceeded:true,ratesMap:new Map()};
+  const theme={colors:{danger:'red',warning:'orange',success:'green'},spacing:{},borderRadius:{}};
+  const {BudgetLiveIndicator}=load('../components/budget-live-indicator.tsx', {
+    react:{memo:c=>c,useMemo:(fn,deps)=>{const i=slot++;if(!cache[i]||deps.some((v,j)=>v!==cache[i].deps[j]))cache[i]={deps,value:fn()};return cache[i].value;}},
+    'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
+    'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View'},
+    'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',CheckCircle2:'CheckCircle2'},
+    '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
+    '@/utils/currency':currency,
+    '../services/check-budget-exceeded.service':{getBudgetLiveSnapshot:()=>{reads++;return snapshot;},evaluateBudgetSnapshot:evaluator},
+  });
+  const render=amount=>{slot=0;return BudgetLiveIndicator({categoryId:'food',amountMinorUnits:amount});};
+  const zero=JSON.stringify(render(0)); assert.doesNotMatch(zero,/Near |% used/);
+  const expense=JSON.stringify(render(10000));assert.match(expense,/Exceeds November 2026 budget by/);assert.match(expense,/100.00/);
+  assert.doesNotMatch(expense,/% used|NaN|Infinity/);
+  for(let i=0;i<50;i++)render(i*100);
+  assert.equal(reads,1,'Typing only evaluates the cached baseline');
+});
+
+test('BUD-F04: zero-limit card shows monetary excess without 100% text', () => {
+  const theme={colors:{danger:'red'},spacing:{},borderRadius:{}};
+  const {BudgetCard}=load('../components/budget-card.tsx', {
+    react:{memo:c=>c}, 'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
+    'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View',Pressable:'Pressable'},
+    'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',ArrowRight:'ArrowRight',RotateCw:'RotateCw'},
+    '@/components':{IconHelper:'IconHelper',ThemedSwitch:'ThemedSwitch'},
+    '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
+    '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
+    '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null}, '@/utils/currency':currency,
+  });
+  const tree=BudgetCard({status:{budget:{isEnabled:true,currencyCode:'PHP',frequency:'custom_monthly'},category:{name:'Food'},effectiveTargetCents:0,spentCents:10000,remainingCents:-10000,percentage:100,isExceeded:true},onPress:()=>{},onToggle:()=>{}});
+  assert.ok(JSON.stringify(tree).includes('Over by'));
+  assert.equal(find(tree,node=>node.type==='Text' && String(JSON.stringify(node.props.children)).includes('%')),undefined);
+});

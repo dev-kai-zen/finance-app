@@ -91,7 +91,7 @@ const BudgetWarningDetails = memo(function BudgetWarningDetails({ result }: { re
     categoryName, periodLabel, effectiveBudgetCents, currentSpentCents,
     additionalExpenseCents, newSpentCents, exceededByCents,
   } = result;
-  const percentage = effectiveBudgetCents > 0 ? Math.round((newSpentCents / effectiveBudgetCents) * 100) : 100;
+  const percentage = effectiveBudgetCents > 0 ? Math.round((newSpentCents / effectiveBudgetCents) * 100) : null;
   return (
     <View>
       <Text style={styles.description}>{t("transactions.budgetWarningDescription", { category: categoryName, period: periodLabel })}</Text>
@@ -130,7 +130,7 @@ const BudgetWarningDetails = memo(function BudgetWarningDetails({ result }: { re
         <View style={styles.exceededRow}>
           <Text style={styles.exceededLabel}>{t("transactions.budgetWarningOverBy")}</Text>
           <Text style={styles.exceededValue}>
-            {formatCurrency(exceededByCents, result.budgetCurrencyCode || "PHP", false)} ({percentage}%)
+            {formatCurrency(exceededByCents, result.budgetCurrencyCode || "PHP", false)}{percentage !== null ? ` (${percentage}%)` : ""}
           </Text>
         </View>
       </View>

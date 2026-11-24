@@ -201,7 +201,7 @@ export const BudgetCard = memo(function BudgetCard({
             <View style={styles.warningPill}>
               <AlertCircle color={theme.colors.danger} size={14} />
               <Text style={styles.warningPillText}>
-                Budget exceeded by {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)} ({percentage}%)
+                Budget exceeded by {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)}{effectiveTargetCents > 0 ? ` (${percentage}%)` : ""}
               </Text>
             </View>
           ) : budget.allowRollover && rolloverCents !== 0 ? (

@@ -511,3 +511,38 @@ test("BUD-F03: both budget and monthly-target lookups chunk at 500 IDs", () => {
   assert.equal(found.find(row=>row.id==="budget_1000").monthlyTargets[0].amountMinorUnits,250);
   sqlite.close();
 });
+
+
+test("BUD-F04: zero limits agree with cards for custom targets, rollover and grouped splits", () => {
+  const {db,date,time,expense}=setupParentBudget();
+  const {checkExpenseBudgets}=require('../services/check-expense-budgets.service');
+  sqlite.exec("DELETE FROM transactions; UPDATE category_budgets SET frequency='custom_monthly',amount_minor_units=100000");
+  sqlite.prepare("INSERT INTO budget_monthly_targets(id,budget_id,year,month,amount_minor_units,created_at,updated_at) VALUES('zero','b_parent',2026,11,0,?,?)").run(time,time);
+  const input={categoryId:'cat_restaurants',occurredAt:date,context:db};
+  const snapshot=getBudgetLiveSnapshot(input);
+  assert.equal(snapshot.effectiveBudgetCents,0);
+  const queryCount=queries.length;
+  for(const [current,pending,expected] of [[0,0,false],[0,10000,true],[-10000,5000,false],[-10000,10000,false],[-10000,10001,true]]) {
+    const result=evaluateBudgetSnapshot({...snapshot,currentSpentCents:current},pending);
+    assert.equal(result.exceeds,expected,JSON.stringify({current,pending}));
+    assert.equal(result.exceededByCents,Math.max(0,current+pending));
+  }
+  for(const target of [100000,500000]) for(const pending of [target,target+1]) {
+    assert.equal(evaluateBudgetSnapshot({...snapshot,effectiveBudgetCents:target},pending).exceeds,pending>target);
+  }
+  for(const flag of ['hasBudget','isEnabled']) assert.equal(evaluateBudgetSnapshot({...snapshot,[flag]:false},10000).exceeds,false);
+  assert.equal(queries.length,queryCount,'Pure evaluations execute zero SQL');
+  const [grouped]=checkExpenseBudgets({lines:[{categoryId:'cat_groceries',amountMinorUnits:4000},{categoryId:'cat_restaurants',amountMinorUnits:6000}],occurredAt:date,context:db});
+  assert.equal(grouped.newSpentCents,10000);assert.equal(grouped.exceeds,true);
+  expense('zero_saved','cat_restaurants',10000);
+  assert.equal(checkBudgetExceeded({...input,amountMinorUnits:0}).exceeds,true);
+  assert.equal(getBudgetsSummary(date,db).exceededCount,1);
+  sqlite.exec("DELETE FROM transactions; UPDATE category_budgets SET frequency='monthly',allow_rollover=1,rollover_mode='full'");
+  expense('previous','cat_groceries',250000,new Date(2026,9,15,12).getTime());
+  const rollover=getBudgetLiveSnapshot(input);
+  assert.equal(rollover.effectiveBudgetCents,0);
+  assert.equal(evaluateBudgetSnapshot(rollover,10000).exceeds,true);
+  expense('rollover_saved','cat_restaurants',10000);
+  assert.equal(getBudgetsSummary(date,db).exceededCount,1);
+  sqlite.close();
+});

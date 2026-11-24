@@ -60,9 +60,9 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
   const percentage =
     effectiveBudgetCents > 0
       ? Math.round((newSpentCents / effectiveBudgetCents) * 100)
-      : 100;
+      : null;
 
-  const isNearLimit = percentage >= 85 && !exceeds;
+  const isNearLimit = percentage !== null && percentage >= 85 && !exceeds;
 
   const statusColor = exceeds
     ? theme.colors.danger
@@ -108,7 +108,7 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
             ? `Exceeds ${periodLabel} budget by ${formatCurrency(exceededByCents, budgetCurrencyCode, false)}!`
             : isNearLimit
               ? `Near ${periodLabel} limit (${percentage}% used)`
-              : `Within ${periodLabel} budget (${percentage}% used)`}
+              : `Within ${periodLabel} budget${percentage !== null ? ` (${percentage}% used)` : ""}`}
         </Text>
         <Text numberOfLines={1} style={styles.subText}>
           {formatCurrency(newSpentCents, budgetCurrencyCode, false)} of{" "}

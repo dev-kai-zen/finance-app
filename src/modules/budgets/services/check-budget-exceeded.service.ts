@@ -197,10 +197,7 @@ export function evaluateBudgetSnapshot(
           DEFAULT_BASE_CURRENCY,
         );
   const newSpentCents = snapshot.currentSpentCents + additionalExpenseCents;
-  const exceeds =
-    snapshot.effectiveBudgetCents > 0
-      ? newSpentCents > snapshot.effectiveBudgetCents
-      : false;
+  const exceeds = newSpentCents > snapshot.effectiveBudgetCents;
   const exceededByCents = Math.max(
     0,
     newSpentCents - snapshot.effectiveBudgetCents,
