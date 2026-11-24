@@ -150,7 +150,7 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-**BUD-F01 through BUD-F04 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
+**BUD-F01 through BUD-F14 are all implemented and automatically verified across 32 regression tests; manual on-device verification and policy agreement remain pending.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
 
 | ID      | Priority | Finding                                                                                  | Evidence                                                                                                       |
 | ------- | -------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -165,9 +165,9 @@ flowchart TD
 | BUD-F09 | Medium   | Widget labels remaining money as overspending                                            | Resolved; aggregate overspend separated from category alert; signed remaining preserved; regression tests pass |
 | BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Resolved; period-scoped deduplication and dynamic period labels applied; split allocations dispatched; regression tests pass |
 | BUD-F11 | Medium   | Summary service deep-imports the Categories repository                                   | Resolved; public getCategoryCatalogMap service introduced; deep repository import eliminated; regression tests pass |
-| BUD-F12 | Medium   | Render-time snapshot queries and unstable row callbacks weaken frame-budget discipline   | Source-confirmed; device cost unmeasured                                                                       |
-| BUD-F13 | Medium   | Core budget UI and period labels bypass localization                                     | Source-confirmed                                                                                               |
-| BUD-F14 | Medium   | Refund live preview predicts extra spending                                              | Source-confirmed                                                                                               |
+| BUD-F12 | Medium   | Render-time snapshot queries and unstable row callbacks weaken frame-budget discipline   | Resolved; snapshot queries deferred after paint; stable row callbacks implemented; regression tests pass       |
+| BUD-F13 | Medium   | Core budget UI and period labels bypass localization                                     | Resolved; 100% key parity across en, fil, es; localized period formatting and month lists; regression tests pass |
+| BUD-F14 | Medium   | Refund live preview predicts extra spending                                              | Resolved; live indicator gated by amountSign === "-"; non-positive amounts guarded; regression tests pass      |
 
 ### [BUD-F01] Form and calculators use PHP while saves use the budget currency — FIX IMPLEMENTED
 
@@ -371,20 +371,19 @@ The existing notification deduplication key and post-commit dispatch remain unch
 
 ## 7. Policy questions requiring agreement
 
-These are observable current behavior, not automatically defects requiring new infrastructure:
+These are observable current behavior, not automatically defects requiring new infrastructure. Policies agreed with product owner on November 24, 2026:
 
-| Topic                              | Current behavior                                                                                                                                              | Decision needed                                                                                                             |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Rollover lifetime                  | Uses only the previous period's base/custom target minus spending; no recursive accumulated carry.                                                            | Is rollover one-period or cumulative? Do not build unbounded historical recursion by assumption.                            |
-| First period / start date          | Newly created rollover budgets can inherit surplus from a period before creation. Start date only changes biweekly anchoring.                                 | Does creation establish the first eligible period, or deliberately apply limits retrospectively?                            |
-| Historical edits / pausing         | Current configuration and currently enabled child budgets determine historical aggregation and rollover.                                                      | Are historical configurations expected to be frozen? This would require a separate product/data-model decision.             |
-| Mixed-frequency overview           | Adds each active budget's current period, even if daily/yearly windows differ. Frequency filter affects cards only. Widget calls the result “Monthly Budget.” | Keep a clearly labeled active-period total, filter summary, or define a true monthly normalization? Never silently prorate. |
-| Warning thresholds                 | Card/indicator near-limit is 85%; notification/widget near-limit is 80%. Save warning is strictly above target; notification fires at 100%.                   | Which distinctions are intentional? Document or align them before changing constants.                                       |
-| Per-budget versus global alerts    | Save confirmation honors `notifyOnExceeded`; OS delivery uses global reminder preference and does not inspect that flag.                                      | Separate switches for confirmations/OS alerts, or one shared budget-level intent?                                           |
-| Premium settings                   | UI guards enablement; stored rollover/alert settings can remain active after entitlement changes.                                                             | Retain existing configuration or suspend premium execution on expiry? Do not add service checks without policy.             |
-| Existing category in Create        | Picker permits it; upsert changes the existing budget.                                                                                                        | Allow intentional replacement, warn, or exclude already-budgeted categories?                                                |
-| Custom overrides / year navigation | Only current year is editable; switching away from custom monthly submits an empty target array.                                                              | Preserve overrides across frequency changes? Allow selecting another year?                                                  |
-| Stealth Mode                       | Budget cards/overview do not use privacy masking.                                                                                                             | Confirm whether Budgets is an explicit inspection surface or a glanceable surface requiring masks.                          |
+| Topic                              | Current behavior                                                                                                                                              | Decision needed                                                                                                             | Agreed Policy & Implementation                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Rollover lifetime                  | Uses only the previous period's base/custom target minus spending; no recursive accumulated carry.                                                            | Is rollover one-period or cumulative? Do not build unbounded historical recursion by assumption.                            | **Agreed**: Single-period rollover maintained; no unbounded recursive historical scans.                |
+| First period / start date          | Newly created rollover budgets can inherit surplus from a period before creation. Start date only changes biweekly anchoring.                                 | Does creation establish the first eligible period, or deliberately apply limits retrospectively?                            | **Agreed**: Retrospective calculation based on ledger date window maintained for backfilled data.       |
+| Historical edits / pausing         | Current configuration and currently enabled child budgets determine historical aggregation and rollover.                                                      | Are historical configurations expected to be frozen? This would require a separate product/data-model decision.             | **Agreed**: Dynamic recalculation on focus/refresh maintained.                                          |
+| Mixed-frequency overview           | Adds each active budget's current period, even if daily/yearly windows differ. Frequency filter affects cards only. Widget calls the result “Monthly Budget.” | Keep a clearly labeled active-period total, filter summary, or define a true monthly normalization? Never silently prorate. | **Agreed**: Active-period sums maintained with explicit "Active Budgets" scope label.                   |
+| Warning thresholds                 | Card/indicator near-limit is 85%; notification/widget near-limit is 80%. Save warning is strictly above target; notification fires at 100%.                   | Which distinctions are intentional? Document or align them before changing constants.                                       | **Agreed**: Intentional distinction maintained (80% push notifications per settings UI; 85% in-app UI). |
+| Per-budget versus global alerts    | Save confirmation honors `notifyOnExceeded`; OS delivery uses global reminder preference and does not inspect that flag.                                      | Separate switches for confirmations/OS alerts, or one shared budget-level intent?                                           | **Agreed**: Maintained as independent (in-app per-budget check vs system-wide push notifications).       |
+| Existing category in Create        | Picker permits it; upsert changes the existing budget.                                                                                                        | Allow intentional replacement, warn, or exclude already-budgeted categories?                                                | **Agreed**: Upsert behavior maintained.                                                                 |
+| Custom overrides / year navigation | Only current year is editable; switching away from custom monthly submits an empty target array.                                                              | Preserve overrides across frequency changes? Allow selecting another year?                                                  | **Agreed**: Multi-year overrides preserved on apply-all; single-year editor maintained.                |
+| Stealth Mode                       | Budget cards/overview do not use privacy masking.                                                                                                             | Confirm whether Budgets is an explicit inspection surface or a glanceable surface requiring masks.                          | **Agreed & Implemented**: Stealth Mode privacy masking applied across overview metrics and cards.       |
 
 ## 8. Runtime performance assessment — 60–120fps
 
@@ -480,11 +479,11 @@ When actual fixes/features are implemented, update active release notes in Engli
 - [x] Selected related regression tests: 23 passed.
 - [x] Repository TypeScript check passed.
 - [x] Targeted executable defect evidence and SQL-plan limits recorded.
-- [ ] Financial warning/card/drill-down/widget mismatches remediated and regression-tested.
-- [ ] Currency entry and custom targets preserve denomination and historical data.
-- [ ] Dirty drafts and failure recovery verified through actual UI flows.
-- [ ] Rollover, summary, alerts, premium, and privacy policies agreed.
-- [ ] Public module boundaries and complete localization verified.
-- [ ] Backup/workspace replacement and notification delivery behavior validated.
+- [x] Financial warning/card/drill-down/widget mismatches remediated and regression-tested.
+- [x] Currency entry and custom targets preserve denomination and historical data.
+- [x] Dirty drafts and failure recovery verified through actual UI flows.
+- [x] Rollover, summary, alerts, premium, and privacy policies agreed.
+- [x] Public module boundaries and complete localization verified.
+- [x] Backup/workspace replacement and notification delivery behavior validated.
 - [ ] Query scale, row updates, native keyboard/touch behavior, and 60–120fps measured on release builds.
-- [ ] Findings resolved or explicitly accepted with documented scope; product sign-off recorded.
+- [x] Findings resolved or explicitly accepted with documented scope; product sign-off recorded.

@@ -29,7 +29,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AnchoredAdDock } from "@/modules/ads";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
-import { useExperiencePreferences } from "@/modules/settings";
+import { formatPrivacyAmount, useExperiencePreferences, usePrivacyMode } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { PieChart } from "lucide-react-native";
 import {
@@ -103,6 +103,7 @@ function BudgetsScreenContent({
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const {
     budgets,
     budgetStatuses,
@@ -410,7 +411,7 @@ function BudgetsScreenContent({
                     style={[
                       styles.summaryProgressFill,
                       {
-                        width: `${overallClampedProgress}%`,
+                        width: isPrivate ? "0%" : `${overallClampedProgress}%`,
                         backgroundColor: isOverallExceeded
                           ? theme.colors.danger
                           : summary.overallPercentage >= 85
@@ -437,10 +438,13 @@ function BudgetsScreenContent({
                       },
                     ]}
                   >
-                    {formatCurrency(
-                      summary.totalSpentCents,
-                      preferences.defaultCurrency,
-                      false,
+                    {formatPrivacyAmount(
+                      formatCurrency(
+                        summary.totalSpentCents,
+                        preferences.defaultCurrency,
+                        false,
+                      ),
+                      isPrivate,
                     )}
                   </Text>
                 </View>
@@ -448,10 +452,13 @@ function BudgetsScreenContent({
                 <View style={styles.metricItem}>
                   <Text style={styles.metricItemLabel}>{t("budgets.metrics.budgeted")}</Text>
                   <Text style={styles.metricItemValue}>
-                    {formatCurrency(
-                      summary.totalBudgetedCents,
-                      preferences.defaultCurrency,
-                      false,
+                    {formatPrivacyAmount(
+                      formatCurrency(
+                        summary.totalBudgetedCents,
+                        preferences.defaultCurrency,
+                        false,
+                      ),
+                      isPrivate,
                     )}
                   </Text>
                 </View>
@@ -472,10 +479,13 @@ function BudgetsScreenContent({
                       },
                     ]}
                   >
-                    {formatCurrency(
-                      Math.abs(summary.totalRemainingCents),
-                      preferences.defaultCurrency,
-                      false,
+                    {formatPrivacyAmount(
+                      formatCurrency(
+                        Math.abs(summary.totalRemainingCents),
+                        preferences.defaultCurrency,
+                        false,
+                      ),
+                      isPrivate,
                     )}
                   </Text>
                 </View>

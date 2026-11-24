@@ -7,6 +7,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { BudgetStatus } from "../types/budget.types";
 
@@ -40,6 +41,7 @@ export const BudgetCard = memo(function BudgetCard({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const resolveEntityColor = useResolveEntityColor();
 
   const {
@@ -148,7 +150,7 @@ export const BudgetCard = memo(function BudgetCard({
             style={[
               styles.progressBarFill,
               {
-                width: `${clampedProgress}%`,
+                width: isPrivate ? "0%" : `${clampedProgress}%`,
                 backgroundColor: statusColor,
               },
             ]}
@@ -170,14 +172,14 @@ export const BudgetCard = memo(function BudgetCard({
               },
             ]}
           >
-            {formatCurrency(spentCents, budget.currencyCode, false)}
+            {formatPrivacyAmount(formatCurrency(spentCents, budget.currencyCode, false), isPrivate)}
           </Text>
         </View>
 
         <View style={styles.targetGroup}>
           <Text style={styles.metricLabel}>{t("budgets.metrics.budget")}</Text>
           <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.targetValue}>
-            {formatCurrency(effectiveTargetCents, budget.currencyCode, false)}
+            {formatPrivacyAmount(formatCurrency(effectiveTargetCents, budget.currencyCode, false), isPrivate)}
           </Text>
         </View>
 
@@ -196,7 +198,7 @@ export const BudgetCard = memo(function BudgetCard({
               },
             ]}
           >
-            {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)}
+            {formatPrivacyAmount(formatCurrency(Math.abs(remainingCents), budget.currencyCode, false), isPrivate)}
           </Text>
         </View>
       </View>
@@ -219,8 +221,8 @@ export const BudgetCard = memo(function BudgetCard({
               <AlertCircle color={theme.colors.danger} size={14} />
               <Text style={styles.warningPillText}>
                 {t("budgets.card.budgetExceededBy", {
-                  amount: formatCurrency(Math.abs(remainingCents), budget.currencyCode, false),
-                  percentage: effectiveTargetCents > 0 ? ` (${percentage}%)` : "",
+                  amount: formatPrivacyAmount(formatCurrency(Math.abs(remainingCents), budget.currencyCode, false), isPrivate),
+                  percentage: effectiveTargetCents > 0 && !isPrivate ? ` (${percentage}%)` : "",
                 })}
               </Text>
             </View>
@@ -230,10 +232,10 @@ export const BudgetCard = memo(function BudgetCard({
               <Text style={styles.rolloverPillText}>
                 {rolloverCents > 0
                   ? t("budgets.card.rolloverSurplus", {
-                      amount: formatCurrency(rolloverCents, budget.currencyCode, false),
+                      amount: formatPrivacyAmount(formatCurrency(rolloverCents, budget.currencyCode, false), isPrivate),
                     })
                   : t("budgets.card.rolloverDeficit", {
-                      amount: formatCurrency(Math.abs(rolloverCents), budget.currencyCode, false),
+                      amount: formatPrivacyAmount(formatCurrency(Math.abs(rolloverCents), budget.currencyCode, false), isPrivate),
                     })}
               </Text>
             </View>

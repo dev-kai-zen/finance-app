@@ -177,6 +177,7 @@ test('BUD-F04: zero-limit card shows monetary excess without 100% text', () => {
     '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
+    '@/modules/settings':{usePrivacyMode:()=>({isPrivate:false}),formatPrivacyAmount:(a,p)=>p?'••••••':a},
     '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null}, '@/utils/currency':currency,
   });
   const tree=BudgetCard({status:{budget:{isEnabled:true,currencyCode:'PHP',frequency:'custom_monthly'},category:{name:'Food'},effectiveTargetCents:0,spentCents:10000,remainingCents:-10000,percentage:100,isExceeded:true},onPress:()=>{},onToggle:()=>{}});
@@ -263,6 +264,7 @@ test('BUD-F12: BudgetCard forwards parameterized callbacks to stable parent hand
     '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
+    '@/modules/settings':{usePrivacyMode:()=>({isPrivate:false}),formatPrivacyAmount:(a,p)=>p?'••••••':a},
     '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null},
     '@/utils/currency':currency,
   });
@@ -431,5 +433,56 @@ test("BUD-F14: evaluateBudgetSnapshot ignores non-positive / refund amounts and 
   assert.equal(expenseResult.newSpentCents, 550000);
   assert.equal(expenseResult.exceededByCents, 50000);
 });
+
+test("Policy 8: BudgetCard masks financial amounts and progress bar when stealth mode is active", () => {
+  const theme = { colors: { danger: "red" }, spacing: {}, borderRadius: {} };
+  let privacyActive = false;
+
+  const { BudgetCard } = load("../components/budget-card.tsx", {
+    react: { memo: c => c, useCallback: cb => cb },
+    "react/jsx-runtime": { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+    "react-native": { StyleSheet: { create: s => s }, Text: "Text", View: "View", Pressable: "Pressable" },
+    "lucide-react-native": { AlertCircle: "AlertCircle", AlertTriangle: "AlertTriangle", ArrowRight: "ArrowRight", RotateCw: "RotateCw" },
+    "@/components": { IconHelper: "IconHelper", ThemedSwitch: "ThemedSwitch" },
+    "@/infrastructure/localization": { useLocalization: () => ({ t: translate, locale: "en" }) },
+    "@/hooks/use-app-theme": { useAppTheme: () => theme, useThemeStyles: create => create(theme) },
+    "@/modules/currencies": { useCurrencyPreferences: () => ({ preferences: {} }) },
+    "@/modules/hex-colors": { useResolveEntityColor: () => () => null },
+    "@/modules/settings": {
+      usePrivacyMode: () => ({ isPrivate: privacyActive }),
+      formatPrivacyAmount: (a, isPriv) => isPriv ? "••••••" : a,
+    },
+    "@/utils/currency": currency,
+  });
+
+  const testStatus = {
+    budget: { id: "b-1", isEnabled: true, currencyCode: "PHP", frequency: "monthly" },
+    category: { name: "Groceries", icon: "cart" },
+    periodLabel: "November 2026",
+    effectiveTargetCents: 50000,
+    spentCents: 25000,
+    remainingCents: 25000,
+    percentage: 50,
+    isExceeded: false,
+    isNearLimit: false,
+    rolloverCents: 0,
+  };
+
+  // Normal view shows amounts
+  privacyActive = false;
+  const normalTree = BudgetCard({ status: testStatus, onPress: () => {}, onToggle: () => {} });
+  const normalStr = JSON.stringify(normalTree);
+  assert.ok(normalStr.includes("250.00"), "Normal card displays clear financial figures");
+  assert.ok(normalStr.includes("50%"), "Normal card displays percentage progress bar width");
+
+  // Stealth view masks amounts and collapses progress bar
+  privacyActive = true;
+  const maskedTree = BudgetCard({ status: testStatus, onPress: () => {}, onToggle: () => {} });
+  const maskedStr = JSON.stringify(maskedTree);
+  assert.ok(!maskedStr.includes("250.00"), "Stealth mode card must NOT display clear financial figures");
+  assert.ok(maskedStr.includes("••••••"), "Stealth mode card must display masked dots");
+  assert.ok(maskedStr.includes('"width":"0%"'), "Stealth mode card must collapse progress bar to 0%");
+});
+
 
 
