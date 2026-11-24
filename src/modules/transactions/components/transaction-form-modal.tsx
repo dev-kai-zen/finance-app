@@ -2815,7 +2815,7 @@ function TransactionFormModalInner({
                       </View>
                       <ChevronRight size={18} color={theme.colors.textMuted} />
                     </Pressable>
-                    {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
+                    {mode === "expense" && amountSign === "-" && selectedCategoryId && amountMinorUnits > 0 ? (
                       <BudgetLiveIndicator
                         amountMinorUnits={postedExpenseMinorUnitsAbs}
                         categoryId={selectedCategoryId}

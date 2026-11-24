@@ -372,3 +372,64 @@ test("BUD-F13: budget-period produces localized period labels and month lists", 
   assert.equal(esDaily.periodLabel, "Hoy");
 });
 
+test("BUD-F14: evaluateBudgetSnapshot ignores non-positive / refund amounts and does not warn", () => {
+  const { evaluateBudgetSnapshot } = load("../services/check-budget-exceeded.service.ts", {
+    drizzle_orm: {},
+    "@/infrastructure/database/client": {},
+    "@/infrastructure/database/schema": {},
+    "@/modules/categories": { getCategory: () => null, getCategoryChildren: () => [] },
+    "@/modules/currencies": {
+      DEFAULT_BASE_CURRENCY: "USD",
+      convertCurrencyMinorUnits: (amount) => amount,
+      getExchangeRateMap: () => new Map(),
+    },
+    "@/utils/currency": currency,
+    "../utils/budget-period": load("../utils/budget-period.ts"),
+    "../utils/budget-category-ids": { getBudgetCategoryIds: () => [] },
+    "../repositories/category-budgets.repository": {},
+    "../repositories/category-budget-targets.repository": {},
+    "./calculate-category-budget.service": {},
+  });
+
+  const snapshot = {
+    hasBudget: true,
+    isEnabled: true,
+    categoryName: "Electronics",
+    budgetCurrencyCode: "PHP",
+    frequency: "monthly",
+    periodLabel: "November 2026",
+    effectiveBudgetCents: 500000,
+    currentSpentCents: 450000,
+    remainingBeforeCents: 50000,
+    notifyOnExceeded: true,
+    expenseCurrency: "PHP",
+    ratesMap: new Map(),
+    budgetId: "b-1",
+    periodKey: "b-1-2026-11",
+    periodStart: new Date(2026, 10, 1),
+    periodEnd: new Date(2026, 10, 30),
+  };
+
+  // Zero amount must not warn or add expense
+  const zeroResult = evaluateBudgetSnapshot(snapshot, 0);
+  assert.equal(zeroResult.exceeds, false);
+  assert.equal(zeroResult.additionalExpenseCents, 0);
+  assert.equal(zeroResult.newSpentCents, 450000);
+  assert.equal(zeroResult.remainingAfterCents, 50000);
+
+  // Negative amount (refund) must NOT be converted to positive expense
+  const refundResult = evaluateBudgetSnapshot(snapshot, -100000);
+  assert.equal(refundResult.exceeds, false);
+  assert.equal(refundResult.additionalExpenseCents, 0);
+  assert.equal(refundResult.newSpentCents, 450000);
+  assert.equal(refundResult.remainingAfterCents, 50000);
+
+  // Positive expense amount DOES add to spending
+  const expenseResult = evaluateBudgetSnapshot(snapshot, 100000);
+  assert.equal(expenseResult.exceeds, true);
+  assert.equal(expenseResult.additionalExpenseCents, 100000);
+  assert.equal(expenseResult.newSpentCents, 550000);
+  assert.equal(expenseResult.exceededByCents, 50000);
+});
+
+

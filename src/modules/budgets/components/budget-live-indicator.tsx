@@ -75,7 +75,7 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
 
   const percentage =
     effectiveBudgetCents > 0
-      ? Math.round((newSpentCents / effectiveBudgetCents) * 100)
+      ? Math.max(0, Math.round((newSpentCents / effectiveBudgetCents) * 100))
       : null;
 
   const isNearLimit = percentage !== null && percentage >= 85 && !exceeds;

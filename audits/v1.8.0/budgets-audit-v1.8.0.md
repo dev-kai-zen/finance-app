@@ -361,7 +361,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** Key parity in `en.ts`, `fil.ts`, `es.ts`; localized all-frequency periods, warning interpolation, and accessibility labels. Verify numeric/date bounds do not change with language.
 - **Performance:** Format labels once per resolved period; no per-row database reads or new root state.
 
-### [BUD-F14] Positive expense refunds show an expense-style live warning
+### [BUD-F14] Positive expense refunds show an expense-style live warning — FIX IMPLEMENTED
 
 - **Evidence / source reproduction:** [TransactionFormModal:2786](../../src/modules/transactions/components/transaction-form-modal.tsx#L2786) mounts the live indicator for expense mode and a positive absolute amount without checking `amountSign`. It passes `postedExpenseMinorUnitsAbs`. [evaluateBudgetSnapshot:158](../../src/modules/budgets/services/check-budget-exceeded.service.ts#L158) takes the absolute value and adds it to spending.
 - **Impact:** With PHP 4,500 spent and a PHP 5,000 target, a PHP 1,000 refund previews PHP 5,500 and an over-budget warning, although the saved ledger should reduce spending to PHP 3,500. Save-time warning checks correctly require `amountSign === "-"`; the live indicator does not share that guard.

@@ -187,7 +187,7 @@ export function evaluateBudgetSnapshot(
   snapshot: BudgetLiveSnapshot,
   amountMinorUnits: number,
 ): BudgetCheckResult {
-  const absAmount = Math.abs(amountMinorUnits);
+  const expenseAmount = Math.max(0, amountMinorUnits);
 
   if (!snapshot.hasBudget || !snapshot.isEnabled) {
     return {
@@ -199,8 +199,8 @@ export function evaluateBudgetSnapshot(
       periodLabel: snapshot.periodLabel,
       effectiveBudgetCents: 0,
       currentSpentCents: 0,
-      additionalExpenseCents: absAmount,
-      newSpentCents: absAmount,
+      additionalExpenseCents: expenseAmount,
+      newSpentCents: expenseAmount,
       remainingBeforeCents: 0,
       remainingAfterCents: 0,
       exceeds: false,
@@ -210,15 +210,17 @@ export function evaluateBudgetSnapshot(
   }
 
   const additionalExpenseCents =
-    snapshot.expenseCurrency === snapshot.budgetCurrencyCode
-      ? absAmount
-      : convertCurrencyMinorUnits(
-          absAmount,
-          snapshot.expenseCurrency,
-          snapshot.budgetCurrencyCode,
-          snapshot.ratesMap,
-          DEFAULT_BASE_CURRENCY,
-        );
+    expenseAmount === 0
+      ? 0
+      : snapshot.expenseCurrency === snapshot.budgetCurrencyCode
+        ? expenseAmount
+        : convertCurrencyMinorUnits(
+            expenseAmount,
+            snapshot.expenseCurrency,
+            snapshot.budgetCurrencyCode,
+            snapshot.ratesMap,
+            DEFAULT_BASE_CURRENCY,
+          );
   const newSpentCents = snapshot.currentSpentCents + additionalExpenseCents;
   const exceeds = newSpentCents > snapshot.effectiveBudgetCents;
   const exceededByCents = Math.max(
