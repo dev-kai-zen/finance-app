@@ -1,7 +1,9 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -12,20 +14,25 @@ import { AppButton } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
-import type { BudgetCheckResult } from "../types/budget.types";
+import type { ExpenseBudgetCheckResult } from "../services/check-expense-budgets.service";
 
 export interface OverBudgetWarningModalProps {
   visible: boolean;
-  result: BudgetCheckResult | null;
+  results: ExpenseBudgetCheckResult[];
   onProceed: () => void;
   onCancel: () => void;
   pending?: boolean;
 }
 
-export const OverBudgetWarningModal = memo(function OverBudgetWarningModal({
-  visible,
-  result,
+export const OverBudgetWarningModal = memo(function OverBudgetWarningModal(props: OverBudgetWarningModalProps) {
+  if (!props.visible || props.results.length === 0) return null;
+  return <OverBudgetWarningModalContent {...props} />;
+});
+
+function OverBudgetWarningModalContent({
+  results,
   onProceed,
   onCancel,
   pending = false,
@@ -34,118 +41,101 @@ export const OverBudgetWarningModal = memo(function OverBudgetWarningModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-
-  if (!result || !result.exceeds) {
-    return null;
-  }
-
-  const {
-    categoryName,
-    periodLabel,
-    effectiveBudgetCents,
-    currentSpentCents,
-    additionalExpenseCents,
-    newSpentCents,
-    exceededByCents,
-  } = result;
-
-  const percentage =
-    effectiveBudgetCents > 0
-      ? Math.round((newSpentCents / effectiveBudgetCents) * 100)
-      : 100;
+  const { t } = useLocalization();
+  const handleCancel = useCallback(() => {
+    if (pending) return;
+    Keyboard.dismiss();
+    onCancel();
+  }, [onCancel, pending]);
+  const handleProceed = useCallback(() => {
+    if (pending) return;
+    Keyboard.dismiss();
+    onProceed();
+  }, [onProceed, pending]);
 
   return (
-    <Modal
-      animationType="fade"
-      onRequestClose={onCancel}
-      transparent
-      visible={visible}
-    >
+    <Modal animationType="fade" onRequestClose={handleCancel} transparent visible>
       <View style={styles.overlay}>
         <Pressable
-          accessibilityLabel="Dismiss budget warning"
+          accessibilityLabel={t("transactions.budgetWarningDismiss")}
           accessibilityRole="button"
-          onPress={onCancel}
+          disabled={pending}
+          onPress={handleCancel}
           style={styles.backdrop}
         />
-
-        <View
-          style={[
-            styles.dialogContainer,
-            isDesktop && styles.dialogContainerDesktop,
-          ]}
-        >
-          {/* Header Icon */}
+        <View style={[styles.dialogContainer, isDesktop && styles.dialogContainerDesktop]}>
           <View style={styles.iconCircle}>
             <AlertTriangle color={theme.colors.danger} size={30} />
           </View>
-
-          {/* Title & Category Info */}
-          <Text style={styles.title}>Budget Exceeded</Text>
-          <Text style={styles.description}>
-            This expense will push{" "}
-            <Text style={styles.boldText}>{categoryName}</Text> over its{" "}
-            <Text style={styles.boldText}>{periodLabel}</Text> budget limit.
-          </Text>
-
-          {/* Breakdown Box */}
-          <View style={styles.breakdownBox}>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Budget Limit</Text>
-              <Text style={styles.breakdownValue}>
-                {formatCurrency(effectiveBudgetCents, result.budgetCurrencyCode || "PHP", false)}
-              </Text>
-            </View>
-
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Current Spending</Text>
-              <Text style={styles.breakdownValue}>
-                {formatCurrency(currentSpentCents, result.budgetCurrencyCode || "PHP", false)}
-              </Text>
-            </View>
-
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>This Expense</Text>
-              <Text style={[styles.breakdownValue, styles.expenseAmount]}>
-                +{formatCurrency(additionalExpenseCents, result.budgetCurrencyCode || "PHP", false)}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.breakdownRow}>
-              <Text style={styles.totalLabel}>New Total</Text>
-              <Text style={styles.totalValue}>
-                {formatCurrency(newSpentCents, result.budgetCurrencyCode || "PHP", false)}
-              </Text>
-            </View>
-
-            <View style={styles.exceededRow}>
-              <Text style={styles.exceededLabel}>Over by</Text>
-              <Text style={styles.exceededValue}>
-                {formatCurrency(exceededByCents, result.budgetCurrencyCode || "PHP", false)} ({percentage}%)
-              </Text>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
+          <Text style={styles.title}>{t("transactions.budgetWarningTitle")}</Text>
+          {results.length > 1 ? (
+            <Text style={styles.description}>{t("transactions.budgetWarningMultiple", { count: results.length })}</Text>
+          ) : null}
+          <ScrollView style={styles.budgetsScroll} keyboardShouldPersistTaps="handled">
+            {results.map((result) => <BudgetWarningDetails key={result.budgetId} result={result} />)}
+          </ScrollView>
           <View style={styles.buttonStack}>
-            <AppButton
-              label="Proceed Anyway"
-              loading={pending}
-              onPress={onProceed}
-              variant="destructive"
-            />
-            <AppButton
-              disabled={pending}
-              label="Cancel & Edit"
-              onPress={onCancel}
-              variant="secondary"
-            />
+            <AppButton label={t("transactions.budgetWarningProceed")} disabled={pending} loading={pending} onPress={handleProceed} variant="destructive" />
+            <AppButton label={t("transactions.budgetWarningCancel")} disabled={pending} onPress={handleCancel} variant="secondary" />
           </View>
         </View>
       </View>
     </Modal>
+  );
+}
+
+const BudgetWarningDetails = memo(function BudgetWarningDetails({ result }: { result: ExpenseBudgetCheckResult }) {
+  const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+  const {
+    categoryName, periodLabel, effectiveBudgetCents, currentSpentCents,
+    additionalExpenseCents, newSpentCents, exceededByCents,
+  } = result;
+  const percentage = effectiveBudgetCents > 0 ? Math.round((newSpentCents / effectiveBudgetCents) * 100) : 100;
+  return (
+    <View>
+      <Text style={styles.description}>{t("transactions.budgetWarningDescription", { category: categoryName, period: periodLabel })}</Text>
+      {/* Breakdown Box */}
+      <View style={styles.breakdownBox}>
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>{t("transactions.budgetWarningLimit")}</Text>
+          <Text style={styles.breakdownValue}>
+            {formatCurrency(effectiveBudgetCents, result.budgetCurrencyCode || "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>{t("transactions.budgetWarningCurrent")}</Text>
+          <Text style={styles.breakdownValue}>
+            {formatCurrency(currentSpentCents, result.budgetCurrencyCode || "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>{t("transactions.budgetWarningExpense")}</Text>
+          <Text style={[styles.breakdownValue, styles.expenseAmount]}>
+            +{formatCurrency(additionalExpenseCents, result.budgetCurrencyCode || "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.breakdownRow}>
+          <Text style={styles.totalLabel}>{t("transactions.budgetWarningNewTotal")}</Text>
+          <Text style={styles.totalValue}>
+            {formatCurrency(newSpentCents, result.budgetCurrencyCode || "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.exceededRow}>
+          <Text style={styles.exceededLabel}>{t("transactions.budgetWarningOverBy")}</Text>
+          <Text style={styles.exceededValue}>
+            {formatCurrency(exceededByCents, result.budgetCurrencyCode || "PHP", false)} ({percentage}%)
+          </Text>
+        </View>
+      </View>
+
+    </View>
   );
 });
 
@@ -167,8 +157,12 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
       maxWidth: 440,
+      maxHeight: "90%",
       padding: theme.spacing.xl,
       width: "100%",
+    },
+    budgetsScroll: {
+      flexShrink: 1,
     },
     dialogContainerDesktop: {
       maxWidth: 460,
@@ -198,10 +192,6 @@ function createStyles(theme: AppTheme) {
       lineHeight: 20,
       marginBottom: theme.spacing.lg,
       textAlign: "center",
-    },
-    boldText: {
-      color: theme.colors.textPrimary,
-      fontWeight: "600",
     },
     breakdownBox: {
       backgroundColor: theme.colors.background,

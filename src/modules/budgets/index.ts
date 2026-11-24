@@ -34,6 +34,12 @@ export const useBudgets = deferFunction(
 ) as typeof import("./hooks/use-budgets").useBudgets;
 
 // Services
+export const checkExpenseBudgets = deferFunction(
+  () => require("./services/check-expense-budgets.service").checkExpenseBudgets,
+) as typeof import("./services/check-expense-budgets.service").checkExpenseBudgets;
+
+export type { CheckExpenseBudgetsInput, ExpenseBudgetCheckResult } from "./services/check-expense-budgets.service";
+
 export const checkBudgetExceeded = deferFunction(
   () => require("./services/check-budget-exceeded.service").checkBudgetExceeded,
 ) as typeof import("./services/check-budget-exceeded.service").checkBudgetExceeded;

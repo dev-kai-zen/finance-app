@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `c73f893` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — BUD-F01 and BUD-F02 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
+**Stage:** Remediation in progress — BUD-F01 through BUD-F03 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Existing tests pass, but targeted fixtures confirm warning/card inconsistencies, incorrect rollover previews during date edits, and an incorrect widget amount label. Source tracing also identifies currency input, drill-down, draft preservation, recovery, architecture, localization, and performance gaps.
 
-**Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs and split-share presentation. Both have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
+**Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs; BUD-F03 checks complete expenses and lists all exceeded budgets before saving. All three have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -19,7 +19,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | 1. Audit Budgets | Complete | Feature inventory, ownership map, financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Budgets | Partial | Existing suites executed; four database-backed defect probes and one extracted UI-handler probe executed. Additional regression cases specified below. |
 | 3. Review findings and policies | Pending | Agree on rollover history, mixed-frequency summaries, notification behavior, and privacy scope. |
-| 4. Remediate findings | In progress | BUD-F01 and BUD-F02 implemented and regression-tested; manual verification pending. Other findings remain open. |
+| 4. Remediate findings | In progress | BUD-F01 through BUD-F03 implemented and regression-tested; manual verification pending. Other findings remain open. |
 | 5. Feature sign-off | Pending | Financial/UI parity, failure recovery, localization, and measured device performance. |
 
 ### Evidence used
@@ -30,6 +30,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | BUD-F01 form-currency regression suite | **10 passed** after remediation; eight failures before the fix | Executes actual TSX and calculator keypad handlers for PHP/USD/JPY/KWD; checks save payloads, reopened fixtures, custom totals, stable draft currency, and closed-form gating. Native children and persistence callbacks are stubbed; device/database round-trip remains a manual check. |
 | BUD-F01 follow-up combined regression run | **46 passed**, zero failures/skips; approximately 10.2 seconds | Ten new currency cases plus the 36 existing budget/walkthrough and related cases above. TypeScript also passed after the production fix. |
 | BUD-F02 follow-up regression run | **157 passed**, zero failures/skips; approximately 18.6 seconds | All Budgets, Transactions, and Walkthrough suites. Includes 16 BUD-F02 cases and an extended existing 10,000-row fixture; TypeScript passed. Tests cover actual SQLite allocations, period/ownership parity, routes, privacy labels, scope clearing, and CSV fields. Native rendering/FPS remain unmeasured. |
+| BUD-F03 follow-up regression run | **184 passed**, zero failures/skips; approximately 30.6 seconds | Budgets, Transactions, Walkthroughs, Widgets, and Notifications suites. Includes 13 new BUD-F03 cases: actual grouped SQLite checks, edit/currency parity, chunking, deferred-read cancellation/retry, confirmation content, localization, and single-submit behavior. TypeScript passed; native layout and frame timing remain unmeasured. |
 | Related refund, split, form, widget, and reminder-settings suites | **23 passed**, zero failures/skips; approximately 5.7 seconds | Refund aggregation, split persistence, save guards, daily/biweekly DST boundaries, widget configuration, and reminder settings. Does not establish split-warning or widget financial-display correctness. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Repository-wide compile-time integrity. |
 | Isolated actual-service probes | **Four mismatches reproduced** | Zero target, shared-parent split checks, moving an expense from the previous period, and widget remaining/over direction. Uses Drizzle and in-memory SQLite with the existing migration-backed budget harness. |
@@ -43,6 +44,7 @@ Commands executed from the repository root:
 ```powershell
 node --test --test-reporter=spec src/modules/budgets/__tests__/budget-form-currency.test.cjs
 node --test --test-reporter=spec src/modules/transactions/__tests__/budget-drill-down.test.cjs
+node --test --test-reporter=spec src/modules/budgets/__tests__/budgets-summary.test.cjs src/modules/budgets/__tests__/over-budget-warning-modal.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs
 node --test --test-reporter=spec src/modules/budgets/__tests__/budgets-summary.test.cjs src/modules/budgets/__tests__/use-budgets.test.cjs src/modules/walkthrough/__tests__/budgets-walkthrough.test.cjs
 node --test --test-concurrency=2 --test-reporter=spec src/modules/transactions/__tests__/category-expense-refunds.test.cjs src/modules/transactions/__tests__/transactions-split.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs src/modules/widgets/__tests__/widgets.test.cjs src/modules/notifications/__tests__/reminder-settings.test.cjs
 npx tsc --noEmit
@@ -94,7 +96,7 @@ For rollover, set the target to PHP 5,000 and previous-period spending to PHP 3,
 | Repository / schema | [category-budgets.repository.ts](../../src/modules/budgets/repositories/category-budgets.repository.ts), [budgets.ts](../../src/infrastructure/database/schema/budgets.ts) | Unique budget per category, target hydration/replacement, foreign keys, checks, and cascades. |
 | Periods / calculation | [budget-period.ts](../../src/modules/budgets/utils/budget-period.ts), [calculate-category-budget.service.ts](../../src/modules/budgets/services/calculate-category-budget.service.ts) | Eight frequencies, previous period, targets, rollover, active-child exclusions, grouped spending reads. |
 | Summary | [get-budgets-summary.service.ts](../../src/modules/budgets/services/get-budgets-summary.service.ts) | Widget-facing active totals converted into home currency. Hook maintains a second summary implementation. |
-| Transaction preview / confirmation | [check-budget-exceeded.service.ts](../../src/modules/budgets/services/check-budget-exceeded.service.ts), [budget-live-indicator.tsx](../../src/modules/budgets/components/budget-live-indicator.tsx), [warning modal](../../src/modules/budgets/components/over-budget-warning-modal.tsx) | Resolve own/parent budget, fetch snapshot, evaluate amount, show optional confirmation. |
+| Transaction preview / confirmation | [single-category snapshot](../../src/modules/budgets/services/check-budget-exceeded.service.ts), [complete-expense checks](../../src/modules/budgets/services/check-expense-budgets.service.ts), [live indicator](../../src/modules/budgets/components/budget-live-indicator.tsx), [warning modal](../../src/modules/budgets/components/over-budget-warning-modal.tsx) | Resolve own/parent budgets, evaluate pending allocations, and show all enabled exceeded-budget confirmations. |
 | Ledger aggregation owner | [expense summary service](../../src/modules/transactions/services/get-category-expense-summary.service.ts), [unsplit totals repository](../../src/modules/transactions/repositories/category-expense-totals.repository.ts), [split totals repository](../../src/modules/transactions/repositories/transaction-entries.repository.ts) | Signed refund-aware SQL aggregation with date/category bounds and chunked category IDs. |
 | Other consumers | [transaction form](../../src/modules/transactions/components/transaction-form-modal.tsx), [instant alerts](../../src/modules/notifications/services/check-instant-alerts.service.ts), [widget snapshot](../../src/modules/widgets/services/widget-snapshot.service.tsx), [general search](../../src/modules/search/hooks/use-general-search.ts) | Save warnings, OS alerts, home-screen totals, and links to matching budgets. |
 
@@ -128,7 +130,7 @@ flowchart TD
 | Remove | Confirmation calls local delete; FK cascade removes monthly targets. | Screen ignores returned failure and closes edit/confirmation even when delete fails. |
 | View transactions | Passes the displayed period and exact budget-owned category IDs through a validated scope parameter. | BUD-F02 fixed. Scoped rows expose category shares; daily totals use those shares while inspection/editing retain full transactions. |
 | Type an expense | Indicator memoizes a snapshot by category/date/currency/exclusion, then evaluates amounts in pure JS. | Zero-query amount typing is covered; initial snapshot still queries during render. Refund indicator uses expense semantics. |
-| Save an expense / split | Form checks spending immediately before saving; splits checked line by line. | Shared-budget split totals are missed; zero-target and previous-period edit mismatches reproduced. |
+| Save an expense / split | Form defers one complete-expense check after paint, grouping lines by owning budget and presenting all applicable warnings before save. | BUD-F03 fixed. Zero-target and previous-period rollover-edit mismatches remain open as BUD-F04/BUD-F05. |
 | Receive threshold notification | Post-commit transaction path invokes notification service without awaiting it. | Month-based deduplication conflicts with non-monthly periods; split transactions with null parent category bypass this path. |
 | Inspect Android widget | Widget snapshot calls public summary service and formats in home currency. | “Over” direction can contradict remaining amount; monthly label includes other frequencies. |
 | Search / deep link | Non-empty debounced general search enables `useBudgets`; existing budget link opens edit form. | Empty search skips reads. Non-empty search calculates all budget statuses despite consuming only budget records. |
@@ -147,13 +149,13 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-**BUD-F01 and BUD-F02 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
+**BUD-F01 through BUD-F03 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | BUD-F01 | High | Input currency/precision differs from stored budget currency | Fixed; 10 regression tests pass; manual check pending |
 | BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Fixed; automated period/ownership/SQL parity verified; manual check pending |
-| BUD-F03 | High | Split lines bypass a shared budget warning | Executable services + form source |
+| BUD-F03 | High | Split lines bypass a shared budget warning | Fixed; grouped checks and confirmation workflow verified automatically; manual check pending |
 | BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Executable |
 | BUD-F05 | Medium | Moving an expense out of the previous period leaves it in rollover preview | Executable |
 | BUD-F06 | Medium | Background refresh resets an open form draft | Source-confirmed |
@@ -222,13 +224,39 @@ Scoped SQL includes unsplit expenses or matching split allocations, excludes del
 
 These manual steps have not yet been executed on a native device. Daily totals retain the existing account-currency/mixed-currency conversion conventions; category-share labels and CSV shares use each transaction's account currency, while budget cards may use a different budget currency. Compare like currencies when checking totals.
 
-### [BUD-F03] Splits consuming one budget are checked independently
+### [BUD-F03] Splits consuming one budget are checked independently — FIX IMPLEMENTED
 
 - **Problem / reproduction:** Parent target 500,000, existing spending 450,000; two pending child split lines of 30,000 each. Current checks return new spending **480,000 / 480,000**, both `exceeds=false`. Saving the complete split produces **510,000**, over budget.
 - **Cause:** [TransactionFormModal:1805](../../src/modules/transactions/components/transaction-form-modal.tsx#L1805) invokes `checkBudgetExceeded` separately per line. Each invocation reads the same pre-save baseline and sees none of the other pending lines.
 - **Smallest fix:** Resolve lines to their owning budgets, aggregate amounts per budget, and evaluate each budget once. Put the multi-line calculation in a focused Budgets service exported through its public API; it is business logic needed by a transaction consumer.
 - **Regression proof:** Same-category lines, sibling fallback to a parent, separately budgeted children, mixed currencies, edits excluding an old split, and multiple exceeded budgets. Verify warning cancellation/proceed does not duplicate ledger writes.
 - **Performance:** Reuse one snapshot per affected budget and Map-based grouping, O(number of lines), rather than repeat baseline reads per line.
+
+**Implemented fix — November 24, 2026:** [check-expense-budgets.service.ts](../../src/modules/budgets/services/check-expense-budgets.service.ts) coalesces repeated category lines, loads category/parent metadata through the public Categories service, and resolves enabled child budgets or parent fallback. It groups amounts by budget ID and reuses the existing snapshot/evaluation logic once per owner. Combined amounts are converted into each budget's currency once. The existing bulk budget repository lookup now chunks both category IDs and monthly-target budget IDs at 500.
+
+The transaction form calls the public complete-expense checker for ordinary and split expenses, excludes the edited transaction, and passes every exceeded result with alerts enabled to the confirmation. The scrollable confirmation shows each budget's limit, existing spending, pending allocation, new total, and excess before one **Proceed Anyway** action. **Cancel & Edit** writes nothing. Existing save guards prevent same-frame duplicate submissions; existing atomic persistence remains unchanged. Warning and read-error copy exists in English, Filipino, and Spanish. Zero-target policy, previous-period rollover-edit exclusion, and split OS-notification dispatch remain separate open findings.
+
+**Loading and lifecycle:** Budget reads run through `runDeferredSyncQuery` after the existing native-driven form skeleton can paint. During the check, the form remains mounted but hidden/inaccessible beneath that skeleton, retaining its draft, scroll state, and memoized live indicator. Closing cancels the pending read through its current ref, even before a loading-state render; unmount also cancels it. Request ownership prevents stale warnings/writes. Read errors return a localized retry message and release the submit guard. Confirmation dismissal/proceed dismisses the keyboard.
+
+**Automated proof:**
+
+- [budgets-summary.test.cjs](../../src/modules/budgets/__tests__/budgets-summary.test.cjs): PHP 4,500 + combined PHP 600 yields one PHP 5,100 check and PHP 100 excess; enabled children remain independent; paused children fall back; same-period edits exclude old split entries; pending dates select the correct month; currency rounding occurs after aggregation; empty/missing/paused budgets fast-exit; alert opt-out survives; 1,001 budgets and their targets use six bounded lookup statements.
+- The shared-parent fixture asserts at most 12 read statements and exactly one unsplit plus one split aggregate for its non-rollover baseline. Replacing two input lines with 2,000 repeated lines produces identical results and statement count. The child lookup uses `categories_parent_id_index` without a temporary B-tree. Checks execute SELECTs only.
+- [form-integrity.test.cjs](../../src/modules/transactions/__tests__/form-integrity.test.cjs): the pre-fix handler incorrectly invoked persistence before confirmation. The fixed handler defers reads, presents all eligible exceeded budgets, passes the edit exclusion, cancels without writing, submits once after repeated Proceed taps, cancels on close/unmount, recovers after read failure, and skips extra-expense checks for refunds.
+- [over-budget-warning-modal.test.cjs](../../src/modules/budgets/__tests__/over-budget-warning-modal.test.cjs): both budget breakdowns/currencies render in a bounded scroll area; closed warnings mount no subtree; pending actions block dismissal/proceed; keyboard dismissal and three-language interpolation keys are verified.
+- Broad regression: 184 passed. Final focused follow-up after retaining the mounted form: 23 passed. Full TypeScript check passes. Tests stub native views, so physical-device layout, scroll retention, and FPS still require manual validation.
+
+**Performance:** Pending-line grouping is O(lines), metadata lookups are chunked, and spending reads scale with unique affected budgets rather than repeated lines. There are zero new mount/focus/typing queries and no new root providers or subscriptions. Deferring synchronous reads allows the skeleton/header to paint; it does not make SQLite asynchronous or certify 8.3–16.6ms execution. Rollover adds its existing previous-period reads per owner; large numbers of independent budgets still need release-device profiling. Closed confirmation hooks remain visibility-gated, and its repeated breakdown components are memoized.
+
+**Manual verification guide:** Use PHP accounts and budgets, keep all example transactions in one month, disable rollover, and enable the budget's **Over-Budget Alert** (currently a Pro option). An opted-out budget intentionally does not request confirmation.
+
+1. Create a Food expense group with Dining and Groceries children. Give Food an enabled monthly PHP 5,000 budget; leave both children without budgets. Record a PHP 4,500 Dining expense. Food must show Spent 4,500 and Remaining 500.
+2. Start a new PHP 600 expense. Enable **Split by category** (enable the Split form field in field preferences if hidden). Allocate Dining 300 and Groceries 300. Tap Save. A brief skeleton may appear before **Budget Exceeded**. The warning must show Food, limit **5,000**, current spending **4,500**, this expense **600**, new total **5,100**, and over by **100**. Nothing is saved yet.
+3. Tap **Cancel & Edit**. Verify the PHP 600 draft and both PHP 300 lines remain; check that the form keeps its scroll position. Close/discard and confirm no new transaction exists and Food remains at 4,500. Re-enter the same split, save, and choose **Proceed Anyway**. Exactly one PHP 600 transaction should appear, with two allocations, and Food becomes 5,100. Repeated Proceed taps must not create duplicates.
+4. Edit that saved split without changing its amount or date. Its warning must still show current spending 4,500 and new total 5,100, rather than counting the old PHP 600 a second time. Cancel or save as appropriate.
+5. In a separate fixture, give Food a PHP 5,000 budget with current Dining spending 4,500, and Groceries its own PHP 1,000 budget with current spending 900. Enable both alerts. Enter one PHP 800 split: Dining 600 and Groceries 200. The same confirmation must list **both** Food (new total 5,100, excess 100) and Groceries (new total 1,100, excess 100), with the action buttons reachable below the scrollable breakdowns. Confirm once and verify one complete PHP 800 transaction.
+6. Turn off one budget's alert and repeat: only the other exceeded budget should be listed. Pause the Groceries budget and try another split: its allocation should instead consume Food's budget. Ordinary unsplit expenses should still warn when they exceed an enabled budget; positive expense refunds should not trigger these save-time expense warnings.
+7. Start Save with the keyboard open: it should dismiss before the check. Verify Cancel/backdrop/back dismisses the warning on the first tap. Switch to Filipino/Spanish and confirm its labels/actions translate. Device-check the skeleton, retained draft/scroll position, and small-screen/landscape scrolling; these native behaviors were not exercised by the automated harness.
 
 ### [BUD-F04] Zero effective targets are exceeded on cards but never in warnings
 
@@ -387,7 +415,7 @@ Keep category ownership, signed refund aggregation, custom targets, local calend
 | Notifications | Owning-budget/period identity and split dispatch; settle alert preferences | Awaiting OS scheduling before local save success. |
 | Localization | All three dictionaries and locale-aware period presentation | React hooks in persistence/calculation code. |
 
-The duplicated active-summary reducers in the hook and summary service deserve parity tests. Extract a shared pure helper only if remediation touches both or duplication causes drift; this is not justification for a general reporting layer. The unchunked `findCategoryBudgetsByCategoryIds` helper has no current caller found outside its definition; record its Section 19 concern if activating it, rather than claim a live bind-limit failure now.
+The duplicated active-summary reducers in the hook and summary service deserve parity tests. Extract a shared pure helper only if remediation touches both or duplication causes drift; this is not justification for a general reporting layer. BUD-F03 activates `findCategoryBudgetsByCategoryIds` with explicit 500-ID chunks for both budgets and monthly targets, verified by the 1,001-budget fixture.
 
 ## 10. Stage 2 regression expansion
 
@@ -412,7 +440,7 @@ Add focused cases to the existing budget suites and the owning consumers' suites
 
 ## 11. Mandatory pre-change gate for remediation
 
-The initial audit was documentation-only. BUD-F01 and BUD-F02 remediation answered these four questions before production edits and first reproduced issues with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
+The initial audit was documentation-only. BUD-F01 through BUD-F03 remediation answered these four questions before production edits and first reproduced issues with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
 
 1. **What is the actual problem?** State the exact incorrect amount/interaction and show a failing regression or the concrete source/executable evidence above. Convert source-only UI scenarios into a focused reproduction before changing behavior.
 2. **Why does the implementation cause it?** Identify the cited function and complete caller path. For split warnings, for example: transaction form loop → independent snapshot checks → same unchanged ledger baseline.

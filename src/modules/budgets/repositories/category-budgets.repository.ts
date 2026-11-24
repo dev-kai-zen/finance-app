@@ -141,20 +141,20 @@ export function findCategoryBudgetsByCategoryIds(
 ): CategoryBudget[] {
   if (!categoryIds.length) return [];
 
-  const rows = context
-    .select()
-    .from(categoryBudgets)
-    .where(inArray(categoryBudgets.categoryId, categoryIds))
-    .all();
+  const rows: Array<typeof categoryBudgets.$inferSelect> = [];
+  for (let offset = 0; offset < categoryIds.length; offset += 500) {
+    rows.push(...context.select().from(categoryBudgets)
+      .where(inArray(categoryBudgets.categoryId, categoryIds.slice(offset, offset + 500))).all());
+  }
 
   if (!rows.length) return [];
 
   const budgetIds = rows.map((r) => r.id);
-  const targets = context
-    .select()
-    .from(budgetMonthlyTargets)
-    .where(inArray(budgetMonthlyTargets.budgetId, budgetIds))
-    .all();
+  const targets: Array<typeof budgetMonthlyTargets.$inferSelect> = [];
+  for (let offset = 0; offset < budgetIds.length; offset += 500) {
+    targets.push(...context.select().from(budgetMonthlyTargets)
+      .where(inArray(budgetMonthlyTargets.budgetId, budgetIds.slice(offset, offset + 500))).all());
+  }
 
   const targetsByBudgetId = new Map<
     string,

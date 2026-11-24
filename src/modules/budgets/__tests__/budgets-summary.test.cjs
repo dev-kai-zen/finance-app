@@ -418,3 +418,96 @@ test("BUD-F02: card spending equals drill-down category shares across all period
   }
   sqlite.close();
 });
+
+
+test("BUD-F03: sibling and repeated split lines share one budget baseline and combined warning", () => {
+  const { db, date }=setupParentBudget();
+  const { checkExpenseBudgets }=require("../services/check-expense-budgets.service");
+  const input={lines:[{categoryId:"cat_groceries",amountMinorUnits:30000},{categoryId:"cat_restaurants",amountMinorUnits:30000}],occurredAt:date,expenseCurrencyCode:"PHP",context:db};
+  queries=[];
+  const results=checkExpenseBudgets(input);
+  assert.equal(results.length,1);assert.equal(results[0].budgetId,"b_parent");
+  assert.equal(results[0].currentSpentCents,450000);assert.equal(results[0].additionalExpenseCents,60000);
+  assert.equal(results[0].newSpentCents,510000);assert.equal(results[0].exceededByCents,10000);assert.equal(results[0].exceeds,true);
+  const count=queries.length;assert.ok(count<=12,"Bounded shared-budget reads: "+count);
+  assert.equal(queries.filter(query=>query.includes("sum(")).length,2,"One unsplit and one split aggregate for the owner");
+  assert.ok(queries.every(query=>/^select/i.test(query)),"Checking never writes to the database");
+  const childQuery=queries.find(query=>query.includes('where "categories"."parent_id" = ?'));
+  const plan=sqlite.prepare("EXPLAIN QUERY PLAN "+childQuery).all("cat_dining").map(row=>row.detail).join(" | ");
+  assert.match(plan,/categories_parent_id_index/);assert.doesNotMatch(plan,/TEMP B-TREE/);
+  queries=[];
+  const repeated=checkExpenseBudgets({...input,lines:Array.from({length:2000},(_,i)=>({categoryId:i%2?"cat_groceries":"cat_restaurants",amountMinorUnits:30}))});
+  assert.deepEqual(repeated,results);assert.equal(queries.length,count,"Repeated lines add no SQL statements");
+  sqlite.close();
+});
+
+test("BUD-F03: active child budgets stay independent; paused children join the parent and all exceeded budgets are returned", () => {
+  const { db, date, time }=setupParentBudget();
+  const { checkExpenseBudgets }=require("../services/check-expense-budgets.service");
+  sqlite.prepare("INSERT INTO category_budgets(id,category_id,amount_minor_units,currency_code,start_date,created_at,updated_at) VALUES('child','cat_groceries',600000,'PHP',?,?,?)").run(time,time,time);
+  const input={lines:[{categoryId:"cat_groceries",amountMinorUnits:200000},{categoryId:"cat_restaurants",amountMinorUnits:600000}],occurredAt:date,context:db};
+  const checks=checkExpenseBudgets(input);assert.equal(checks.length,2);
+  const byId=new Map(checks.map(check=>[check.budgetId,check]));
+  assert.equal(byId.get("child").currentSpentCents,450000);assert.equal(byId.get("child").newSpentCents,650000);
+  assert.equal(byId.get("b_parent").currentSpentCents,0);assert.equal(byId.get("b_parent").newSpentCents,600000);
+  assert.ok(checks.every(check=>check.exceeds&&check.notifyOnExceeded));
+  sqlite.exec("UPDATE category_budgets SET is_enabled=0 WHERE id='child'");
+  const fallback=checkExpenseBudgets(input);assert.equal(fallback.length,1);
+  assert.equal(fallback[0].newSpentCents,1250000);
+  sqlite.close();
+});
+
+test("BUD-F03: split edits exclude the original parent once and respect the pending date", () => {
+  const { db, date, time, expense }=setupParentBudget();
+  const { checkExpenseBudgets }=require("../services/check-expense-budgets.service");
+  expense("editing_split","cat_dining",10000);
+  sqlite.prepare("INSERT INTO transaction_entries(id,transaction_id,category_id,amount_minor_units,created_at,updated_at) VALUES('old_a','editing_split','cat_groceries',4000,?,?),('old_b','editing_split','cat_restaurants',6000,?,?)").run(time,time,time,time);
+  const input={lines:[{categoryId:"cat_groceries",amountMinorUnits:20000},{categoryId:"cat_restaurants",amountMinorUnits:40000}],occurredAt:date,excludeTransactionId:"editing_split",context:db};
+  const [check]=checkExpenseBudgets(input);
+  assert.equal(check.currentSpentCents,450000);assert.equal(check.newSpentCents,510000);
+  const [otherMonth]=checkExpenseBudgets({...input,occurredAt:new Date(2026,9,15,12)});
+  assert.equal(otherMonth.currentSpentCents,0);assert.equal(otherMonth.newSpentCents,60000);assert.equal(otherMonth.exceeds,false);
+  sqlite.close();
+});
+
+test("BUD-F03: currency conversion rounds the combined budget allocation once", () => {
+  const { db, date, time }=setupParentBudget();
+  const { checkExpenseBudgets }=require("../services/check-expense-budgets.service");
+  sqlite.exec("DELETE FROM transactions; UPDATE category_budgets SET currency_code='JPY',amount_minor_units=1");
+  sqlite.prepare("INSERT INTO exchange_rates(id,base_currency,quote_currency,rate_basis_points,created_at,updated_at) VALUES('usd','PHP','USD',500000,?,?),('jpy','PHP','JPY',10000,?,?) ON CONFLICT(base_currency,quote_currency) DO UPDATE SET rate_basis_points=excluded.rate_basis_points").run(time,time,time,time);
+  const [check]=checkExpenseBudgets({lines:[{categoryId:"cat_groceries",amountMinorUnits:1},{categoryId:"cat_restaurants",amountMinorUnits:1}],expenseCurrencyCode:"USD",occurredAt:date,context:db});
+  assert.equal(check.additionalExpenseCents,1,"USD 0.02 = PHP 1.00 = JPY 1, not two rounded yen");
+  assert.equal(check.newSpentCents,1);assert.equal(check.exceeds,false);
+  sqlite.close();
+});
+
+test("BUD-F03: empty/missing/paused budgets fast-exit; alert opt-out is retained", () => {
+  const { db, date }=setupParentBudget();
+  const { checkExpenseBudgets }=require("../services/check-expense-budgets.service");
+  queries=[];assert.deepEqual(checkExpenseBudgets({lines:[],context:db}),[]);assert.equal(queries.length,0);
+  assert.deepEqual(checkExpenseBudgets({lines:[{categoryId:"missing",amountMinorUnits:100}],context:db}),[]);
+  sqlite.exec("UPDATE category_budgets SET notify_on_exceeded=0");
+  const [check]=checkExpenseBudgets({lines:[{categoryId:"cat_restaurants",amountMinorUnits:100000}],occurredAt:date,context:db});
+  assert.equal(check.exceeds,true);assert.equal(check.notifyOnExceeded,false);
+  sqlite.exec("UPDATE category_budgets SET is_enabled=0");queries=[];
+  assert.deepEqual(checkExpenseBudgets({lines:[{categoryId:"cat_restaurants",amountMinorUnits:100000}],occurredAt:date,context:db}),[]);
+  assert.ok(queries.every(query=>!query.includes("sum(")));
+  sqlite.close();
+});
+
+test("BUD-F03: both budget and monthly-target lookups chunk at 500 IDs", () => {
+  const db=setupTestDb();const time=Date.now();
+  const { findCategoryBudgetsByCategoryIds }=require("../repositories/category-budgets.repository");
+  const category=sqlite.prepare("INSERT INTO categories(id,name,type,created_at,updated_at) VALUES(?,?,'expense',?,?)");
+  const budget=sqlite.prepare("INSERT INTO category_budgets(id,category_id,amount_minor_units,currency_code,start_date,created_at,updated_at) VALUES(?,?,100,'PHP',?,?,?)");
+  sqlite.exec("BEGIN");
+  const ids=[];
+  for(let i=0;i<1001;i++){const id="bulk_"+i;ids.push(id);category.run(id,id,time,time);budget.run("budget_"+i,id,time,time,time);}
+  sqlite.exec("COMMIT");
+  sqlite.prepare("INSERT INTO budget_monthly_targets(id,budget_id,year,month,amount_minor_units,created_at,updated_at) VALUES('target','budget_1000',2026,12,250,?,?)").run(time,time);
+  queries=[];const found=findCategoryBudgetsByCategoryIds(ids,db);
+  assert.equal(found.length,1001);assert.equal(queries.length,6);
+  assert.ok(queries.every(query=>(query.match(/\?/g)||[]).length<=500));
+  assert.equal(found.find(row=>row.id==="budget_1000").monthlyTargets[0].amountMinorUnits,250);
+  sqlite.close();
+});

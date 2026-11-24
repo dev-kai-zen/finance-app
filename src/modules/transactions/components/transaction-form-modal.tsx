@@ -81,6 +81,7 @@ import {
 import { useDefaultAccounts, useExperiencePreferences } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getExchangeRateMap } from "@/modules/currencies";
 import {
   applyExchangeRate,
@@ -95,10 +96,10 @@ import {
 import { TransactionCurrencyPickerModal } from "./transaction-currency-picker-modal";
 import { TransactionExchangeRateHint } from "./transaction-exchange-rate-hint";
 import {
-  checkBudgetExceeded,
+  checkExpenseBudgets,
   BudgetLiveIndicator,
   OverBudgetWarningModal,
-  type BudgetCheckResult,
+  type ExpenseBudgetCheckResult,
 } from "@/modules/budgets";
 import type {
   CreateTransactionInput,
@@ -318,6 +319,15 @@ function TransactionFormModalInner({
     error: categorySaveError,
     clearError: clearCategorySaveError,
   } = useCategories({ skipQuery: true });
+  const [checkingBudgets, setCheckingBudgets] = useState(false);
+  const cancelBudgetCheckRef = useRef<(() => void) | null>(null);
+  const budgetCheckRequestRef = useRef(0);
+  const cancelBudgetCheck = useCallback(() => {
+    ++budgetCheckRequestRef.current;
+    cancelBudgetCheckRef.current?.();
+    cancelBudgetCheckRef.current = null;
+  }, []);
+  useEffect(() => cancelBudgetCheck, [cancelBudgetCheck]);
   const isFormLoading = Boolean(loading || (accounts.length === 0 && presetsLoading));
   const [isFieldPreferencesOpen, setIsFieldPreferencesOpen] = useState(false);
   const [categoryFormDraft, setCategoryFormDraft] = useState<{
@@ -485,7 +495,7 @@ function TransactionFormModalInner({
   const [isFeeAccountPickerOpen, setIsFeeAccountPickerOpen] = useState(false);
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [isTransferFeeHelpOpen, setIsTransferFeeHelpOpen] = useState(false);
-  const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
+  const [pendingBudgetWarnings, setPendingBudgetWarnings] = useState<ExpenseBudgetCheckResult[]>([]);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
   const [pendingCreditLimitWarning, setPendingCreditLimitWarning] =
     useState<CreditLimitCheckResult | null>(null);
@@ -1813,25 +1823,35 @@ function TransactionFormModalInner({
                   },
                 ]
               : [];
-          for (const line of budgetLines) {
-            const budgetCheck = checkBudgetExceeded({
-              categoryId: line.categoryId,
-              amountMinorUnits: line.amountMinorUnits,
-              expenseCurrencyCode: accountCurrencyCode,
-              occurredAt: transactionOccurredAt,
-              excludeTransactionId:
-                isEditing && initialTransaction ? initialTransaction.id : null,
+          Keyboard.dismiss();
+          const requestId = ++budgetCheckRequestRef.current;
+          let checks: ExpenseBudgetCheckResult[] | null;
+          try {
+            checks = await new Promise<ExpenseBudgetCheckResult[] | null>((resolve, reject) => {
+              const cancel = runDeferredSyncQuery({ hasCachedResult: false, setLoading: setCheckingBudgets }, () => {
+                cancelBudgetCheckRef.current = null;
+                try {
+                  resolve(checkExpenseBudgets({
+                    lines: budgetLines,
+                    expenseCurrencyCode: accountCurrencyCode,
+                    occurredAt: transactionOccurredAt,
+                    excludeTransactionId:
+                      isEditing && initialTransaction ? initialTransaction.id : null,
+                  }));
+                } catch (error) { reject(error); }
+              });
+              cancelBudgetCheckRef.current = () => { cancel(); resolve(null); };
             });
-            if (
-              budgetCheck.hasBudget &&
-              budgetCheck.isEnabled &&
-              budgetCheck.exceeds &&
-              budgetCheck.notifyOnExceeded
-            ) {
-              setPendingBudgetWarning(budgetCheck);
-              setIsBudgetWarningOpen(true);
-              return;
-            }
+          } catch {
+            if (requestId === budgetCheckRequestRef.current) setLocalError(t("transactions.budgetWarningCheckFailed"));
+            return;
+          }
+          if (checks === null || requestId !== budgetCheckRequestRef.current) return;
+          const warnings = checks.filter((result) => result.exceeds && result.notifyOnExceeded);
+          if (warnings.length > 0) {
+            setPendingBudgetWarnings(warnings);
+            setIsBudgetWarningOpen(true);
+            return;
           }
         }
       }
@@ -1924,6 +1944,7 @@ function TransactionFormModalInner({
 
   const handleProceedOverBudget = async () => {
     setIsBudgetWarningOpen(false);
+    setPendingBudgetWarnings([]);
     await handleSave({
       bypassCreditLimit: true,
       bypassMaintainingBalance: true,
@@ -1933,6 +1954,7 @@ function TransactionFormModalInner({
 
   const handleCancelOverBudget = () => {
     setIsBudgetWarningOpen(false);
+    setPendingBudgetWarnings([]);
   };
 
   const displayError = localError || error;
@@ -2019,12 +2041,16 @@ function TransactionFormModalInner({
   const handleRequestClose = useCallback(() => {
     Keyboard.dismiss();
     if (pending) return;
+    if (cancelBudgetCheckRef.current) {
+      cancelBudgetCheck();
+      setCheckingBudgets(false);
+    }
     if (isDirty) {
       setShowUnsavedPrompt(true);
     } else {
       onClose();
     }
-  }, [isDirty, onClose, pending]);
+  }, [cancelBudgetCheck, isDirty, onClose, pending]);
 
   return (
     <>
@@ -2090,7 +2116,13 @@ function TransactionFormModalInner({
           {isFormLoading ? (
             <TransactionFormSkeleton />
           ) : (
-            <>
+            <View style={styles.formBody}>
+            <View
+              pointerEvents={checkingBudgets ? "none" : "auto"}
+              accessibilityElementsHidden={checkingBudgets}
+              importantForAccessibility={checkingBudgets ? "no-hide-descendants" : "auto"}
+              style={[styles.formBody, checkingBudgets && styles.budgetCheckContentHidden]}
+            >
           <HorizontalScrollView
             contentContainerStyle={styles.topActionsContent}
             keyboardShouldPersistTaps="handled"
@@ -3248,7 +3280,13 @@ function TransactionFormModalInner({
               </Pressable>
             </View>
           </KeyboardStickyView>
-          </>
+            </View>
+            {checkingBudgets ? (
+              <View pointerEvents="none" style={styles.budgetCheckSkeleton}>
+                <TransactionFormSkeleton />
+              </View>
+            ) : null}
+            </View>
           )}
 
           <TransactionFormWalkthroughOverlay
@@ -3625,7 +3663,7 @@ function TransactionFormModalInner({
         onCancel={handleCancelOverBudget}
         onProceed={handleProceedOverBudget}
         pending={pending}
-        result={pendingBudgetWarning}
+        results={pendingBudgetWarnings}
         visible={isBudgetWarningOpen}
       />
 
@@ -3685,6 +3723,16 @@ function createStyles(theme: AppTheme) {
       position: "absolute",
       right: 0,
       top: 0,
+    },
+    formBody: {
+      flex: 1,
+    },
+    budgetCheckContentHidden: {
+      opacity: 0,
+    },
+    budgetCheckSkeleton: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: theme.colors.surface,
     },
     sheetContainer: {
       backgroundColor: theme.colors.surface,

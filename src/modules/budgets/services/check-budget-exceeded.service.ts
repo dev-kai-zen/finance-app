@@ -1,5 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getCategory, getCategoryChildren } from "@/modules/categories";
+import { getCategory, getCategoryChildren, type Category } from "@/modules/categories";
 import { getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
@@ -9,7 +9,7 @@ import {
   findCategoryBudgetByCategoryId,
   findEnabledBudgetCategoryIds,
 } from "../repositories/category-budgets.repository";
-import type { BudgetCheckResult } from "../types/budget.types";
+import type { BudgetCheckResult, CategoryBudget } from "../types/budget.types";
 import { calculateCategoryBudgetStatus } from "./calculate-category-budget.service";
 
 export interface CheckBudgetExceededInput {
@@ -54,7 +54,6 @@ export function getBudgetLiveSnapshot(
   const {
     categoryId,
     occurredAt = new Date(),
-    excludeTransactionId,
     context = db,
   } = input;
 
@@ -108,6 +107,16 @@ export function getBudgetLiveSnapshot(
     };
   }
 
+  return getBudgetLiveSnapshotForBudget(budget, budgetedCategory, { ...input, occurredAt, context });
+}
+
+/** Reuse a resolved owner so a multi-line expense reads its spending baseline only once. */
+export function getBudgetLiveSnapshotForBudget(
+  budget: CategoryBudget,
+  budgetedCategory: Category,
+  input: BudgetLiveSnapshotInput,
+): BudgetLiveSnapshot {
+  const { occurredAt = new Date(), excludeTransactionId, context = db } = input;
   const childCategories = getCategoryChildren(budgetedCategory.id, context);
   const activeBudgetCategoryIds = findEnabledBudgetCategoryIds(
     childCategories.map((child) => child.id),
