@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F05 fixed with automated regression coverage. CC-F06 through CC-F12 remain open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F06 fixed with automated regression coverage. CC-F07 through CC-F12 remain open, and native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, and positive opening credit handling are fixed; the combined selected regression run passes 163 tests. CC-F06 through CC-F12 remain pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, and focused mutation refreshes are fixed; the combined selected regression run passes 169 tests. CC-F07 through CC-F12 remain pending. Native UI and frame timing remain unverified.
 
-**Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. Added 50 actual-service/SQLite regressions and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
+**Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -17,9 +17,9 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | Stage | Status | Deliverable |
 | --- | --- | --- |
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
-| 2. Validate Credit Cards | Partial | CC-F01 through CC-F05 have permanent regressions. Native checks remain. |
+| 2. Validate Credit Cards | Partial | CC-F01 through CC-F06 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F05 fixed; CC-F06 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F06 fixed; CC-F07 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -179,7 +179,7 @@ These original probes characterize the initial defects. CC-F01 through CC-F04 no
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F05 are fixed with automated coverage; CC-F06 through CC-F12 remain open. Native verification remains pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F06 are fixed with automated coverage; CC-F07 through CC-F12 remain open. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -188,7 +188,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F03 | P1 — FIXED | Removing/reducing paid charges leaves credit trapped in statements. | Fixed; 16 new cases pass, including net monitoring, ordered reallocation, rollback, and ownership support. |
 | CC-F04 | P1 — FIXED | Opening reconciliation absorbs payment adjustments and changes debt on repeat. | Fixed; ownership guard and four dedicated actual-service regressions pass, covering payment delete/restore, refund corrections, account edits, and convergence. |
 | CC-F05 | P1 — FIXED | Positive opening credit is ignored by billing/monitoring. | Fixed; 6 new actual-service regressions pass covering unbilled/billed offset, surplus, installments, chronology, and convergence. |
-| CC-F06 | P2 | Focused monitoring does not refresh after external mutations. | Hook/event source trace; lifecycle regression pending. |
+| CC-F06 | P2 — FIXED | Focused monitoring does not refresh after external mutations. | Fixed; 6 dedicated hook lifecycle regressions pass covering focus, burst coalescing, blur cleanup, DB replacement, and day rollover. |
 | CC-F07 | P2 | All-card synchronous history reads, per-installment probes, and incomplete chunking violate performance requirements. | SQL counts, query plan, scale probes, and source trace. |
 | CC-F08 | P2 | Activity inspection reveals historical amounts in privacy mode. | Rendering source trace; native check pending. |
 | CC-F09 | P2 | Statement badges use UTC/stale dates and hide overdue partial bills. | Fixed-date/helper probe plus UI source. |
@@ -390,15 +390,46 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** CC-F05 is fixed and automated-test verified. Native UI verification remains pending. Release notes were skipped as requested.
 
-### [CC-F06] External writes leave the focused screen stale
+### [CC-F06] External writes leave the focused screen stale — FIXED
 
-**Problem / evidence:** [use-credit-card-monitoring.ts](../../src/modules/credit-cards/hooks/use-credit-card-monitoring.ts) refreshes only on focus and home-currency dependency changes. [use-transactions.ts](../../src/modules/transactions/hooks/use-transactions.ts) emits `FINANCE_APP_TRANSACTION_MUTATED` after mutations, but the credit-card hook has no listener. Global Quick Entry is mounted by the shared experience shell and can save without changing route focus.
+**Problem / evidence:** [use-credit-card-monitoring.ts](../../src/modules/credit-cards/hooks/use-credit-card-monitoring.ts) refreshed only on focus and home-currency dependency changes. [use-transactions.ts](../../src/modules/transactions/hooks/use-transactions.ts) emits `FINANCE_APP_TRANSACTION_MUTATED` after mutations, but the credit-card hook had no listener. Global Quick Entry is mounted by the shared experience shell and can save without changing route focus, leaving card balances and activity stale.
 
-**Cause / path:** Correct database writes and reconciliation do not call this mounted hook's `setData`; no subscription bridges them. The hook also has no explicit database-replacement/resume-date refresh path of its own.
+**Original cause / path:** Correct database writes and reconciliation do not call this mounted hook's `setData`; no subscription bridged them. Root overlay hosts like `QuickEntryProvider` never emit route blur/focus events. The hook also lacked a database-replacement or app resume date refresh listener.
 
-**Smallest reasonable fix:** Subscribe while focused to the established mutation signal, coalesce/cancel scheduled refreshes, and handle replacement/date invalidation through existing app mechanisms. Do not add a global all-data context or another mutation event. Avoid refreshing offscreen stack entries.
+**Smallest reasonable fix:** Subscribe while focused to the established mutation signal, coalesce/cancel scheduled refreshes via `requestAnimationFrame`, and handle replacement and date invalidation through existing app mechanisms. Do not add a global all-data context or another mutation event. Avoid refreshing offscreen stack entries.
 
-**Proof required:** Focus the hook, save via Global Quick Entry, assert one refresh and updated amounts. Check burst events, blur/unmount cleanup, home-currency changes, failure/retry, restore/replacement, and resume across a due-date boundary. A native smoke test must confirm the visible card changes without leaving the route.
+**Implemented:** [use-credit-card-monitoring.ts](../../src/modules/credit-cards/hooks/use-credit-card-monitoring.ts) now manages focus-gated subscriptions inside `useFocusEffect`:
+1. **Focus-scoped mutation subscription:** Subscribes to `DeviceEventEmitter.addListener("FINANCE_APP_TRANSACTION_MUTATED", ...)` strictly while focused, detaching on blur. Offscreen screens perform 0 SQLite reads.
+2. **Coalesced frame dispatch:** Replaces immediate synchronous refresh with a cancellable `requestAnimationFrame` handle. Multiple burst events collapse into a single database read on the next paint.
+3. **Smooth background updates:** Keeps `loading: true` only on initial mount (`!hasLoadedOnceRef.current`). Subsequent mutation refreshes update data silently without layout shifts or skeleton flickers.
+4. **Database replacement & day rollover:** Subscribes to `subscribeToDatabaseReplacement()` to refresh if focused, and inspects `AppState` changes to `"active"` to detect date rollover across midnight/due dates.
+
+**Regression evidence:** Added 6 dedicated hook lifecycle regressions in [use-credit-card-monitoring.test.cjs](../../src/modules/credit-cards/__tests__/use-credit-card-monitoring.test.cjs):
+1. `CC-F06: initial focus schedules refresh via animation frame and loads data`: Verifies initial load deferral to animation frame and loading completion.
+2. `CC-F06: FINANCE_APP_TRANSACTION_MUTATED while focused refreshes data without skeleton flicker`: Verifies external write updates data with `loading: false`.
+3. `CC-F06: burst mutation events coalesce into a single animation frame refresh`: 5 rapid mutations execute exactly 1 database read.
+4. `CC-F06: blur and unmount detach listeners and cancel pending frames (no offscreen reads)`: Blur detaches listeners and cancels pending frames; offscreen mutations perform 0 reads.
+5. `CC-F06: database replacement triggers refresh when focused`: Backup restore triggers immediate refresh when focused.
+6. `CC-F06: AppState resume across midnight / day change triggers refresh`: Foreground resume on a new calendar date schedules a refresh.
+
+**Performance:** Eliminates redundant offscreen calculations; collapses burst events into a single $O(1)$ animation frame; avoids full-screen re-renders during active inspection.
+
+#### Manual verification guide — CC-F06
+
+1. **Baseline setup:**
+   - Open Credit Cards monitoring. Note the current unbilled and outstanding amounts.
+2. **Global Quick Entry mutation:**
+   - While still on Credit Cards monitoring, trigger Global Quick Entry (via floating action button, shake gesture, or Kai chat).
+   - Enter an expense on this credit card (e.g. PHP 500 Dining) and tap Save.
+   - When the Quick Entry modal dismisses, observe Credit Cards monitoring immediately.
+   - **Expected:** Unbilled and Outstanding immediately increase by PHP 500, Available Limit decreases by PHP 500, and the new item appears in the unbilled activity list without having to leave the screen.
+3. **Burst mutation coalescing:**
+   - Save a split transaction or import multiple items; verify the screen updates once cleanly without multiple flashes.
+4. **Offscreen protection:**
+   - Navigate away to Settings or Dashboard. Record transactions on the card. Return to Credit Cards.
+   - **Expected:** Data is fresh upon refocusing, with zero queries executed while offscreen.
+
+**Status:** CC-F06 is fixed and automated-test verified. Native UI verification remains pending. Release notes were skipped as requested.
 
 ### [CC-F07] Monitoring and plan inspection perform unbounded synchronous work
 
@@ -571,7 +602,7 @@ The initial audit changed no production code. CC-F01's reproduced warnings, calc
 3. **What is the smallest reasonable fix?** Use the localized recommendation above. Explain any proposed new file; avoid surrounding refactors, new caches, and duplicate financial formulas.
 4. **How will we prove the fix does not break other features?** Specify the actual-service, failure/rollback, query-bound, and UI regression cases applicable to that finding; run `npx tsc --noEmit` and the affected suites.
 
-CC-F01 through CC-F05 are fixed with permanent automated regression coverage. Next, address CC-F06 (refresh on external writes); then address performance/plan inspection, privacy/date/localization, and reminder/restore validation. Keep production diffs surgical. Release notes were explicitly skipped for the requested fixes; versions remain unchanged pending the repository-required version decision.
+CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Next, address CC-F07 (query bounding and performance); then address privacy/date/localization, and reminder/restore validation. Keep production diffs surgical. Release notes were explicitly skipped for the requested fixes; versions remain unchanged pending the repository-required version decision.
 
 ## 12. Feature sign-off checklist
 
@@ -582,10 +613,11 @@ CC-F01 through CC-F05 are fixed with permanent automated regression coverage. Ne
 - [x] Fix CC-F03 with 16 new regressions, including required opening-ownership support; combined selected run: 153 passed.
 - [x] Fix CC-F04 with 4 new dedicated regressions (6 total covering opening balance lifecycle); combined selected run: 157 passed.
 - [x] Fix CC-F05 with 6 new actual-service regressions; combined selected run: 163 passed.
+- [x] Fix CC-F06 with 6 new hook lifecycle regressions; combined selected run: 169 passed.
 - [x] Run repository TypeScript verification successfully.
 - [x] Reproduce financial discrepancies through actual services and real SQLite fixtures.
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
-- [ ] Implement and regression-test CC-F06 through CC-F12; preserve exact monetary and historical parity.
+- [ ] Implement and regression-test CC-F07 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.
