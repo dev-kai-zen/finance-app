@@ -1,6 +1,6 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { findAccountById, getCreditCardDetails } from "@/modules/accounts";
-import { computeCreditCardAccountMonitoring } from "./get-credit-card-monitoring.service";
+import { getAccountTransactionDelta } from "@/modules/transactions";
 
 export interface CheckCreditLimitInput {
   accountId: string;
@@ -31,7 +31,6 @@ export function checkCreditLimitExceeded(
     accountId,
     expenseAmountMinorUnits,
     excludeTransactionId,
-    occurredAt = new Date(),
     context = db,
   } = input;
 
@@ -67,21 +66,13 @@ export function checkCreditLimitExceeded(
     };
   }
 
-  const cardMonitoring = computeCreditCardAccountMonitoring(
-    {
-      id: account.id,
-      name: account.name,
-      currencyCode: account.currencyCode,
-      creditCardDetails: details,
-    },
-    occurredAt,
-    excludeTransactionId,
-  );
-
-  const currentOutstanding = cardMonitoring?.outstandingMinorUnits ?? 0;
+  const balance = account.openingBalanceMinorUnits +
+    getAccountTransactionDelta(accountId, context, { excludeTransactionId });
+  const currentOutstanding = Math.max(0, -balance);
   const creditLimit = details.creditLimitMinorUnits;
   const additional = Math.abs(expenseAmountMinorUnits);
-  const newOutstanding = currentOutstanding + additional;
+  // Preserve prepaid credit until the replacement expense has been applied.
+  const newOutstanding = Math.max(0, additional - balance);
   const availableBefore = Math.max(0, creditLimit - currentOutstanding);
   const availableAfter = Math.max(0, creditLimit - newOutstanding);
   const exceeds = newOutstanding > creditLimit;

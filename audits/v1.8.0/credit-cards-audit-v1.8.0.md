@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Initial feature audit complete; targeted service probes executed. Remediation and native sign-off remain pending.
+**Stage:** Remediation in progress — CC-F01 fixed with automated regression coverage. Other findings and native sign-off remain pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** The selected 111 existing tests and TypeScript pass, but actual-service probes reproduce incorrect credit-limit warnings, missing installment debt after restore, stranded payment credit, and opening-balance inconsistencies. Source review also identifies refresh, privacy, date-status, localization, and performance gaps.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** CC-F01's incorrect credit-limit warnings are fixed; the combined selected regression run passes 125 tests. Missing installment debt after restore, stranded payment credit, opening-balance inconsistencies, and the other documented findings remain open. Native UI and frame timing remain unverified.
 
-**Changes made:** This audit document only. No production code, migrations, release notes, application versions, or dependencies changed. Version-bump approval is not needed for this documentation-only audit; apply the repository's release-note and version-decision rules when implementing fixes.
+**Changes made:** The initial pass added this audit only. CC-F01 now calculates the proposed debt from the signed local ledger balance, with edit exclusion and prepaid credit preserved. Added 12 actual-service/SQLite regressions and two form-handler regressions in existing test files. No migration or dependency changes. Release notes skipped at the user's request; application versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -17,9 +17,9 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | Stage | Status | Deliverable |
 | --- | --- | --- |
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
-| 2. Validate Credit Cards | Partial | Existing suites and isolated actual-service probes executed; permanent regressions and native checks remain. |
+| 2. Validate Credit Cards | Partial | Existing suites and isolated probes executed; CC-F01 has permanent regressions. Other regressions and native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | Pending | Apply small fixes with the four-question investigation gate and regression coverage. |
+| 4. Remediate findings | In progress | CC-F01 fixed and regression-tested. CC-F02 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -29,6 +29,8 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | Credit Cards and credit-card walkthrough suites | **30 passed**, zero failures/skips; approximately 8.0 seconds | Includes ten actual-service/SQLite billing remediation tests. Some other cases insert schema fixtures or repeat arithmetic instead of executing the service named by the test. |
 | Related Accounts, Transactions, Notifications, and user-data registry suites | **81 passed**, zero failures/skips; approximately 11.4 seconds | Related contracts remain green. Notification settings tests do not establish OS delivery or correct rescheduling. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Repository-wide compile-time integrity. |
+| CC-F01 targeted regression run | **14 passed**, zero failures/skips; approximately 11.3 seconds | Twelve actual-service/SQLite cases plus two extracted actual form-handler cases. Eight service cases failed before the production fix. Native children/persistence callbacks in the form harness are stubbed. |
+| CC-F01 combined regression run | **125 passed**, zero failures/skips; approximately 21.7 seconds | Credit Cards, card walkthroughs, Accounts, selected Transactions, notification settings, and user-data registry suites. Includes all 14 new regressions. Native validation remains pending. |
 | Actual-service financial probes | **Eight financial/validation scenarios reproduced** | Calls production monitoring, limit-check, installment creation, and reconciliation services with migration-backed in-memory SQLite. Fixture edits use explicit SQL; this is not a native interaction test. See Section 5. |
 | Calendar/status probe | UTC/local mismatch and overdue-partial precedence reproduced | Executes the actual status helper and the date expression used by the UI with a fixed instant. Native clock rollover remains untested. |
 | Query counts and query plan | Cold monitor **30 statements / 3 writes**; warm monitor **8 statements**; 120-month edit-state read **123 statements** | Fixture-specific counts, including transaction control where applicable. Expo bridge/device costs are not measured. |
@@ -41,6 +43,14 @@ Commands executed from the repository root:
 ```powershell
 node --test --test-reporter=spec src/modules/credit-cards/__tests__/*.test.cjs src/modules/walkthrough/__tests__/credit-cards-walkthrough.test.cjs
 node --test --test-concurrency=2 --test-reporter=spec src/modules/accounts/__tests__/*.test.cjs src/modules/transactions/__tests__/transactions.test.cjs src/modules/transactions/__tests__/transactions-split.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs src/modules/notifications/__tests__/reminder-settings.test.cjs src/infrastructure/database/__tests__/user-data-tables.test.cjs
+npx tsc --noEmit
+```
+
+CC-F01 follow-up commands:
+
+```powershell
+node --test --test-name-pattern=CC-F01 --test-reporter=spec src/modules/credit-cards/__tests__/billing-remediation.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs
+node --test --test-concurrency=2 --test-reporter=spec src/modules/credit-cards/__tests__/*.test.cjs src/modules/walkthrough/__tests__/credit-cards-walkthrough.test.cjs src/modules/accounts/__tests__/*.test.cjs src/modules/transactions/__tests__/transactions.test.cjs src/modules/transactions/__tests__/transactions-split.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs src/modules/notifications/__tests__/reminder-settings.test.cjs src/infrastructure/database/__tests__/user-data-tables.test.cjs
 npx tsc --noEmit
 ```
 
@@ -119,7 +129,7 @@ The reviewed cross-module calls use public APIs. Screens/components do not query
 | Switch card | Account chips choose an already-loaded card; keyed card component remounts for the new account. | No new SQL specifically on chip selection; unnecessary all-card detail hydration happened earlier. |
 | Inspect statement or unbilled activity | Card transforms/slices full arrays; activity modal searches the in-memory items and renders a `FlatList`. | Closed activity modal is correctly gated; item search executes zero SQL but scans all loaded items. Historical amounts lose privacy masking in the modal; CC-F08. |
 | Create expense / installment / BNPL | Transaction service inserts ledger row, creates schedule, then reconciles within the same transaction. | Atomic structure is sound. Term/principal edge fails at a DB constraint; CC-F11. BNPL has existing schedule coverage. |
-| Check limit before save | Expense form synchronously calls `checkCreditLimitExceeded`, then offers Proceed/Cancel if exceeded. | Confirmed billed-edit and prepayment false warnings; CC-F01. No server request is required. |
+| Check limit before save | Expense form calls `checkCreditLimitExceeded`, then offers Proceed/Cancel if exceeded. | CC-F01 fixed: signed ledger balance, edit exclusion, preserved credit, three read-only queries. No server request is required. |
 | Edit purchase | Transaction update obtains edit state; billed installments protect account/amount/date, then applies allowed plan changes and reconciliation. | Authoritative billed-plan guard exists. An edit-state read performs up to 123 SQL statements; CC-F07. Moving a billed one-time purchase's date does not relocate its statement; policy Q-CC01. |
 | Pay card / refund | Positive ledger amounts allocate against oldest outstanding statements; unused credit offsets unbilled activity. | Ordinary payment-reduction tests pass. Credit stranded after a charge disappears, and opening corrections interact incorrectly with payment adjustments; CC-F03/04. |
 | Delete / restore purchase | Ledger service changes deletion state and reconciles in the same transaction. | One-time charge restore has existing coverage. Installment restore undercounts total debt; CC-F02. |
@@ -134,7 +144,7 @@ The [Transactions audit's settled advisory-warning policy](transactions-audit-v1
 
 ## 5. Independent reproducible checks
 
-Unless overridden below, use the existing billing fixture: `today = new Date(2026, 10, 21, 12)`, card `card`, PHP limit `5000000`, statement day `10`, due day `25`, zero opening balance, and charges dated November 5 at local noon. `f.reconcile()` invokes `reconcileCreditCardBillingInContext` inside a Drizzle transaction; `f.monitor()` invokes `getCreditCardMonitoring`.
+Unless overridden below, use the existing billing fixture: `today = new Date(2026, 10, 21, 12)`, card `card`, PHP limit `5000000`, statement day `10`, due day `25`, zero opening balance, and charges dated November 5 at local noon. `f.reconcile()` invokes `reconcileCreditCardBillingInContext` inside a Drizzle transaction; `f.monitor()` invokes `getCreditCardMonitoring`. The Actual result column preserves the initial, pre-remediation observations; CC-F01's first two rows now produce the expected results.
 
 | Probe | Fixture operations | Expected result | Actual result |
 | --- | --- | --- | --- |
@@ -149,15 +159,15 @@ Unless overridden below, use the existing billing fixture: `today = new Date(202
 
 For the date probe, use `2026-11-23T16:30:00Z`: it is **November 24, 00:30 in Manila**, but `toISOString().slice(0, 10)` is `2026-11-23`. A fully unpaid bill due November 23 is classified `unpaid` by the UI date path while the service's local-date comparison marks it overdue. Separately, `getStatementPaymentStatus({ issuedAmountMinorUnits: 100, remainingAmountMinorUnits: 50, dueOn: "2026-11-01" }, "2026-11-24")` returns `partial`, concealing overdue status when only one badge is displayed.
 
-These probes characterize the current defects. They are not passing tests of desired behavior and must become permanent regressions before remediation sign-off.
+These original probes characterize the initial defects. CC-F01 now has permanent regressions asserting the desired results; the other findings still require that coverage before remediation sign-off.
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. Every finding is open; recommended fixes have not been implemented.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 is fixed with automated coverage; CC-F02 through CC-F12 remain open. Native verification of CC-F01 is still pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
-| CC-F01 | P1 | Credit-limit preview double-counts billed edits and loses unused credit. | Actual-service probes. |
+| CC-F01 | P1 — FIXED | Credit-limit preview double-counts billed edits and loses unused credit. | Fixed; 12 actual-service/SQLite and two form-handler regressions pass. |
 | CC-F02 | P1 | Restoring an installment purchase does not restore its billed debt. | Actual-service/SQLite probe. |
 | CC-F03 | P1 | Removing/reducing paid charges leaves credit trapped in statements. | Actual-service/SQLite deletion probe; reductions share the path. |
 | CC-F04 | P1 | Opening reconciliation absorbs payment adjustments and changes debt on repeat. | Actual-service/SQLite two-run probe. |
@@ -170,15 +180,38 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F11 | P2 | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Actual-service/SQLite probe. |
 | CC-F12 | P2 | Core feature strings are untranslated; activity close omits keyboard dismissal. | Source trace; native/localized checks pending. |
 
-### [CC-F01] Credit-limit preview does not model the replacement expense correctly
+### [CC-F01] Credit-limit preview does not model the replacement expense correctly — FIXED
 
 **Problem / evidence:** An unchanged PHP 40,000 billed expense projects PHP 80,000. An unused PHP 1,000 prepayment is ignored when checking a PHP 1,500 expense against a PHP 1,000 limit. See Section 5.
 
-**Cause / path:** `TransactionFormModal` calls `checkCreditLimitExceeded` before save. In [get-credit-card-monitoring.service.ts](../../src/modules/credit-cards/services/get-credit-card-monitoring.service.ts), `excludeTransactionId` filters `ledger` at line 139, after `statementSummaries` has already included the billed charge. [check-credit-limit-exceeded.service.ts](../../src/modules/credit-cards/services/check-credit-limit-exceeded.service.ts), lines 81–84, then adds the replacement amount to clamped outstanding. Clamping has discarded any surplus credit. Its optional context is also not forwarded to the monitoring reads.
+**Original cause / path:** `TransactionFormModal` calls `checkCreditLimitExceeded` before save. In [get-credit-card-monitoring.service.ts](../../src/modules/credit-cards/services/get-credit-card-monitoring.service.ts), `excludeTransactionId` filters `ledger` at line 139, after `statementSummaries` has already included the billed charge. The original limit service added the replacement amount to clamped outstanding. Clamping discarded surplus credit, and its optional context was not forwarded to monitoring reads.
 
 **Smallest reasonable fix:** Compute the proposed debt from a signed card balance snapshot, removing the old ledger effect and applying the replacement before clamping. Consume the Accounts/Transactions public service boundary; keep statement/activity construction out of the warning path. Preserve `context` throughout and keep the warning advisory. No new generic warning framework is needed.
 
-**Proof required:** Call the actual service for unchanged/increased/decreased billed and unbilled edits, billed installments, moving accounts, unused/partially allocated prepayment, positive opening credit, refunds, native-currency FX posting, and exact-limit equality. Assert every result field and no writes; exercise Cancel/Proceed through the actual form handler. The current four `credit-limit-check.test.cjs` cases do not execute this service.
+**Implemented:** [check-credit-limit-exceeded.service.ts](../../src/modules/credit-cards/services/check-credit-limit-exceeded.service.ts) now reuses the existing public `getAccountTransactionDelta(accountId, context, { excludeTransactionId })` service. It adds the opening balance, subtracts the proposed native-currency expense, then clamps the resulting debt to zero. All reads use the supplied context. It does not load statements/plans/activity, reconcile billing, or change persistence. `occurredAt` remains accepted for caller compatibility; the check continues to use the current active ledger rather than a historical cutoff.
+
+```text
+baselineBalance = openingBalance + active signed ledger sum excluding the edited transaction
+projectedDebt = max(0, proposedExpense - baselineBalance)
+exceededBy = max(0, projectedDebt - creditLimit)
+```
+
+**Regression evidence:** Twelve cases in [billing-remediation.test.cjs](../../src/modules/credit-cards/__tests__/billing-remediation.test.cjs) execute the actual service, covering billed amount edits, unbilled/account changes, unused/partially allocated payments, paid-purchase edits, opening debt/credit, refunds, deleted rows, billed installment principal, exact-limit/one-unit-over boundaries, PHP/JPY/KWD and FX-posted amounts, missing/non-card/zero-limit guards, context propagation, and 10k-row query bounds. Monetary results are asserted field by field. Eight cases failed before the fix; all twelve now pass. Two cases in [form-integrity.test.cjs](../../src/modules/transactions/__tests__/form-integrity.test.cjs) execute the actual extracted handlers, checking edit-ID/native-amount forwarding and Cancel/no-write/Proceed-once behavior. The older arithmetic-only `credit-limit-check.test.cjs` cases remain supplementary, not evidence for the fix.
+
+**Performance:** Eligible checks execute exactly **three read-only statements**: account, card details, and one SQL sum scoped to that account. The 10,000-row fixture confirms indexed account lookup and no temporary B-tree sort or statement-history hydration. Aggregation is still `O(N)` in matching card rows, but JS receives one scalar instead of full history. There are zero new queries during typing, zero new mount/focus queries, and no context-provider changes. Native frame timing remains unmeasured. Broader monitoring/reconciliation work remains tracked by CC-F07.
+
+#### Manual verification guide — CC-F01
+
+Use isolated test accounts so other transactions do not affect the expected totals. Run the updated app; no database migration/reset is required. These checks concern the credit-limit warning. Separate budget warnings may still appear under their own rules.
+
+1. **Create a billed-purchase fixture.** Add a PHP Credit Card account with a **PHP 50,000 limit**, **zero opening balance**, statement day **10**, and due day **25**. Record one **PHP 40,000 expense dated before the latest statement cutoff** (November 5, 2026 for this audit's November 24 date). Open Credit Cards and confirm the purchase appears on an issued statement. Keep the card free of other purchases/payments.
+2. **Check an unchanged edit.** Edit only the expense description and save. Expect **no credit-limit warning**, one existing transaction updated, and debt still **PHP 40,000**. Reopen the same expense rather than adding another transaction.
+3. **Check replacement amounts and the boundary.** On that same expense, save **PHP 30,000**, then **PHP 50,000**. Neither should trigger a credit-limit warning. Try **PHP 50,000.01**: expect projected debt **PHP 50,000.01** and excess **PHP 0.01**. Cancel and confirm the saved expense is still PHP 50,000.
+4. **Check advisory confirmation.** Change that expense to **PHP 60,000**. Expect projected debt **PHP 60,000**, excess **PHP 10,000**. Cancel first and confirm nothing changes. Retry and Proceed; confirm the existing expense updates once, with no extra transaction added. Return it to PHP 40,000 before checking other cases on this card.
+5. **Check unused prepaid credit on a separate card.** Create another PHP card with a **PHP 1,000 limit**, zero opening balance, and no purchases. Transfer **PHP 1,000 from a funded bank account into that card**. Enter a **PHP 1,500 expense**: expect **no credit-limit warning** and a resulting account debt of **PHP 500**.
+6. **Check credit on an edited purchase.** On the first card, with only its PHP 40,000 purchase, transfer **PHP 10,000** into the card. Edit the purchase description without changing the amount. Expect no warning and remaining debt **PHP 30,000**.
+
+**Native status:** Guide supplied; these device interactions have not been performed by the agent. The fix is automated-test verified, while full Credit Cards feature sign-off remains pending.
 
 ### [CC-F02] Installment restore leaves deletion reversals in force
 
@@ -394,23 +427,24 @@ Extend the existing billing/service tests where practical. A small hook/render h
 
 ## 11. Mandatory pre-change gate for remediation
 
-No production changes were made during this audit. Before each fix, explicitly answer these four questions again against the then-current code:
+The initial audit changed no production code. For CC-F01 remediation, the reproduced false warnings, their calculation path, reuse of the existing scalar ledger service, and the failing-before/passing-after regressions above answered the four questions before the production edit. Before each subsequent fix, explicitly answer them again against the then-current code:
 
 1. **What is the actual problem?** Use the finding's concrete fixture or a failing regression; distinguish confirmed defects from Section 7 policy questions.
 2. **Why does the current implementation cause it?** Confirm the named function and full caller path, including the transaction boundary and presentation consumer.
 3. **What is the smallest reasonable fix?** Use the localized recommendation above. Explain any proposed new file; avoid surrounding refactors, new caches, and duplicate financial formulas.
 4. **How will we prove the fix does not break other features?** Specify the actual-service, failure/rollback, query-bound, and UI regression cases applicable to that finding; run `npx tsc --noEmit` and the affected suites.
 
-Suggested order: add the independent financial fixtures; fix CC-F02/03/04/05; correct CC-F01 against the same balance model; then address performance/refresh, lifecycle/input validation, privacy/date/localization, and reminder/restore validation. Keep production diffs surgical and add localized release notes when implementing changes. Ask whether fixes stay in v1.8.0 or receive the appropriate semantic-version bump at that implementation stage.
+CC-F01 is now fixed independently through the existing signed-ledger service. Next, add the remaining independent financial fixtures and fix CC-F02/03/04/05; then address performance/refresh, lifecycle/input validation, privacy/date/localization, and reminder/restore validation. Keep production diffs surgical. Release notes were explicitly skipped for CC-F01; versions remain unchanged pending the repository-required version decision.
 
 ## 12. Feature sign-off checklist
 
 - [x] Inventory routes, UI actions, service/repository ownership, schema, and alternate consumers.
 - [x] Run the existing Credit Cards/walkthrough and selected related suites: 111 passed.
+- [x] Fix CC-F01 with 14 new regressions; combined selected run: 125 passed.
 - [x] Run repository TypeScript verification successfully.
 - [x] Reproduce financial discrepancies through actual services and real SQLite fixtures.
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
-- [ ] Implement and regression-test CC-F01 through CC-F12; preserve exact monetary and historical parity.
+- [ ] Implement and regression-test CC-F02 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.

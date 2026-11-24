@@ -199,6 +199,9 @@ function setupTestDb() {
 
 const { reconcileCreditCardBillingInContext } = require("../services/reconcile-credit-card-billing.service");
 const { getCreditCardMonitoring } = require("../services/get-credit-card-monitoring.service");
+const { checkCreditLimitExceeded } = require("../services/check-credit-limit-exceeded.service");
+const { createCreditCardInstallmentPlan } = require("../services/create-installment-plan.service");
+const { getTransactionsByIds } = require("@/modules/transactions");
 function fixture() {
   const db = setupTestDb();
   const today = new Date(2026, 10, 21, 12);
@@ -463,6 +466,175 @@ test("B04: moving billed charge from credit card to cash reverses charge from ol
     const card2Statement = sqlite.prepare("SELECT * FROM credit_card_statements WHERE account_id = 'card_2' AND kind = 'billing_cycle'").get();
     assert.ok(card2Statement, "Card 2 statement should be created");
     assert.equal(card2Statement.issued_amount_minor_units, 70000, "Card 2 statement must bill the moved 70,000");
+  } finally { sqlite.close(); }
+});
+
+function expectedCreditLimit(overrides = {}) {
+  return {
+    hasCreditCard: true,
+    accountName: "Test Card",
+    currencyCode: "PHP",
+    creditLimitMinorUnits: 5000000,
+    currentOutstandingMinorUnits: 0,
+    additionalExpenseMinorUnits: 4000000,
+    newOutstandingMinorUnits: 4000000,
+    availableLimitBeforeMinorUnits: 5000000,
+    availableLimitAfterMinorUnits: 1000000,
+    exceeds: false,
+    exceededByMinorUnits: 0,
+    ...overrides,
+  };
+}
+
+test("CC-F01: billed edits replace the old expense for unchanged, increased, and reduced amounts", () => {
+  const f = fixture();
+  try {
+    f.charge("billed", -4000000);
+    f.reconcile();
+    for (const [amount, expected] of [
+      [4000000, expectedCreditLimit()],
+      [6000000, expectedCreditLimit({ additionalExpenseMinorUnits: 6000000, newOutstandingMinorUnits: 6000000, availableLimitAfterMinorUnits: 0, exceeds: true, exceededByMinorUnits: 1000000 })],
+      [3000000, expectedCreditLimit({ additionalExpenseMinorUnits: 3000000, newOutstandingMinorUnits: 3000000, availableLimitAfterMinorUnits: 2000000 })],
+    ]) {
+      assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: amount, excludeTransactionId: "billed", occurredAt: f.today }), expected);
+    }
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: unbilled edits and purchases on another account do not duplicate ledger effects", () => {
+  const f = fixture();
+  try {
+    f.charge("unbilled", -4000000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    f.charge("other_account", -9000000);
+    sqlite.exec("UPDATE transactions SET account_id = 'acc_1' WHERE id = 'other_account'");
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 4000000, excludeTransactionId: "unbilled", occurredAt: f.today }), expectedCreditLimit());
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 1000000, excludeTransactionId: "other_account", occurredAt: f.today }), expectedCreditLimit({ currentOutstandingMinorUnits: 4000000, additionalExpenseMinorUnits: 1000000, newOutstandingMinorUnits: 5000000, availableLimitBeforeMinorUnits: 1000000, availableLimitAfterMinorUnits: 0 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: unused prepayment offsets the proposed expense before debt is clamped", () => {
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE credit_card_details SET credit_limit_minor_units = 100000 WHERE account_id = 'card'");
+    f.charge("prepayment", 100000, "transfer");
+    f.reconcile();
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 150000 }), expectedCreditLimit({ creditLimitMinorUnits: 100000, additionalExpenseMinorUnits: 150000, newOutstandingMinorUnits: 50000, availableLimitBeforeMinorUnits: 100000, availableLimitAfterMinorUnits: 50000 }));
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 50000 }), expectedCreditLimit({ creditLimitMinorUnits: 100000, additionalExpenseMinorUnits: 50000, newOutstandingMinorUnits: 0, availableLimitBeforeMinorUnits: 100000, availableLimitAfterMinorUnits: 100000 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: editing a paid billed purchase preserves the payment's credit", () => {
+  const f = fixture();
+  try {
+    f.charge("billed", -4000000);
+    f.charge("payment", 1000000, "transfer");
+    f.reconcile();
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 4000000, excludeTransactionId: "billed", occurredAt: f.today }), expectedCreditLimit({ newOutstandingMinorUnits: 3000000, availableLimitAfterMinorUnits: 2000000 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: opening debt/credit, refunds, and deleted entries use signed active ledger amounts", () => {
+  const f = fixture();
+  try {
+    f.charge("expense", -4000000);
+    f.charge("refund", 500000);
+    f.charge("deleted", -9000000);
+    sqlite.prepare("UPDATE transactions SET deleted_at = ? WHERE id = 'deleted'").run(f.occurred);
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -1000000 WHERE id = 'card'");
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 1000000 }), expectedCreditLimit({ currentOutstandingMinorUnits: 4500000, additionalExpenseMinorUnits: 1000000, newOutstandingMinorUnits: 5500000, availableLimitBeforeMinorUnits: 500000, availableLimitAfterMinorUnits: 0, exceeds: true, exceededByMinorUnits: 500000 }));
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 1000000 WHERE id = 'card'");
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 1000000 }), expectedCreditLimit({ currentOutstandingMinorUnits: 2500000, additionalExpenseMinorUnits: 1000000, newOutstandingMinorUnits: 3500000, availableLimitBeforeMinorUnits: 2500000, availableLimitAfterMinorUnits: 1500000 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: partially allocated excess payment remains available for a new expense", () => {
+  const f = fixture();
+  try {
+    f.charge("billed", -4000000);
+    f.charge("payment", 6000000, "transfer");
+    f.reconcile();
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 6000000 }), expectedCreditLimit({ additionalExpenseMinorUnits: 6000000 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: billed installment edits exclude the full original principal exactly once", () => {
+  const f = fixture();
+  try {
+    f.charge("installment_purchase", -4000000);
+    f.db.transaction(context => createCreditCardInstallmentPlan(getTransactionsByIds(["installment_purchase"], context)[0], { termMonths: 3 }, context));
+    f.reconcile();
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 4000000, excludeTransactionId: "installment_purchase", occurredAt: f.today }), expectedCreditLimit());
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: exact limit passes and one minor unit over the limit warns", () => {
+  const f = fixture();
+  try {
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 5000000 }), expectedCreditLimit({ additionalExpenseMinorUnits: 5000000, newOutstandingMinorUnits: 5000000, availableLimitAfterMinorUnits: 0 }));
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 5000001 }), expectedCreditLimit({ additionalExpenseMinorUnits: 5000001, newOutstandingMinorUnits: 5000001, availableLimitAfterMinorUnits: 0, exceeds: true, exceededByMinorUnits: 1 }));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: PHP, JPY, and KWD checks use account-native minor units including FX-posted entries", () => {
+  const f = fixture();
+  try {
+    f.charge("fx_purchase", -4000);
+    sqlite.exec("UPDATE transactions SET currency_code = 'USD', original_amount_minor_units = -100, exchange_rate_scaled = 40000000 WHERE id = 'fx_purchase'");
+    for (const currency of ["PHP", "JPY", "KWD"]) {
+      sqlite.prepare("UPDATE accounts SET currency_code = ? WHERE id = 'card'").run(currency);
+      sqlite.exec("UPDATE credit_card_details SET credit_limit_minor_units = 5000 WHERE account_id = 'card'");
+      assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 1001 }), expectedCreditLimit({ currencyCode: currency, creditLimitMinorUnits: 5000, currentOutstandingMinorUnits: 4000, additionalExpenseMinorUnits: 1001, newOutstandingMinorUnits: 5001, availableLimitBeforeMinorUnits: 1000, availableLimitAfterMinorUnits: 0, exceeds: true, exceededByMinorUnits: 1 }));
+    }
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: all reads use the supplied transaction context and see its pending writes", () => {
+  const f = fixture();
+  try {
+    let reads = 0;
+    f.db.transaction(context => {
+      f.charge("pending", -4000000);
+      const trackedContext = new Proxy(context, {
+        get(target, key) {
+          if (key === "select") return (...args) => { reads++; return target.select(...args); };
+          return Reflect.get(target, key);
+        },
+      });
+      assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 1000000, context: trackedContext }), expectedCreditLimit({ currentOutstandingMinorUnits: 4000000, additionalExpenseMinorUnits: 1000000, newOutstandingMinorUnits: 5000000, availableLimitBeforeMinorUnits: 1000000, availableLimitAfterMinorUnits: 0 }));
+    });
+    assert.equal(reads, 3, "Account, card details, and aggregate must all use the supplied context");
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: missing accounts, non-card accounts, and zero-limit cards preserve the no-warning contract", () => {
+  const f = fixture();
+  try {
+    for (const accountId of ["", "missing", "acc_1", "card"]) {
+      sqlite.exec("UPDATE credit_card_details SET credit_limit_minor_units = 0 WHERE account_id = 'card'");
+      const result = checkCreditLimitExceeded({ accountId, expenseAmountMinorUnits: 100 });
+      assert.equal(result.hasCreditCard, false);
+      assert.equal(result.exceeds, false);
+      assert.equal(result.additionalExpenseMinorUnits, 100);
+      assert.equal(result.newOutstandingMinorUnits, 100);
+    }
+  } finally { sqlite.close(); }
+});
+
+test("CC-F01: 10k-row checks execute three read-only statements with an indexed scalar aggregate", () => {
+  const f = fixture();
+  try {
+    for (let index = 0; index < 10000; index++) f.charge("bulk_" + index, -100);
+    queries = [];
+    assert.deepEqual(checkCreditLimitExceeded({ accountId: "card", expenseAmountMinorUnits: 4000000 }), expectedCreditLimit({ currentOutstandingMinorUnits: 1000000, newOutstandingMinorUnits: 5000000, availableLimitBeforeMinorUnits: 4000000, availableLimitAfterMinorUnits: 0 }));
+    assert.equal(queries.length, 3);
+    assert.ok(queries.every(query => /^\s*select\b/i.test(query)));
+    assert.ok(queries.every(query => !/credit_card_(statements|statement_entries|installment)/i.test(query)));
+    const aggregate = queries.find(query => /sum\(/i.test(query));
+    assert.ok(aggregate);
+    const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + aggregate).all("card");
+    assert.ok(plan.some(row => /SEARCH transactions USING .*INDEX .*account/i.test(row.detail)), JSON.stringify(plan));
+    assert.ok(plan.every(row => !/TEMP B-TREE|SCAN transactions/i.test(row.detail)), JSON.stringify(plan));
   } finally { sqlite.close(); }
 });
 

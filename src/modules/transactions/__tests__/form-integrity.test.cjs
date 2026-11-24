@@ -10,7 +10,7 @@ function saveHarness() {
   const file = path.resolve(__dirname, '../components/transaction-form-modal.tsx');
   const source = fs.readFileSync(file, 'utf8');
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  let handler, proceed, cancel, requestClose, cancelCheck;
+  let handler, proceed, cancel, requestClose, cancelCheck, proceedCredit, cancelCredit;
   function visit(node) {
     if (ts.isVariableDeclaration(node)) {
       const name = node.name.getText(ast);
@@ -19,6 +19,8 @@ function saveHarness() {
       if (name === 'handleCancelOverBudget') cancel = node.initializer.getText(ast);
       if (name === 'handleRequestClose') requestClose = node.initializer.getText(ast);
       if (name === 'cancelBudgetCheck') cancelCheck = node.initializer.getText(ast);
+      if (name === 'handleProceedCreditLimit') proceedCredit = node.initializer.getText(ast);
+      if (name === 'handleCancelCreditLimit') cancelCredit = node.initializer.getText(ast);
     }
     ts.forEachChild(node, visit);
   }
@@ -48,7 +50,7 @@ function saveHarness() {
     accountCurrencyCode: 'PHP', entryCurrency: 'PHP', isCrossCurrencyEntry: false, installmentFieldsLocked: false,
     onSaveTransaction() { calls++; return new Promise(resolve => { finish = resolve; }); },
   };
-  vm.runInNewContext(ts.transpileModule('const cancelBudgetCheck = ' + cancelCheck + '; const handleSave = ' + handler + '; exports.save = handleSave; exports.proceed = ' + proceed + '; exports.cancel = ' + cancel + '; exports.requestClose = ' + requestClose + '; exports.unmount = cancelBudgetCheck;', {
+  vm.runInNewContext(ts.transpileModule('const cancelBudgetCheck = ' + cancelCheck + '; const handleSave = ' + handler + '; exports.save = handleSave; exports.proceed = ' + proceed + '; exports.cancel = ' + cancel + '; exports.requestClose = ' + requestClose + '; exports.unmount = cancelBudgetCheck; exports.proceedCredit = ' + proceedCredit + '; exports.cancelCredit = ' + cancelCredit + ';', {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText, context);
   return { context, flushBudgetChecks: () => { const jobs=[...budgetChecks]; budgetChecks.clear(); jobs.forEach(run=>run()); }, save: context.exports.save, requestClose: context.exports.requestClose, unmount: context.exports.unmount, proceed: context.exports.proceed, cancel: context.exports.cancel, finish: value => finish(value), get calls() { return calls; }, get closed() { return closed; } };
@@ -74,6 +76,53 @@ test('P2-11b: validation, warning, and rejected saves release the synchronous gu
   assert.equal(h.calls, 0); assert.equal(h.context.submittingRef.current, false);
   h.context.mode = 'transfer'; h.context.onSaveTransfer = async () => { throw new Error('failed'); };
   await assert.rejects(h.save(), /failed/); assert.equal(h.context.submittingRef.current, false);
+});
+
+test('CC-F01: editing forwards the original ID and account-native expense to the limit check', async () => {
+  const h = saveHarness();
+  let checked = 0, updated;
+  Object.assign(h.context, {
+    mode: 'expense', isEditing: true, initialTransaction: { id: 'billed', type: 'expense' },
+    amountMinorUnits: 10000, postedExpenseMinorUnitsAbs: 570000,
+    checkCreditLimitExceeded(input) {
+      checked++;
+      assert.equal(input.accountId, 'source');
+      assert.equal(input.excludeTransactionId, 'billed');
+      assert.equal(input.expenseAmountMinorUnits, 570000);
+      assert.equal(input.occurredAt.getTime(), h.context.occurredAt.getTime());
+      return { hasCreditCard: true, exceeds: false };
+    },
+    checkExpenseBudgets: () => [],
+    onUpdateTransaction(id, input) { updated = { id, input }; return h.context.onSaveTransaction(); },
+  });
+  const saving = h.save();
+  h.flushBudgetChecks(); await Promise.resolve();
+  assert.equal(checked, 1); assert.equal(h.calls, 1); assert.equal(updated.id, 'billed');
+  h.finish(true); await saving;
+  assert.equal(h.closed, 1); assert.equal(h.context.submittingRef.current, false);
+});
+
+test('CC-F01: over-limit Cancel writes nothing and repeated Proceed submits once', async () => {
+  const h = saveHarness();
+  let visible = false, warning, checks = 0;
+  Object.assign(h.context, {
+    mode: 'expense', amountMinorUnits: 6000000, postedExpenseMinorUnitsAbs: 6000000,
+    checkCreditLimitExceeded() { checks++; return { hasCreditCard: true, exceeds: true, newOutstandingMinorUnits: 6000000 }; },
+    setPendingCreditLimitWarning(value) { warning = value; },
+    setIsCreditLimitWarningOpen(value) { visible = value; },
+    checkExpenseBudgets: () => [],
+  });
+  await h.save();
+  assert.equal(visible, true); assert.equal(warning.newOutstandingMinorUnits, 6000000); assert.equal(h.calls, 0);
+  h.context.exports.cancelCredit();
+  assert.equal(visible, false); assert.equal(h.calls, 0);
+  await h.save(); assert.equal(visible, true);
+  const saving = h.context.exports.proceedCredit();
+  const duplicate = h.context.exports.proceedCredit();
+  h.flushBudgetChecks(); await Promise.resolve();
+  assert.equal(visible, false); assert.equal(h.calls, 1); assert.equal(checks, 2);
+  h.finish(true); await Promise.all([saving, duplicate]);
+  assert.equal(h.closed, 1); assert.equal(h.context.submittingRef.current, false);
 });
 
 test('P2-11c: daily and biweekly boundaries use calendar days across US/EU DST and negative anchor offsets', () => {
