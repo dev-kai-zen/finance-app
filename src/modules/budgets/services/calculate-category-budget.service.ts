@@ -86,6 +86,7 @@ export function calculateCategoryBudgetStatus(
               categoryIds,
               startDate: period.previousStartDate,
               endDate: period.previousEndDate,
+              excludeTransactionId,
               targetCurrencyCode: budget.currencyCode,
             },
             context,

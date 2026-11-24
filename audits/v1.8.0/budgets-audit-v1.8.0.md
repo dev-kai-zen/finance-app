@@ -131,7 +131,7 @@ flowchart TD
 | Remove | Confirmation calls local delete; FK cascade removes monthly targets. | Screen ignores returned failure and closes edit/confirmation even when delete fails. |
 | View transactions | Passes the displayed period and exact budget-owned category IDs through a validated scope parameter. | BUD-F02 fixed. Scoped rows expose category shares; daily totals use those shares while inspection/editing retain full transactions. |
 | Type an expense | Indicator memoizes a snapshot by category/date/currency/exclusion, then evaluates amounts in pure JS. | Zero-query amount typing is covered; initial snapshot still queries during render. Refund indicator uses expense semantics. |
-| Save an expense / split | Form defers one complete-expense check after paint, grouping lines by owning budget and presenting all applicable warnings before save. | BUD-F03 fixed. BUD-F04 aligns zero-limit checks; previous-period rollover-edit mismatches remain open as BUD-F05. |
+| Save an expense / split | Form defers one complete-expense check after paint, grouping lines by owning budget and presenting all applicable warnings before save. | BUD-F03 fixed. BUD-F04 aligns zero-limit checks; BUD-F05 fixed date edits and previous-period rollover exclusion. |
 | Receive threshold notification | Post-commit transaction path invokes notification service without awaiting it. | Month-based deduplication conflicts with non-monthly periods; split transactions with null parent category bypass this path. |
 | Inspect Android widget | Widget snapshot calls public summary service and formats in home currency. | “Over” direction can contradict remaining amount; monthly label includes other frequencies. |
 | Search / deep link | Non-empty debounced general search enables `useBudgets`; existing budget link opens edit form. | Empty search skips reads. Non-empty search calculates all budget statuses despite consuming only budget records. |
@@ -158,7 +158,7 @@ flowchart TD
 | BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Fixed; automated period/ownership/SQL parity verified; manual check pending |
 | BUD-F03 | High | Split lines bypass a shared budget warning | Fixed; grouped checks and confirmation workflow verified automatically; manual check pending |
 | BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Fixed; seven regression cases pass; manual check pending |
-| BUD-F05 | Medium | Moving an expense out of the previous period leaves it in rollover preview | Executable |
+| BUD-F05 | Medium | Moving an expense out of the previous period leaves it in rollover preview | Resolved; edit exclusion applied to previous-period spending query; regression tests pass |
 | BUD-F06 | Medium | Background refresh resets an open form draft | Source-confirmed |
 | BUD-F07 | Medium | Apply-all discards other-year custom targets | Executable handler + persistence source |
 | BUD-F08 | Medium | Failure paths hide category errors and discard delete recovery context | Source-confirmed |

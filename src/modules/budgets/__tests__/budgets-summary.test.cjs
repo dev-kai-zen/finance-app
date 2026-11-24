@@ -546,3 +546,50 @@ test("BUD-F04: zero limits agree with cards for custom targets, rollover and gro
   assert.equal(getBudgetsSummary(date,db).exceededCount,1);
   sqlite.close();
 });
+
+test("BUD-F05: date edits exclude the old transaction from previous-period spending during rollover calculation", () => {
+  const { db, date, time, expense } = setupParentBudget();
+  sqlite.exec("DELETE FROM transactions; UPDATE category_budgets SET frequency='monthly', amount_minor_units=500000, allow_rollover=1, rollover_mode='positive_only'");
+
+  const prevDate = new Date(2026, 9, 15, 12);
+  expense('tx_move', 'cat_groceries', 300000, prevDate.getTime());
+
+  // 1. Edit tx_move: moved to current period (Nov) with amount 800,000
+  const input = {
+    categoryId: 'cat_groceries',
+    occurredAt: date,
+    excludeTransactionId: 'tx_move',
+    context: db,
+  };
+
+  const snapshot = getBudgetLiveSnapshot(input);
+  // Without fix: snapshot.effectiveBudgetCents was 700000 (300,000 counted in Oct).
+  // With fix: snapshot.effectiveBudgetCents is 1000000 (tx_move excluded from Oct -> 500,000 rollover).
+  assert.equal(snapshot.effectiveBudgetCents, 1000000);
+
+  const check = evaluateBudgetSnapshot(snapshot, 800000);
+  assert.equal(check.exceeds, false);
+
+  // 2. Commit the edit to DB and verify post-save card and summary match preview exactly
+  sqlite.prepare("UPDATE transactions SET occurred_at = ?, amount_minor_units = -800000 WHERE id = 'tx_move'").run(time);
+  const postSaveSummary = getBudgetsSummary(date, db);
+  assert.equal(postSaveSummary.totalBudgetedCents, 1000000);
+  assert.equal(postSaveSummary.totalSpentCents, 800000);
+  assert.equal(postSaveSummary.exceededCount, 0);
+
+  // 3. Move back: edit tx_move to move from Nov back to Oct
+  sqlite.exec("UPDATE category_budgets SET rollover_mode='full'");
+  const moveBackInput = {
+    categoryId: 'cat_groceries',
+    occurredAt: prevDate,
+    excludeTransactionId: 'tx_move',
+    context: db,
+  };
+  const moveBackSnapshot = getBudgetLiveSnapshot(moveBackInput);
+  // In October, tx_move is excluded -> October current spent is 0
+  assert.equal(moveBackSnapshot.currentSpentCents, 0);
+  assert.equal(moveBackSnapshot.effectiveBudgetCents, 1000000);
+
+  sqlite.close();
+});
+
