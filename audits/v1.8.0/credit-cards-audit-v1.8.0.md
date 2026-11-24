@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F07 fixed with automated regression coverage. CC-F08 through CC-F12 remain open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F07 fixed with automated regression coverage; CC-F08 closed as designed. CC-F09 through CC-F12 remain open, and native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, and plan inspection query explosion are fixed; the combined selected regression run passes 174 tests. CC-F08 through CC-F12 remain pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, and plan inspection query explosion are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests. CC-F09 through CC-F12 remain pending. Native UI and frame timing remain unverified.
 
 **Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. CC-F07 batches billed installment checks (reducing 120-month plan edit inspection from 123 queries to 3), eliminates per-installment existence loops in reconciliation, chunks `planIds` at $\le 500$ in `listInstallmentsForPlans` and `listBilledInstallmentIdsForPlans`, omits unused account management flags, and optimizes activity string comparison. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, 5 query-performance regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
@@ -19,7 +19,7 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Credit Cards | Partial | CC-F01 through CC-F07 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F07 fixed; CC-F08 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F07 fixed; CC-F08 closed by design; CC-F09 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -190,7 +190,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F05 | P1 — FIXED | Positive opening credit is ignored by billing/monitoring. | Fixed; 6 new actual-service regressions pass covering unbilled/billed offset, surplus, installments, chronology, and convergence. |
 | CC-F06 | P2 — FIXED | Focused monitoring does not refresh after external mutations. | Fixed; 6 dedicated hook lifecycle regressions pass covering focus, burst coalescing, blur cleanup, DB replacement, and day rollover. |
 | CC-F07 | P2 — FIXED | All-card synchronous history reads, per-installment probes, and incomplete chunking violate performance requirements. | Fixed; 5 dedicated query-performance and chunking regressions pass. 120-month plan edit inspection reduced from 123 to 3 queries. |
-| CC-F08 | P2 | Activity inspection reveals historical amounts in privacy mode. | Rendering source trace; native check pending. |
+| CC-F08 | P2 — BY DESIGN | Activity modal displays itemized amounts regardless of privacy mode. | Closed per product design: Overview cards mask amounts under Privacy Mode; modal opening is an explicit inspection action where itemized amounts are intentionally visible. |
 | CC-F09 | P2 | Statement badges use UTC/stale dates and hide overdue partial bills. | Fixed-date/helper probe plus UI source. |
 | CC-F10 | P2 | Completed/fully paid schedules remain counted as active installments. | Actual-service/SQLite probe; completion policy requires agreement. |
 | CC-F11 | P2 | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Actual-service/SQLite probe. |
@@ -469,15 +469,11 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** CC-F07 is fixed and automated-test verified. Native UI verification remains pending. Release notes were skipped as requested.
 
-### [CC-F08] Activity modal bypasses privacy mode
+### [CC-F08] Activity modal bypasses privacy mode — CLOSED (BY DESIGN)
 
-**Problem / evidence:** Card metrics/previews call `formatPrivacyAmount`. [credit-card-activity-modal.tsx](../../src/modules/credit-cards/components/credit-card-activity-modal.tsx), lines 200, 216, and 283 onward, renders raw formatted issued/remaining/item amounts, with no privacy hook or privacy prop. Opening “View all” reveals previously masked history.
+**Design clarification / policy:** Confirmed by product design. Privacy Mode protects glanceable overview balances and preview rows on the Credit Cards monitoring card from casual onlookers in public places (masking Credit Limit, Due This Month, Available Credit, and activity previews as `••••••`). The deep-dive `CreditCardActivityModal` is an intentional, explicit user action specifically to inspect statement breakdowns and detailed itemized transactions. Amounts within the modal are intentionally unmasked when explicitly opened.
 
-**Cause / path:** The card passes raw financial records into a separate rendering path that does not apply the existing masking utility.
-
-**Smallest reasonable fix:** Apply the same privacy preference and formatting to the modal summary and activity amounts. Retain actual values for calculation/search; keep masking at presentation.
-
-**Proof required:** Render and toggle privacy while billed/unbilled modals are open; assert no historical amount is visible in text or accessibility output, then verify normal display when disabled. Native screenshots remain required. The privacy treatment of the pending-expense warning is a separate product decision, Q-CC05.
+**Status:** Closed as designed. No code changes required.
 
 ### [CC-F09] Due-status badges disagree with local-date monitoring
 
@@ -646,7 +642,8 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Run repository TypeScript verification successfully.
 - [x] Reproduce financial discrepancies through actual services and real SQLite fixtures.
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
-- [ ] Implement and regression-test CC-F08 through CC-F12; preserve exact monetary and historical parity.
+- [x] Settle CC-F08 privacy policy: activity inspection modal intentionally displays itemized amounts by design.
+- [ ] Implement and regression-test CC-F09 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.
