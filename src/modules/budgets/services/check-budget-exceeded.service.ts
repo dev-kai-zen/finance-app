@@ -39,6 +39,10 @@ export interface BudgetLiveSnapshot {
   notifyOnExceeded: boolean;
   expenseCurrency: string;
   ratesMap: Map<string, number>;
+  budgetId?: string;
+  periodKey?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
 }
 
 const EMPTY_RATES = new Map<string, number>();
@@ -140,6 +144,19 @@ export function getBudgetLiveSnapshotForBudget(
       ? getExchangeRateMap(DEFAULT_BASE_CURRENCY, context)
       : EMPTY_RATES;
 
+  let periodScopeSuffix = `${status.periodStart.getFullYear()}-${status.periodStart.getMonth() + 1}`;
+  if (
+    budget.frequency === "daily" ||
+    budget.frequency === "weekly" ||
+    budget.frequency === "biweekly" ||
+    budget.frequency === "semi_monthly"
+  ) {
+    periodScopeSuffix = `${status.periodStart.getFullYear()}-${status.periodStart.getMonth() + 1}-${status.periodStart.getDate()}`;
+  } else if (budget.frequency === "yearly") {
+    periodScopeSuffix = `${status.periodStart.getFullYear()}`;
+  }
+  const periodKey = `${budget.id}-${periodScopeSuffix}`;
+
   return {
     hasBudget: true,
     isEnabled: budget.isEnabled,
@@ -153,6 +170,10 @@ export function getBudgetLiveSnapshotForBudget(
     notifyOnExceeded: budget.notifyOnExceeded,
     expenseCurrency,
     ratesMap,
+    budgetId: budget.id,
+    periodKey,
+    periodStart: status.periodStart,
+    periodEnd: status.periodEnd,
   };
 }
 
@@ -219,6 +240,10 @@ export function evaluateBudgetSnapshot(
     exceeds,
     exceededByCents,
     notifyOnExceeded: snapshot.notifyOnExceeded,
+    budgetId: snapshot.budgetId,
+    periodKey: snapshot.periodKey,
+    periodStart: snapshot.periodStart,
+    periodEnd: snapshot.periodEnd,
   };
 }
 

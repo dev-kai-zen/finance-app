@@ -97,6 +97,20 @@ export async function recordTransaction(
         categoryId: tx.categoryId,
         occurredAt: tx.occurredAt,
       });
+    } else if (command.input.splitEntries?.length) {
+      const distinctCategoryIds = [
+        ...new Set(
+          command.input.splitEntries
+            .map((s) => s.categoryId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      for (const catId of distinctCategoryIds) {
+        void checkAndNotifyBudgetThreshold({
+          categoryId: catId,
+          occurredAt: tx.occurredAt,
+        });
+      }
     }
     if (tx.accountId) {
       void checkAndNotifyCreditLimit(tx.accountId);

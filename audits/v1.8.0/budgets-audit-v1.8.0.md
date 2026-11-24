@@ -163,7 +163,7 @@ flowchart TD
 | BUD-F07 | Medium   | Apply-all discards other-year custom targets                                             | Resolved; other-year overrides preserved on apply-all; regression tests pass                                   |
 | BUD-F08 | Medium   | Failure paths hide category errors and discard delete recovery context                   | Resolved; category readiness/error surfaced and retried; delete context preserved on failure; regression tests pass |
 | BUD-F09 | Medium   | Widget labels remaining money as overspending                                            | Resolved; aggregate overspend separated from category alert; signed remaining preserved; regression tests pass |
-| BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Source-confirmed                                                                                               |
+| BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Resolved; period-scoped deduplication and dynamic period labels applied; split allocations dispatched; regression tests pass |
 | BUD-F11 | Medium   | Summary service deep-imports the Categories repository                                   | Source-confirmed architecture violation                                                                        |
 | BUD-F12 | Medium   | Render-time snapshot queries and unstable row callbacks weaken frame-budget discipline   | Source-confirmed; device cost unmeasured                                                                       |
 | BUD-F13 | Medium   | Core budget UI and period labels bypass localization                                     | Source-confirmed                                                                                               |
@@ -329,7 +329,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** One exceeded category with positive aggregate remaining, aggregate overspend, exact zero, no active budgets, paused budgets, and refunds. Assert rendered text and accessibility description against actual summary values.
 - **Performance:** O(1) presentation changes, no new summary query.
 
-### [BUD-F10] Notification deduplication and dispatch do not follow budget scope
+### [BUD-F10] Notification deduplication and dispatch do not follow budget scope — FIX IMPLEMENTED
 
 - **Problem / source evidence:** [checkAndNotifyBudgetThreshold:47](../../src/modules/notifications/services/check-instant-alerts.service.ts#L47) keys deliveries by input category and year/month. Two daily or weekly periods in one month reuse a key and suppress the later alert; sibling inputs can produce multiple keys for the same parent budget. Text always says “this month.” The Set is process-local.
 - **Additional concrete gap:** [recordTransaction:95](../../src/modules/transactions/services/record-transaction.service.ts#L95) only dispatches when the saved parent has `categoryId`. The form submits null for active splits, so split category thresholds skip this delivery check.

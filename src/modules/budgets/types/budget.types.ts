@@ -100,4 +100,8 @@ export interface BudgetCheckResult {
   exceeds: boolean;
   exceededByCents: number;
   notifyOnExceeded: boolean;
+  budgetId?: string;
+  periodKey?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
 }

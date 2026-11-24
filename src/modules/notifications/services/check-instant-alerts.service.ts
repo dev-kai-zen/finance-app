@@ -50,9 +50,14 @@ export async function checkAndNotifyBudgetThreshold(options: {
       ? (result.newSpentCents / result.effectiveBudgetCents) * 100
       : 0;
     const yearMonth = `${occurredAt.getFullYear()}-${occurredAt.getMonth() + 1}`;
+    const periodScope =
+      result.periodKey ??
+      (result.budgetId
+        ? `${result.budgetId}-${yearMonth}`
+        : `${categoryId}-${yearMonth}`);
 
     if (zeroLimit || percent >= 100) {
-      const alertKey = `${NOTIFICATION_IDENTIFIERS.BUDGET_ALERT_PREFIX}100-${categoryId}-${yearMonth}`;
+      const alertKey = `${NOTIFICATION_IDENTIFIERS.BUDGET_ALERT_PREFIX}100-${periodScope}`;
       if (deliveredAlertKeys.has(alertKey)) return;
       deliveredAlertKeys.add(alertKey);
 
@@ -67,7 +72,7 @@ export async function checkAndNotifyBudgetThreshold(options: {
           title: zeroLimit ? "Budget Exceeded" : "Budget Exceeded (100% Limit)",
           body: zeroLimit
             ? `You are ${formatCurrency(result.exceededByCents, result.budgetCurrencyCode, false)} over your zero-limit ${result.categoryName} budget for ${result.periodLabel}.`
-            : `You have reached 100% of your ${result.categoryName} budget for this month.`,
+            : `You have reached 100% of your ${result.categoryName} budget for ${result.periodLabel || "this month"}.`,
           sound: true,
           data: data as unknown as Record<string, unknown>,
           categoryIdentifier: "budget",
@@ -75,7 +80,7 @@ export async function checkAndNotifyBudgetThreshold(options: {
         trigger: null, // deliver immediately
       });
     } else if (percent >= 80) {
-      const alertKey = `${NOTIFICATION_IDENTIFIERS.BUDGET_ALERT_PREFIX}80-${categoryId}-${yearMonth}`;
+      const alertKey = `${NOTIFICATION_IDENTIFIERS.BUDGET_ALERT_PREFIX}80-${periodScope}`;
       if (deliveredAlertKeys.has(alertKey)) return;
       deliveredAlertKeys.add(alertKey);
 
@@ -88,7 +93,7 @@ export async function checkAndNotifyBudgetThreshold(options: {
         identifier: alertKey,
         content: {
           title: "Budget Warning (80% Limit)",
-          body: `You have reached ${Math.round(percent)}% of your ${result.categoryName} budget for this month.`,
+          body: `You have reached ${Math.round(percent)}% of your ${result.categoryName} budget for ${result.periodLabel || "this month"}.`,
           sound: true,
           data: data as unknown as Record<string, unknown>,
           categoryIdentifier: "budget",

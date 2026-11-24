@@ -28,7 +28,12 @@ function harness(overrides = {}) {
   }).outputText, { exports, console, require: name => {
     assert.ok(name in dependencies, name); return dependencies[name];
   } });
-  return { state, scheduled, checks, run: () => exports.checkAndNotifyBudgetThreshold({ categoryId: "food", occurredAt: new Date(2026, 10, 15, 12) }) };
+  return {
+    state,
+    scheduled,
+    checks,
+    run: (opts) => exports.checkAndNotifyBudgetThreshold({ categoryId: "food", occurredAt: new Date(2026, 10, 15, 12), ...opts }),
+  };
 }
 
 test("BUD-F04: zero-limit alert uses monetary excess and keeps existing deduplication", async () => {
@@ -64,4 +69,67 @@ test("BUD-F04: positive limits retain 80% warning and inclusive 100% notificatio
     await h.run(); assert.equal(h.scheduled.length, count);
     if (count) assert.equal(h.scheduled[0].content.title, title);
   }
+});
+
+test("BUD-F10: daily budget across consecutive days triggers alerts for each day", async () => {
+  const h = harness({
+    result: {
+      hasBudget: true,
+      isEnabled: true,
+      notifyOnExceeded: true,
+      effectiveBudgetCents: 50000,
+      newSpentCents: 60000,
+      exceededByCents: 10000,
+      exceeds: true,
+      categoryName: "Coffee",
+      periodLabel: "November 15, 2026",
+      budgetCurrencyCode: "PHP",
+      budgetId: "b-coffee",
+      periodKey: "b-coffee-2026-11-15",
+    },
+  });
+
+  // Day 1
+  await h.run({ categoryId: "coffee", occurredAt: new Date(2026, 10, 15) });
+  assert.equal(h.scheduled.length, 1);
+  assert.equal(h.scheduled[0].identifier, "budget-100-b-coffee-2026-11-15");
+  assert.match(h.scheduled[0].content.body, /November 15, 2026/);
+  assert.doesNotMatch(h.scheduled[0].content.body, /for this month/);
+
+  // Day 2 (next day in same month)
+  h.state.result.periodKey = "b-coffee-2026-11-16";
+  h.state.result.periodLabel = "November 16, 2026";
+  await h.run({ categoryId: "coffee", occurredAt: new Date(2026, 10, 16) });
+  assert.equal(h.scheduled.length, 2, "Day 2 alert is NOT suppressed");
+  assert.equal(h.scheduled[1].identifier, "budget-100-b-coffee-2026-11-16");
+  assert.match(h.scheduled[1].content.body, /November 16, 2026/);
+});
+
+test("BUD-F10: sibling subcategories share parent budget deduplication", async () => {
+  const h = harness({
+    result: {
+      hasBudget: true,
+      isEnabled: true,
+      notifyOnExceeded: true,
+      effectiveBudgetCents: 100000,
+      newSpentCents: 85000,
+      exceededByCents: 0,
+      exceeds: false,
+      categoryName: "Food & Dining",
+      periodLabel: "November 2026",
+      budgetCurrencyCode: "PHP",
+      budgetId: "b-parent-food",
+      periodKey: "b-parent-food-2026-11",
+    },
+  });
+
+  // Transaction 1 on child category "fast-food"
+  await h.run({ categoryId: "fast-food", occurredAt: new Date(2026, 10, 15) });
+  assert.equal(h.scheduled.length, 1);
+  assert.equal(h.scheduled[0].identifier, "budget-80-b-parent-food-2026-11");
+  assert.match(h.scheduled[0].content.body, /November 2026/);
+
+  // Transaction 2 on sibling category "groceries" under same parent budget
+  await h.run({ categoryId: "groceries", occurredAt: new Date(2026, 10, 16) });
+  assert.equal(h.scheduled.length, 1, "Duplicate 80% alert for same parent budget is suppressed");
 });
