@@ -352,6 +352,46 @@ function* reconcileAccount(
           context,
         );
       }
+    } else if (linkedEntries.some((entry) => entry.entryType === "installment")) {
+      // Restore issued installments without replacing their original billing entries.
+      const totalsByStatement = new Map<
+        string,
+        { issued: number; net: number; lastEntryId: string }
+      >();
+      for (const entry of linkedEntries) {
+        yield;
+        const totals = totalsByStatement.get(entry.statementId) ?? {
+          issued: 0,
+          net: 0,
+          lastEntryId: entry.id,
+        };
+        if (entry.entryType === "installment") {
+          totals.issued += entry.amountMinorUnits;
+        }
+        totals.net += entry.amountMinorUnits;
+        totals.lastEntryId = entry.id;
+        totalsByStatement.set(entry.statementId, totals);
+      }
+      for (const [statementId, totals] of totalsByStatement) {
+        yield;
+        const difference = totals.issued - totals.net;
+        if (difference === 0) continue;
+        insertStatementEntry(
+          {
+            id: newCreditCardBillingId(context),
+            statementId,
+            transactionId: txId,
+            installmentId: null,
+            entryType: "adjustment",
+            amountMinorUnits: difference,
+            descriptionSnapshot: "Transaction restored",
+            occurredOnSnapshot: todayOn,
+            reversesEntryId: totals.lastEntryId,
+            createdAt: new Date(),
+          },
+          context,
+        );
+      }
     } else {
       const netAllocated = linkedEntries.reduce(
         (sum, entry) => sum - entry.amountMinorUnits,

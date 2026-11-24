@@ -197,11 +197,11 @@ function setupTestDb() {
   return database;
 }
 
-const { reconcileCreditCardBillingInContext } = require("../services/reconcile-credit-card-billing.service");
+const { reconcileCreditCardBilling, reconcileCreditCardBillingInContext } = require("../services/reconcile-credit-card-billing.service");
 const { getCreditCardMonitoring } = require("../services/get-credit-card-monitoring.service");
 const { checkCreditLimitExceeded } = require("../services/check-credit-limit-exceeded.service");
 const { createCreditCardInstallmentPlan } = require("../services/create-installment-plan.service");
-const { getTransactionsByIds } = require("@/modules/transactions");
+const { getTransactionsByIds, removeTransaction, restoreTransaction } = require("@/modules/transactions");
 function fixture() {
   const db = setupTestDb();
   const today = new Date(2026, 10, 21, 12);
@@ -635,6 +635,213 @@ test("CC-F01: 10k-row checks execute three read-only statements with an indexed 
     const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + aggregate).all("card");
     assert.ok(plan.some(row => /SEARCH transactions USING .*INDEX .*account/i.test(row.detail)), JSON.stringify(plan));
     assert.ok(plan.every(row => !/TEMP B-TREE|SCAN transactions/i.test(row.detail)), JSON.stringify(plan));
+  } finally { sqlite.close(); }
+});
+
+function installmentFixture(input = { termMonths: 3 }) {
+  const f = fixture();
+  f.charge("purchase", -120000);
+  f.db.transaction(context => createCreditCardInstallmentPlan(getTransactionsByIds(["purchase"], context)[0], input, context));
+  return f;
+}
+
+function installmentFinancialSnapshot() {
+  const card = getCreditCardMonitoring(new Date()).cards.find(item => item.accountId === "card");
+  return {
+    billed: card.billedMinorUnits,
+    unbilled: card.unbilledMinorUnits,
+    outstanding: card.outstandingMinorUnits,
+    available: card.availableCreditMinorUnits,
+    utilization: card.utilizationPercent,
+    dueThisMonth: card.dueThisMonthMinorUnits,
+    overdue: card.overdueMinorUnits,
+    nextDueOn: card.nextDueOn,
+    activePlans: card.activeInstallmentCount,
+    statements: card.statements.map(statement => ({
+      id: statement.id,
+      statementOn: statement.statementOn,
+      dueOn: statement.dueOn,
+      issued: statement.issuedAmountMinorUnits,
+      remaining: statement.remainingAmountMinorUnits,
+    })),
+  };
+}
+
+test("CC-F02: actual delete/restore restores the billed installment without replacing history or schedules", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    assert.equal(before.billed, 40000); assert.equal(before.unbilled, 80000); assert.equal(before.outstanding, 120000);
+    const schedule = sqlite.prepare("SELECT * FROM credit_card_installments ORDER BY id").all();
+    const issuedEntry = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE entry_type = 'installment'").get();
+    removeTransaction("purchase");
+    const deleted = installmentFinancialSnapshot();
+    assert.equal(deleted.outstanding, 0); assert.equal(deleted.activePlans, 0);
+    restoreTransaction("purchase");
+    assert.deepEqual(installmentFinancialSnapshot(), before);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_installments ORDER BY id").all(), schedule);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE entry_type = 'installment'").get(), issuedEntry);
+    assert.deepEqual(sqlite.prepare("SELECT entry_type, amount_minor_units FROM credit_card_statement_entries ORDER BY rowid").all().map(row => [row.entry_type, row.amount_minor_units]), [["installment", 40000], ["adjustment", -40000], ["adjustment", 40000]]);
+    assert.equal(sqlite.prepare("SELECT opening_balance_minor_units + (SELECT coalesce(sum(amount_minor_units), 0) FROM transactions WHERE account_id = 'card' AND deleted_at IS NULL) AS balance FROM accounts WHERE id = 'card'").get().balance, -120000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: restore before the first cutoff keeps the full purchase unbilled", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 8, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    assert.equal(before.billed, 0); assert.equal(before.unbilled, 120000);
+    removeTransaction("purchase"); restoreTransaction("purchase");
+    assert.deepEqual(installmentFinancialSnapshot(), before);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries").get().n, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: multiple issued statements recover their own installment amounts", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 11, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    assert.equal(before.billed, 80000); assert.equal(before.unbilled, 40000);
+    removeTransaction("purchase"); restoreTransaction("purchase");
+    assert.deepEqual(installmentFinancialSnapshot(), before);
+    assert.deepEqual(sqlite.prepare("SELECT amount_minor_units FROM credit_card_statement_entries WHERE entry_type = 'adjustment' AND amount_minor_units > 0 ORDER BY rowid").all().map(row => row.amount_minor_units), [40000, 40000]);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries WHERE entry_type = 'installment'").get().n, 2);
+  } finally { sqlite.close(); }
+});
+
+for (const payment of [20000, 40000, 70000]) {
+  test(`CC-F02: restoring a billed purchase preserves an existing ${payment}-minor-unit payment`, t => {
+    t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+    const f = installmentFixture();
+    try {
+      f.charge("payment", payment, "transfer");
+      reconcileCreditCardBilling();
+      const before = installmentFinancialSnapshot();
+      assert.equal(before.outstanding, 120000 - payment);
+      const allocations = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment' ORDER BY id").all();
+      removeTransaction("purchase"); restoreTransaction("purchase");
+      assert.deepEqual(installmentFinancialSnapshot(), before);
+      assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment' ORDER BY id").all(), allocations);
+    } finally { sqlite.close(); }
+  });
+}
+
+test("CC-F02: a cutoff passing in Trash issues the new bill and restores the old one once", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling(); removeTransaction("purchase");
+    t.mock.timers.setTime(new Date(2026, 11, 21, 12).getTime());
+    restoreTransaction("purchase");
+    const restored = installmentFinancialSnapshot();
+    assert.equal(restored.billed, 80000); assert.equal(restored.unbilled, 40000); assert.equal(restored.outstanding, 120000);
+    assert.equal(restored.overdue, 40000); assert.equal(restored.dueThisMonth, 80000);
+    assert.deepEqual(restored.statements.map(statement => [statement.statementOn, statement.issued, statement.remaining]), [["2026-12-10", 40000, 40000], ["2026-11-10", 40000, 40000]]);
+    const entryCount = sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries").get().n;
+    reconcileCreditCardBilling();
+    assert.deepEqual(installmentFinancialSnapshot(), restored);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries").get().n, entryCount);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: BNPL restore preserves deferred principal and later restores its issued bill", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture({ termMonths: 3, deferredMonths: 2 });
+  try {
+    reconcileCreditCardBilling();
+    const deferred = installmentFinancialSnapshot();
+    assert.equal(deferred.billed, 0); assert.equal(deferred.unbilled, 120000);
+    removeTransaction("purchase"); restoreTransaction("purchase");
+    assert.deepEqual(installmentFinancialSnapshot(), deferred);
+    t.mock.timers.setTime(new Date(2027, 0, 21, 12).getTime());
+    reconcileCreditCardBilling();
+    const issued = installmentFinancialSnapshot();
+    assert.equal(issued.billed, 40000); assert.equal(issued.unbilled, 80000);
+    removeTransaction("purchase"); restoreTransaction("purchase");
+    assert.deepEqual(installmentFinancialSnapshot(), issued);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: repeated delete/restore cycles converge without duplicate issuance or idle writes", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    for (let cycle = 1; cycle <= 3; cycle++) {
+      removeTransaction("purchase"); restoreTransaction("purchase");
+      assert.deepEqual(installmentFinancialSnapshot(), before);
+      assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries").get().n, 1 + cycle * 2);
+      queries = [];
+      reconcileCreditCardBilling(); reconcileCreditCardBilling();
+      assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+      assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries WHERE entry_type = 'installment'").get().n, 1);
+    }
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: reconciliation repairs an already-active purchase left broken by an earlier restore", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    removeTransaction("purchase");
+    sqlite.exec("UPDATE transactions SET deleted_at = NULL WHERE id = 'purchase'; UPDATE credit_card_installment_plans SET status = 'active'");
+    assert.equal(installmentFinancialSnapshot().outstanding, 80000, "Fixture reproduces the old restore state before explicit reconciliation");
+    reconcileCreditCardBilling();
+    assert.deepEqual(installmentFinancialSnapshot(), before);
+    const entries = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    reconcileCreditCardBilling();
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all(), entries);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: failed restoration adjustment rolls back source restore, plan activation, and newly due bills", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling(); removeTransaction("purchase");
+    const tables = ["transactions", "credit_card_installment_plans", "credit_card_installments", "credit_card_statements", "credit_card_statement_entries"];
+    const snapshot = () => tables.map(table => sqlite.prepare(`SELECT * FROM ${table} ORDER BY id`).all());
+    const before = snapshot();
+    t.mock.timers.setTime(new Date(2026, 11, 21, 12).getTime());
+    sqlite.exec("CREATE TRIGGER fail_installment_restore BEFORE INSERT ON credit_card_statement_entries WHEN NEW.entry_type = 'adjustment' AND NEW.amount_minor_units > 0 AND NEW.transaction_id = 'purchase' BEGIN SELECT RAISE(ABORT, 'installment restore failed'); END");
+    assert.throws(() => restoreTransaction("purchase"), /installment restore failed/);
+    assert.deepEqual(snapshot(), before);
+    sqlite.exec("DROP TRIGGER fail_installment_restore");
+    restoreTransaction("purchase");
+    assert.equal(installmentFinancialSnapshot().outstanding, 120000);
+    assert.equal(sqlite.prepare("SELECT deleted_at FROM transactions WHERE id = 'purchase'").get().deleted_at, null);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F02: a 120-statement restore adds corrections without adding history reads", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2036, 10, 21, 12).getTime() });
+  const f = installmentFixture({ termMonths: 120 });
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    assert.equal(before.billed, 120000); assert.equal(before.unbilled, 0); assert.equal(before.statements.length, 120);
+    queries = [];
+    reconcileCreditCardBilling();
+    const historyReadCount = queries.filter(query => /^\s*select\b/i.test(query) && !/randomblob/i.test(query)).length;
+    removeTransaction("purchase");
+    queries = [];
+    restoreTransaction("purchase");
+    const restoreReads = queries.filter(query => /^\s*select\b/i.test(query) && !/randomblob/i.test(query));
+    assert.equal(restoreReads.length, historyReadCount + 1, "Only the restore service's source lookup is additional; ID generation is excluded");
+    assert.deepEqual(installmentFinancialSnapshot(), before);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries WHERE entry_type = 'installment'").get().n, 120);
+    queries = [];
+    reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
   } finally { sqlite.close(); }
 });
 
