@@ -397,3 +397,97 @@ test("widgets: gallery route and Android-only Settings entry exist", () => {
   }
 });
 
+test("BUD-F09: MonthlyBudgetWidget correctly distinguishes category alerts from total overspending", () => {
+  const { MonthlyBudgetWidget } = require("../components/monthly-budget-widget.tsx");
+
+  // Case 1: One category exceeded, but overall aggregate has money remaining (₱4,000 Left, 60% Used)
+  const positiveRemainingVdom = MonthlyBudgetWidget({
+    snapshot: {
+      isPro: true,
+      hasActiveBudgets: true,
+      isBudgetExceeded: false,
+      hasExceededCategory: true,
+      exceededCategoryCount: 1,
+      budgetPercentage: 60,
+      budgetTotalFormatted: "₱10,000.00",
+      budgetSpentFormatted: "₱6,000.00",
+      budgetRemainingFormatted: "₱4,000.00",
+    },
+  });
+
+  assert.equal(
+    positiveRemainingVdom.props.accessibilityLabel,
+    "Monthly Budget: ₱4,000.00 Left. Budget: ₱10,000.00, Spent: ₱6,000.00",
+    "Accessibility description must label remaining money as Left, not Over",
+  );
+  const posSummaryRow = positiveRemainingVdom.props.children[1];
+  const posPrimaryText = posSummaryRow.props.children[0];
+  assert.equal(posPrimaryText.props.text, "₱4,000.00 Left");
+  assert.equal(posPrimaryText.props.style.color, "#FFFFFF", "Positive balance remains white");
+
+  const posHealthPill = posSummaryRow.props.children[1].props.children;
+  assert.equal(posHealthPill.props.text, "60% Used");
+  assert.equal(posHealthPill.props.style.color, "#F59E0B", "Category alert colors pill amber");
+
+  // Case 2: Aggregate budget is genuinely overspent (₱2,000 Over, 120%)
+  const overspentVdom = MonthlyBudgetWidget({
+    snapshot: {
+      isPro: true,
+      hasActiveBudgets: true,
+      isBudgetExceeded: true,
+      hasExceededCategory: true,
+      exceededCategoryCount: 1,
+      budgetPercentage: 120,
+      budgetTotalFormatted: "₱10,000.00",
+      budgetSpentFormatted: "₱12,000.00",
+      budgetRemainingFormatted: "₱2,000.00",
+    },
+  });
+
+  assert.equal(
+    overspentVdom.props.accessibilityLabel,
+    "Monthly Budget: ₱2,000.00 Over. Budget: ₱10,000.00, Spent: ₱12,000.00",
+  );
+  const overSummaryRow = overspentVdom.props.children[1];
+  const overPrimaryText = overSummaryRow.props.children[0];
+  assert.equal(overPrimaryText.props.text, "₱2,000.00 Over");
+  assert.equal(overPrimaryText.props.style.color, WIDGET_THEME.expenseAccent, "Overspent balance is red");
+
+  const overHealthPill = overSummaryRow.props.children[1].props.children;
+  assert.equal(overHealthPill.props.text, "120% (Over)");
+  assert.equal(overHealthPill.props.style.color, WIDGET_THEME.expenseAccent);
+
+  // Case 3: Exact zero remaining (100% Used)
+  const zeroVdom = MonthlyBudgetWidget({
+    snapshot: {
+      isPro: true,
+      hasActiveBudgets: true,
+      isBudgetExceeded: false,
+      hasExceededCategory: false,
+      budgetPercentage: 100,
+      budgetTotalFormatted: "₱10,000.00",
+      budgetSpentFormatted: "₱10,000.00",
+      budgetRemainingFormatted: "₱0.00",
+    },
+  });
+  const zeroSummaryRow = zeroVdom.props.children[1];
+  assert.equal(zeroSummaryRow.props.children[0].props.text, "₱0.00 Left");
+  assert.equal(zeroSummaryRow.props.children[1].props.children.props.text, "100% Used");
+
+  // Case 4: No active budgets
+  const emptyVdom = MonthlyBudgetWidget({
+    snapshot: {
+      isPro: true,
+      hasActiveBudgets: false,
+      isBudgetExceeded: false,
+      budgetPercentage: 0,
+      budgetTotalFormatted: "₱0.00",
+      budgetSpentFormatted: "₱0.00",
+      budgetRemainingFormatted: "₱0.00",
+    },
+  });
+  const emptySummaryRow = emptyVdom.props.children[1];
+  assert.equal(emptySummaryRow.props.children[0].props.text, "No Budget Set");
+  assert.equal(emptySummaryRow.props.children[1].props.children.props.text, "Set Budget");
+});
+

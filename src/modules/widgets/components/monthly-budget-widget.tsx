@@ -27,6 +27,7 @@ export function MonthlyBudgetWidget({ snapshot }: MonthlyBudgetWidgetProps) {
   const month = snapshot?.monthLabel ?? "This Month";
   const hasActiveBudgets = snapshot?.hasActiveBudgets ?? false;
   const isBudgetExceeded = snapshot?.isBudgetExceeded ?? false;
+  const hasExceededCategory = snapshot?.hasExceededCategory ?? false;
   const percentage = snapshot?.budgetPercentage ?? 0;
   const totalBudget = snapshot?.budgetTotalFormatted ?? "₱0.00";
   const totalSpent = snapshot?.budgetSpentFormatted ?? "₱0.00";
@@ -36,13 +37,13 @@ export function MonthlyBudgetWidget({ snapshot }: MonthlyBudgetWidgetProps) {
 
   const statusColor = isBudgetExceeded
     ? WIDGET_THEME.expenseAccent
-    : isNearLimit
+    : hasExceededCategory || isNearLimit
       ? "#F59E0B"
       : WIDGET_THEME.incomeAccent;
 
   const statusBg = isBudgetExceeded
     ? "#EF444420"
-    : isNearLimit
+    : hasExceededCategory || isNearLimit
       ? "#F59E0B20"
       : "#10B98120";
 

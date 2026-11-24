@@ -44,6 +44,8 @@ export const DEFAULT_WIDGET_SNAPSHOT = {
   budgetPercentage: 0,
   hasActiveBudgets: false,
   isBudgetExceeded: false,
+  hasExceededCategory: false,
+  exceededCategoryCount: 0,
   currencyCode: "PHP",
   isPro: false,
   updatedAt: 0,

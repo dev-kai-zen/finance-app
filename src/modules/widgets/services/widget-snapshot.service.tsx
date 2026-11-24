@@ -57,8 +57,9 @@ export function computeAndSaveFinancialSnapshot(
 
     const budgetSummary = getBudgetsSummary(new Date(), context);
     const hasActiveBudgets = budgetSummary.activeCount > 0;
-    const isBudgetExceeded =
-      budgetSummary.exceededCount > 0 || budgetSummary.totalRemainingCents < 0;
+    const isBudgetExceeded = budgetSummary.totalRemainingCents < 0;
+    const hasExceededCategory = budgetSummary.exceededCount > 0;
+    const exceededCategoryCount = budgetSummary.exceededCount;
     const budgetTotal = budgetSummary.totalBudgetedCents;
     const budgetSpent = budgetSummary.totalSpentCents;
     const budgetRemaining = Math.abs(budgetSummary.totalRemainingCents);
@@ -89,6 +90,8 @@ export function computeAndSaveFinancialSnapshot(
       budgetPercentage,
       hasActiveBudgets,
       isBudgetExceeded,
+      hasExceededCategory,
+      exceededCategoryCount,
       currencyCode: homeCurrency,
       isPro: getCurrentProStatus().isPro,
       updatedAt: Date.now(),

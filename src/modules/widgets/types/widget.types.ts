@@ -36,6 +36,8 @@ export interface FinancialWidgetSnapshot {
   budgetPercentage: number;
   hasActiveBudgets: boolean;
   isBudgetExceeded: boolean;
+  hasExceededCategory?: boolean;
+  exceededCategoryCount?: number;
   currencyCode: string;
   isPro?: boolean;
   updatedAt: number;
