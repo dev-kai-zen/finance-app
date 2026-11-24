@@ -8,35 +8,52 @@ export interface BudgetPeriodInfo {
   periodLabel: string;
 }
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTH_NAMES: Record<string, string[]> = {
+  en: [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ],
+  fil: [
+    "Enero", "Pebrero", "Marso", "Abril", "Mayo", "Hunyo",
+    "Hulyo", "Agosto", "Setyembre", "Oktubre", "Nobyembre", "Disyembre",
+  ],
+  es: [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  ],
+};
 
-const SHORT_MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const SHORT_MONTHS: Record<string, string[]> = {
+  en: [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ],
+  fil: [
+    "Ene", "Peb", "Mar", "Abr", "May", "Hun",
+    "Hul", "Ago", "Set", "Okt", "Nob", "Dis",
+  ],
+  es: [
+    "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+  ],
+};
+
+const TODAY_LABELS: Record<string, string> = {
+  en: "Today",
+  fil: "Ngayong araw",
+  es: "Hoy",
+};
+
+export function getLocalizedMonthNames(language: string = "en"): {
+  full: string[];
+  short: string[];
+} {
+  const lang = language in MONTH_NAMES ? language : "en";
+  return {
+    full: MONTH_NAMES[lang],
+    short: SHORT_MONTHS[lang],
+  };
+}
 
 /**
  * Calculates start, end, and previous period dates along with user-facing labels
@@ -46,7 +63,9 @@ export function getBudgetPeriodInfo(
   frequency: BudgetFrequency,
   referenceDate: Date = new Date(),
   anchorStartDate?: Date,
+  language: string = "en",
 ): BudgetPeriodInfo {
+  const lang = language in MONTH_NAMES ? language : "en";
   const d = new Date(referenceDate);
 
   if (frequency === "daily") {
@@ -80,8 +99,8 @@ export function getBudgetPeriodInfo(
       today.getDate() === d.getDate();
 
     const periodLabel = isToday
-      ? "Today"
-      : `${SHORT_MONTHS[d.getMonth()]} ${d.getDate()}`;
+      ? TODAY_LABELS[lang]
+      : `${SHORT_MONTHS[lang][d.getMonth()]} ${d.getDate()}`;
 
     return {
       startDate,
@@ -102,7 +121,7 @@ export function getBudgetPeriodInfo(
     const previousStartDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7, 0, 0, 0, 0);
     const previousEndDate = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() - 7, 23, 59, 59, 999);
 
-    const periodLabel = `${SHORT_MONTHS[monday.getMonth()]} ${monday.getDate()} - ${SHORT_MONTHS[sunday.getMonth()]} ${sunday.getDate()}`;
+    const periodLabel = `${SHORT_MONTHS[lang][monday.getMonth()]} ${monday.getDate()} - ${SHORT_MONTHS[lang][sunday.getMonth()]} ${sunday.getDate()}`;
 
     return {
       startDate: monday,
@@ -161,7 +180,7 @@ export function getBudgetPeriodInfo(
       999,
     );
 
-    const periodLabel = `${SHORT_MONTHS[startDate.getMonth()]} ${startDate.getDate()} - ${SHORT_MONTHS[endDate.getMonth()]} ${endDate.getDate()}`;
+    const periodLabel = `${SHORT_MONTHS[lang][startDate.getMonth()]} ${startDate.getDate()} - ${SHORT_MONTHS[lang][endDate.getMonth()]} ${endDate.getDate()}`;
 
     return {
       startDate,
@@ -186,7 +205,7 @@ export function getBudgetPeriodInfo(
       const previousStartDate = new Date(prevYear, prevMonth, 16, 0, 0, 0, 0);
       const previousEndDate = new Date(prevYear, prevMonth + 1, 0, 23, 59, 59, 999);
 
-      const periodLabel = `${SHORT_MONTHS[d.getMonth()]} 1 - 15`;
+      const periodLabel = `${SHORT_MONTHS[lang][d.getMonth()]} 1 - 15`;
 
       return {
         startDate,
@@ -204,7 +223,7 @@ export function getBudgetPeriodInfo(
       const previousStartDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
       const previousEndDate = new Date(d.getFullYear(), d.getMonth(), 15, 23, 59, 59, 999);
 
-      const periodLabel = `${SHORT_MONTHS[d.getMonth()]} 16 - ${endDate.getDate()}`;
+      const periodLabel = `${SHORT_MONTHS[lang][d.getMonth()]} 16 - ${endDate.getDate()}`;
 
       return {
         startDate,
@@ -229,7 +248,7 @@ export function getBudgetPeriodInfo(
     const previousStartDate = new Date(prevYear, normalizedPrevMonth, 1, 0, 0, 0, 0);
     const previousEndDate = new Date(prevYear, normalizedPrevMonth + 3, 0, 23, 59, 59, 999);
 
-    const periodLabel = `Q${quarter + 1} ${d.getFullYear()}`;
+    const periodLabel = lang === "es" ? `T${quarter + 1} ${d.getFullYear()}` : `Q${quarter + 1} ${d.getFullYear()}`;
 
     return {
       startDate,
@@ -267,7 +286,7 @@ export function getBudgetPeriodInfo(
   const previousStartDate = new Date(prevYear, prevMonth, 1, 0, 0, 0, 0);
   const previousEndDate = new Date(prevYear, prevMonth + 1, 0, 23, 59, 59, 999);
 
-  const periodLabel = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+  const periodLabel = `${MONTH_NAMES[lang][d.getMonth()]} ${d.getFullYear()}`;
 
   return {
     startDate,
@@ -276,4 +295,13 @@ export function getBudgetPeriodInfo(
     previousEndDate,
     periodLabel,
   };
+}
+
+export function formatBudgetPeriodLabel(
+  frequency: BudgetFrequency,
+  referenceDate: Date = new Date(),
+  anchorStartDate?: Date,
+  language: string = "en",
+): string {
+  return getBudgetPeriodInfo(frequency, referenceDate, anchorStartDate, language).periodLabel;
 }

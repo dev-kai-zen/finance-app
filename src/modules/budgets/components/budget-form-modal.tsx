@@ -58,27 +58,16 @@ export interface BudgetFormModalProps {
   pending?: boolean;
 }
 
-const FREQUENCY_OPTIONS: Array<{ key: BudgetFrequency; label: string }> = [
-  { key: "daily", label: "Daily" },
-  { key: "weekly", label: "Weekly" },
-  { key: "biweekly", label: "Bi-Weekly" },
-  { key: "semi_monthly", label: "Semi-Monthly" },
-  { key: "monthly", label: "Monthly" },
-  { key: "quarterly", label: "Quarterly" },
-  { key: "custom_monthly", label: "Custom (12-Mo)" },
-  { key: "yearly", label: "Yearly" },
+const FREQUENCY_KEYS: BudgetFrequency[] = [
+  "daily",
+  "weekly",
+  "biweekly",
+  "semi_monthly",
+  "monthly",
+  "quarterly",
+  "custom_monthly",
+  "yearly",
 ];
-
-const FREQUENCY_DESCRIPTIONS: Record<BudgetFrequency, string> = {
-  daily: "Resets every day at midnight",
-  weekly: "Resets every Monday to Sunday",
-  biweekly: "Resets every 14 days (every 2 weeks)",
-  semi_monthly: "Resets twice a month: 1st–15th and 16th–End of Month",
-  monthly: "Resets on the 1st of every month",
-  quarterly: "Resets every 3 months (Q1–Q4)",
-  custom_monthly: "Custom budget limit per calendar month (Jan–Dec)",
-  yearly: "Resets on January 1st every year",
-};
 
 export function BudgetFormModal(props: BudgetFormModalProps) {
   if (!props.visible) return null;
@@ -206,10 +195,14 @@ function BudgetFormModalContent({
   }
 
   const frequencyOptions = useMemo(() => {
-    const selected = FREQUENCY_OPTIONS.find((opt) => opt.key === frequency);
-    const rest = FREQUENCY_OPTIONS.filter((opt) => opt.key !== frequency);
-    return selected ? [selected, ...rest] : FREQUENCY_OPTIONS;
-  }, [frequency]);
+    const options = FREQUENCY_KEYS.map((key) => ({
+      key,
+      label: t(`budgets.frequencies.${key}` as any),
+    }));
+    const selected = options.find((opt) => opt.key === frequency);
+    const rest = options.filter((opt) => opt.key !== frequency);
+    return selected ? [selected, ...rest] : options;
+  }, [frequency, t]);
 
   const handleSelectFrequency = (nextFrequency: BudgetFrequency) => {
     setFrequency(nextFrequency);
@@ -374,18 +367,18 @@ function BudgetFormModalContent({
   return (
     <>
       <FullScreenFormModal
-        deleteLabel="Remove budget"
+        deleteLabel={t("budgets.form.remove")}
         pending={pending}
         saveButtonRef={saveRef}
-        saveLabel="Save budget"
+        saveLabel={t("budgets.form.save")}
         title={
-          initialBudget ? "Edit Category Budget" : "New Category Budget"
+          initialBudget ? t("budgets.form.editTitle") : t("budgets.form.newTitle")
         }
         titleAlign="left"
         visible={visible}
         isDirty={isDirty}
         onTour={guideHelperEnabled && !initialBudget ? walkthrough.startWalkthrough : undefined}
-        tourLabel="Tour budget form"
+        tourLabel={t("budgets.form.tour")}
         onClose={onClose}
         onDelete={initialBudget && onDelete ? handleDelete : undefined}
         onSave={() => void handleSave()}
@@ -404,7 +397,7 @@ function BudgetFormModalContent({
               {/* Category Picker Selector */}
               <WalkthroughTarget id="budgetFormCategory">
                 <View style={styles.section}>
-                  <Text style={styles.fieldLabel}>CATEGORY</Text>
+                  <Text style={styles.fieldLabel}>{t("budgets.form.categoryLabel")}</Text>
                   <Pressable
                     accessibilityRole="button"
                     disabled={Boolean(initialBudget)}
@@ -436,7 +429,7 @@ function BudgetFormModalContent({
                           !selectedCategory && styles.placeholderText,
                         ]}
                       >
-                        {selectedCategory ? selectedCategory.name : "Select a category"}
+                        {selectedCategory ? selectedCategory.name : t("budgets.form.categoryPlaceholder")}
                       </Text>
                     </View>
                     {!initialBudget && (
@@ -450,10 +443,10 @@ function BudgetFormModalContent({
               <WalkthroughTarget id="budgetFormEnable">
                 <View style={styles.switchRow}>
                   <View style={styles.switchTextCol}>
-                    <Text style={styles.switchTitle}>Enable Budget</Text>
+                    <Text style={styles.switchTitle}>{t("budgets.form.enableBudget")}</Text>
                   </View>
                   <ThemedSwitch
-                    accessibilityLabel="Enable Budget"
+                    accessibilityLabel={t("budgets.form.enableBudget")}
                     disabled={pending}
                     onValueChange={setIsEnabled}
                     value={isEnabled}
@@ -470,8 +463,8 @@ function BudgetFormModalContent({
                     currencyCode={budgetCurrencyCode}
                     label={
                       frequency === "custom_monthly"
-                        ? "DEFAULT MONTHLY AMOUNT"
-                        : "BUDGET AMOUNT"
+                        ? t("budgets.form.defaultMonthlyAmount")
+                        : t("budgets.form.budgetAmount")
                     }
                     onOpenCalculator={() => setIsCalculatorOpen(true)}
                     showSignToggle={false}
@@ -482,7 +475,7 @@ function BudgetFormModalContent({
               {/* Frequency Picker Chips */}
               <WalkthroughTarget id="budgetFormFrequency">
                 <View style={styles.section}>
-                  <Text style={styles.fieldLabel}>FREQUENCY</Text>
+                  <Text style={styles.fieldLabel}>{t("budgets.form.frequencyLabel")}</Text>
                   <HorizontalScrollView
                     ref={frequencyScrollRef}
                     contentContainerStyle={styles.frequencyRow}
@@ -512,7 +505,7 @@ function BudgetFormModalContent({
                     })}
                   </HorizontalScrollView>
                   <Text style={styles.frequencyHelpText}>
-                    {FREQUENCY_DESCRIPTIONS[frequency]}
+                    {t(`budgets.frequencyDescriptions.${frequency}` as any)}
                   </Text>
                 </View>
               </WalkthroughTarget>
@@ -534,7 +527,7 @@ function BudgetFormModalContent({
                   <View style={styles.switchTextCol}>
                     <View style={styles.labelWithIcon}>
                       <RotateCw color={theme.colors.primary} size={16} />
-                      <Text style={styles.switchTitle}>Rollover Budget</Text>
+                      <Text style={styles.switchTitle}>{t("budgets.form.rolloverSection")}</Text>
                       {!isPro && (
                         <View style={styles.proChip}>
                           <Crown color="#D97706" size={10} />
@@ -546,16 +539,15 @@ function BudgetFormModalContent({
                         accessibilityLabel="Rollover budget help"
                         onPress={() =>
                           setInfoModal({
-                            title: "Rollover Budget",
-                            message:
-                              "Unspent budget from the previous period carries over to the next.",
+                            title: t("budgets.help.rolloverTitle"),
+                            message: t("budgets.help.rolloverBody"),
                           })
                         }
                       />
                     </View>
                   </View>
                   <ThemedSwitch
-                    accessibilityLabel="Rollover Budget"
+                    accessibilityLabel={t("budgets.form.rolloverSection")}
                     disabled={pending}
                     onValueChange={handleToggleRollover}
                     value={allowRollover}
@@ -565,7 +557,7 @@ function BudgetFormModalContent({
 
               {allowRollover && (
                 <View style={styles.subOptionContainer}>
-                  <Text style={styles.subOptionLabel}>Rollover Behavior:</Text>
+                  <Text style={styles.subOptionLabel}>{t("budgets.form.rolloverMode") + ":"}</Text>
                   <View style={styles.segmentedRow}>
                     <Pressable
                       onPress={() => setRolloverMode("positive_only")}
@@ -582,7 +574,7 @@ function BudgetFormModalContent({
                             styles.segmentButtonTextActive,
                         ]}
                       >
-                        Surplus Only (Recommended)
+                        {t("budgets.form.rolloverPreviousOnly")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -599,7 +591,7 @@ function BudgetFormModalContent({
                             styles.segmentButtonTextActive,
                         ]}
                       >
-                        Full (Include Deficit)
+                        {t("budgets.form.rolloverCumulative")}
                       </Text>
                     </Pressable>
                   </View>
@@ -612,7 +604,7 @@ function BudgetFormModalContent({
                   <View style={styles.switchTextCol}>
                     <View style={styles.labelWithIcon}>
                       <AlertTriangle color={theme.colors.warning} size={16} />
-                      <Text style={styles.switchTitle}>Over-Budget Alert</Text>
+                      <Text style={styles.switchTitle}>{t("budgets.form.overBudgetAlerts")}</Text>
                       {!isPro && (
                         <View style={styles.proChip}>
                           <Crown color="#D97706" size={10} />
@@ -624,16 +616,15 @@ function BudgetFormModalContent({
                         accessibilityLabel="Over-budget alert help"
                         onPress={() =>
                           setInfoModal({
-                            title: "Over-Budget Alert",
-                            message:
-                              "Prompt a confirmation when an expense exceeds this budget.",
+                            title: t("budgets.help.alertsTitle"),
+                            message: t("budgets.help.alertsBody"),
                           })
                         }
                       />
                     </View>
                   </View>
                   <ThemedSwitch
-                    accessibilityLabel="Over-Budget Alert"
+                    accessibilityLabel={t("budgets.form.overBudgetAlerts")}
                     disabled={pending}
                     onValueChange={handleToggleNotifyOnExceeded}
                     value={notifyOnExceeded}
@@ -661,7 +652,7 @@ function BudgetFormModalContent({
         onClose={() => setIsCategoryPickerOpen(false)}
         onSelectCategory={handleSelectCategory}
         selectedCategoryId={categoryId}
-        title="Select Expense Category"
+        title={t("budgets.form.categoryPlaceholder")}
         type="expense"
         visible={isCategoryPickerOpen}
       />

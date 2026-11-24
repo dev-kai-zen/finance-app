@@ -4,6 +4,7 @@ import { AlertCircle, AlertTriangle, ArrowRight, RotateCw } from "lucide-react-n
 import { IconHelper, ThemedSwitch } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
@@ -37,6 +38,7 @@ export const BudgetCard = memo(function BudgetCard({
 }: BudgetCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const resolveEntityColor = useResolveEntityColor();
 
@@ -85,7 +87,7 @@ export const BudgetCard = memo(function BudgetCard({
 
   return (
     <Pressable
-      accessibilityLabel={`${category.name} budget`}
+      accessibilityLabel={t("budgets.card.accessibilityCard", { category: category.name })}
       accessibilityRole="button"
       onPress={handlePress}
       style={({ pressed }) => [
@@ -116,7 +118,7 @@ export const BudgetCard = memo(function BudgetCard({
             <View style={styles.badgeRow}>
               <View style={styles.frequencyBadge}>
                 <Text style={styles.frequencyText}>
-                  {FREQUENCY_LABELS[budget.frequency] || budget.frequency}
+                  {t(`budgets.frequencies.${budget.frequency}` as any) || FREQUENCY_LABELS[budget.frequency] || budget.frequency}
                 </Text>
               </View>
               <Text numberOfLines={1} style={styles.periodText}>
@@ -132,7 +134,7 @@ export const BudgetCard = memo(function BudgetCard({
           style={styles.toggleContainer}
         >
           <ThemedSwitch
-            accessibilityLabel={`Toggle ${category.name} budget`}
+            accessibilityLabel={t("budgets.card.accessibilityToggle", { category: category.name })}
             onValueChange={handleToggle}
             value={budget.isEnabled}
           />
@@ -157,7 +159,7 @@ export const BudgetCard = memo(function BudgetCard({
       {/* Amounts and Status Row */}
       <View style={styles.metricsRow}>
         <View style={styles.spentGroup}>
-          <Text style={styles.metricLabel}>Spent</Text>
+          <Text style={styles.metricLabel}>{t("budgets.metrics.spent")}</Text>
           <Text
             style={[
               styles.spentValue,
@@ -173,7 +175,7 @@ export const BudgetCard = memo(function BudgetCard({
         </View>
 
         <View style={styles.targetGroup}>
-          <Text style={styles.metricLabel}>Budget</Text>
+          <Text style={styles.metricLabel}>{t("budgets.metrics.budget")}</Text>
           <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.targetValue}>
             {formatCurrency(effectiveTargetCents, budget.currencyCode, false)}
           </Text>
@@ -181,7 +183,7 @@ export const BudgetCard = memo(function BudgetCard({
 
         <View style={styles.remainingGroup}>
           <Text style={styles.metricLabel}>
-            {isExceeded ? "Over by" : "Remaining"}
+            {isExceeded ? t("budgets.metrics.overBy") : t("budgets.metrics.remaining")}
           </Text>
           <Text
             style={[
@@ -208,7 +210,7 @@ export const BudgetCard = memo(function BudgetCard({
               onPress={handleViewTransactions}
               style={styles.transactionsLink}
             >
-              <Text style={styles.transactionsLinkText}>View transactions</Text>
+              <Text style={styles.transactionsLinkText}>{t("budgets.card.viewTransactions")}</Text>
               <ArrowRight color={theme.colors.primary} size={13} />
             </Pressable>
           ) : null}
@@ -216,7 +218,10 @@ export const BudgetCard = memo(function BudgetCard({
             <View style={styles.warningPill}>
               <AlertCircle color={theme.colors.danger} size={14} />
               <Text style={styles.warningPillText}>
-                Budget exceeded by {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)}{effectiveTargetCents > 0 ? ` (${percentage}%)` : ""}
+                {t("budgets.card.budgetExceededBy", {
+                  amount: formatCurrency(Math.abs(remainingCents), budget.currencyCode, false),
+                  percentage: effectiveTargetCents > 0 ? ` (${percentage}%)` : "",
+                })}
               </Text>
             </View>
           ) : budget.allowRollover && rolloverCents !== 0 ? (
@@ -224,8 +229,12 @@ export const BudgetCard = memo(function BudgetCard({
               <RotateCw color={theme.colors.textSecondary} size={12} />
               <Text style={styles.rolloverPillText}>
                 {rolloverCents > 0
-                  ? `+${formatCurrency(rolloverCents, budget.currencyCode, false)} rolled over from last period`
-                  : `${formatCurrency(rolloverCents, budget.currencyCode, false)} deficit carried forward`}
+                  ? t("budgets.card.rolloverSurplus", {
+                      amount: formatCurrency(rolloverCents, budget.currencyCode, false),
+                    })
+                  : t("budgets.card.rolloverDeficit", {
+                      amount: formatCurrency(Math.abs(rolloverCents), budget.currencyCode, false),
+                    })}
               </Text>
             </View>
           ) : null}

@@ -21,6 +21,7 @@ export interface CalculateBudgetOptions {
   context?: DbContext;
   precomputedSpent?: number;
   precomputedPreviousSpent?: number;
+  language?: string;
 }
 
 /**
@@ -44,6 +45,7 @@ export function calculateCategoryBudgetStatus(
     budget.frequency,
     referenceDate,
     budget.startDate,
+    options.language,
   );
 
   // Collect category IDs to include in spending calculations.
@@ -156,6 +158,7 @@ export function calculateBudgetStatusesBatch(
   flatCategoriesMap: Map<string, Category>,
   referenceDate: Date = new Date(),
   context?: DbContext,
+  language: string = "en",
 ): BudgetStatus[] {
   if (budgets.length === 0) return [];
 
@@ -245,7 +248,7 @@ export function calculateBudgetStatusesBatch(
     const category = flatCategoriesMap.get(budget.categoryId);
     if (!category) continue;
 
-    const period = getBudgetPeriodInfo(budget.frequency, referenceDate, budget.startDate);
+    const period = getBudgetPeriodInfo(budget.frequency, referenceDate, budget.startDate, language);
     const currKey = `${period.startDate.getTime()}:${period.endDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
     const currTotals = currentTotalsByGroup.get(currKey) ?? {};
 
@@ -270,6 +273,7 @@ export function calculateBudgetStatusesBatch(
         context,
         precomputedSpent,
         precomputedPreviousSpent,
+        language,
       }),
     );
   }

@@ -24,13 +24,15 @@ const catalogs = Object.fromEntries(["en", "fil", "es"].map(language => [languag
   load(`../../../infrastructure/localization/translations/${language}.ts`)[language],
 ]));
 
+const translate = (key, values = {}) => {
+  const template = key.split(".").reduce((value, part) => value?.[part], catalogs.en);
+  assert.equal(typeof template, "string", "Missing translation " + key);
+  return template.replace(/%\{(\w+)\}/g, (_, name) => values[name]);
+};
+
 function harness() {
   let hookReads = 0, dismissed = 0, cancelled = 0, proceeded = 0;
-  const t = (key, values = {}) => {
-    const template = key.split(".").reduce((value, part) => value?.[part], catalogs.en);
-    assert.equal(typeof template, "string", "Missing translation " + key);
-    return template.replace(/%\{(\w+)\}/g, (_, name) => values[name]);
-  };
+  const t = translate;
   const theme = { colors: { danger: "red" }, spacing: {}, borderRadius: {} };
   const native = Object.fromEntries(["Modal", "Pressable", "ScrollView", "Text", "View"].map(name => [name, name]));
   native.Keyboard = { dismiss: () => dismissed++ };
@@ -147,6 +149,7 @@ test('BUD-F04: live indicator shows zero-limit excess and never a zero-limit nea
     'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',CheckCircle2:'CheckCircle2'},
+    '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/utils/currency':currency,
     '../services/check-budget-exceeded.service':{getBudgetLiveSnapshot:()=>{reads++;return snapshot;},evaluateBudgetSnapshot:evaluator},
@@ -171,6 +174,7 @@ test('BUD-F04: zero-limit card shows monetary excess without 100% text', () => {
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View',Pressable:'Pressable'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',ArrowRight:'ArrowRight',RotateCw:'RotateCw'},
     '@/components':{IconHelper:'IconHelper',ThemedSwitch:'ThemedSwitch'},
+    '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
     '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null}, '@/utils/currency':currency,
@@ -212,6 +216,7 @@ test('BUD-F12: live indicator defers SQLite query after paint and cancels pendin
     'react/jsx-runtime':{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})},
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',CheckCircle2:'CheckCircle2'},
+    '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/utils/currency':currency,
     '../services/check-budget-exceeded.service':{
@@ -255,6 +260,7 @@ test('BUD-F12: BudgetCard forwards parameterized callbacks to stable parent hand
     'react-native':{StyleSheet:{create:s=>s},Text:'Text',View:'View',Pressable:'Pressable'},
     'lucide-react-native':{AlertCircle:'AlertCircle',AlertTriangle:'AlertTriangle',ArrowRight:'ArrowRight',RotateCw:'RotateCw'},
     '@/components':{IconHelper:'IconHelper',ThemedSwitch:'ThemedSwitch'},
+    '@/infrastructure/localization':{useLocalization:()=>({t:translate,locale:'en'})},
     '@/hooks/use-app-theme':{useAppTheme:()=>theme,useThemeStyles:create=>create(theme)},
     '@/modules/currencies':{useCurrencyPreferences:()=>({preferences:{}})},
     '@/modules/hex-colors':{useResolveEntityColor:()=>()=>null},
@@ -299,3 +305,70 @@ test('BUD-F12: BudgetCard forwards parameterized callbacks to stable parent hand
   viewLink.props.onPress();
   assert.equal(viewedTransactionsStatus,testStatus,'onViewTransactions receives status');
 });
+
+test("BUD-F13: 100% key parity across en, fil, and es for budgets translations", () => {
+  function getDeepKeys(obj, prefix = "") {
+    let keys = [];
+    for (const [k, v] of Object.entries(obj)) {
+      const full = prefix ? `${prefix}.${k}` : k;
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        keys = keys.concat(getDeepKeys(v, full));
+      } else {
+        keys.push(full);
+      }
+    }
+    return keys;
+  }
+
+  assert.ok(catalogs.en.budgets, "en.budgets catalog exists");
+  assert.ok(catalogs.fil.budgets, "fil.budgets catalog exists");
+  assert.ok(catalogs.es.budgets, "es.budgets catalog exists");
+
+  const enKeys = getDeepKeys(catalogs.en.budgets).sort();
+  const filKeys = getDeepKeys(catalogs.fil.budgets).sort();
+  const esKeys = getDeepKeys(catalogs.es.budgets).sort();
+
+  assert.deepEqual(filKeys, enKeys, "Filipino translation keys must match English 100%");
+  assert.deepEqual(esKeys, enKeys, "Spanish translation keys must match English 100%");
+});
+
+test("BUD-F13: budget-period produces localized period labels and month lists", () => {
+  const { getBudgetPeriodInfo, getLocalizedMonthNames } = load("../utils/budget-period.ts");
+
+  // Test getLocalizedMonthNames
+  const enMonths = getLocalizedMonthNames("en");
+  const filMonths = getLocalizedMonthNames("fil");
+  const esMonths = getLocalizedMonthNames("es");
+
+  assert.equal(enMonths.full[10], "November");
+  assert.equal(filMonths.full[10], "Nobyembre");
+  assert.equal(esMonths.full[10], "Noviembre");
+
+  // Test getBudgetPeriodInfo with different languages
+  const refDate = new Date(2026, 10, 15); // Nov 15, 2026
+
+  const enMonthly = getBudgetPeriodInfo("monthly", refDate, undefined, "en");
+  const filMonthly = getBudgetPeriodInfo("monthly", refDate, undefined, "fil");
+  const esMonthly = getBudgetPeriodInfo("monthly", refDate, undefined, "es");
+
+  assert.equal(enMonthly.periodLabel, "November 2026");
+  assert.equal(filMonthly.periodLabel, "Nobyembre 2026");
+  assert.equal(esMonthly.periodLabel, "Noviembre 2026");
+
+  // Start and end timestamps must be identical regardless of locale
+  assert.equal(enMonthly.startDate.getTime(), filMonthly.startDate.getTime());
+  assert.equal(enMonthly.endDate.getTime(), filMonthly.endDate.getTime());
+  assert.equal(enMonthly.startDate.getTime(), esMonthly.startDate.getTime());
+  assert.equal(enMonthly.endDate.getTime(), esMonthly.endDate.getTime());
+
+  // Test daily "Today"
+  const now = new Date();
+  const enDaily = getBudgetPeriodInfo("daily", now, undefined, "en");
+  const filDaily = getBudgetPeriodInfo("daily", now, undefined, "fil");
+  const esDaily = getBudgetPeriodInfo("daily", now, undefined, "es");
+
+  assert.equal(enDaily.periodLabel, "Today");
+  assert.equal(filDaily.periodLabel, "Ngayong araw");
+  assert.equal(esDaily.periodLabel, "Hoy");
+});
+

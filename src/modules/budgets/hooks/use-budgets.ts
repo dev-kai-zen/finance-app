@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { DeviceEventEmitter } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { useLocalization } from "@/infrastructure/localization";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { db } from "@/infrastructure/database/client";
 import { useCategories, type Category } from "@/modules/categories";
@@ -101,6 +102,7 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
   const [error, setError] = useState<string | null>(null);
   const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([]);
   const [summary, setSummary] = useState<BudgetsSummary>(() => summarizeBudgetStatuses([]));
+  const { locale } = useLocalization();
   const focusedRef = useRef(false);
   const requestIdRef = useRef(0);
   const cancelPendingRef = useRef<(() => void) | null>(null);
@@ -152,6 +154,7 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
               flatCategoriesMap,
               referenceDateMs === undefined ? new Date() : new Date(referenceDateMs),
               db,
+              locale,
             );
             statuses.sort((a, b) => {
               if (a.isExceeded !== b.isExceeded) return a.isExceeded ? -1 : 1;
@@ -176,7 +179,7 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
         resolve();
       };
     });
-  }, [cancelPending, categoriesError, categoriesLoading, flatCategoriesMap, referenceDateMs, refreshCategories, skipQuery]);
+  }, [cancelPending, categoriesError, categoriesLoading, flatCategoriesMap, locale, referenceDateMs, refreshCategories, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
@@ -28,6 +29,7 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
 }: BudgetLiveIndicatorProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t, locale } = useLocalization();
   const occurredAtMs = occurredAt ? occurredAt.getTime() : null;
 
   const [snapshot, setSnapshot] = useState<BudgetLiveSnapshot | null>(null);
@@ -44,12 +46,13 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
         expenseCurrencyCode,
         occurredAt: occurredAtMs !== null ? new Date(occurredAtMs) : undefined,
         excludeTransactionId,
+        language: locale,
       });
       setSnapshot(liveSnapshot);
     });
 
     return cancel;
-  }, [categoryId, expenseCurrencyCode, occurredAtMs, excludeTransactionId]);
+  }, [categoryId, expenseCurrencyCode, occurredAtMs, excludeTransactionId, locale]);
 
   const result = useMemo(() => {
     if (!snapshot) return null;
@@ -118,18 +121,36 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
       <View style={styles.textWrap}>
         <Text numberOfLines={1} style={[styles.mainText, { color: statusColor }]}>
           {exceeds
-            ? `Exceeds ${periodLabel} budget by ${formatCurrency(exceededByCents, budgetCurrencyCode, false)}!`
+            ? t("budgets.live.exceeds", {
+                period: periodLabel,
+                amount: formatCurrency(exceededByCents, budgetCurrencyCode, false),
+              })
             : isNearLimit
-              ? `Near ${periodLabel} limit (${percentage}% used)`
-              : `Within ${periodLabel} budget${percentage !== null ? ` (${percentage}% used)` : ""}`}
+              ? t("budgets.live.nearLimit", {
+                  period: periodLabel,
+                  percentage,
+                })
+              : percentage !== null
+                ? t("budgets.live.within", {
+                    period: periodLabel,
+                    percentage,
+                  })
+                : t("budgets.live.withinNoPercent", {
+                    period: periodLabel,
+                  })}
         </Text>
         <Text numberOfLines={1} style={styles.subText}>
-          {formatCurrency(newSpentCents, budgetCurrencyCode, false)} of{" "}
-          {formatCurrency(effectiveBudgetCents, budgetCurrencyCode, false)} (
-          {exceeds
-            ? `${formatCurrency(exceededByCents, budgetCurrencyCode, false)} over`
-            : `${formatCurrency(remainingAfterCents, budgetCurrencyCode, false)} left`}
-          )
+          {t("budgets.live.spentOf", {
+            spent: formatCurrency(newSpentCents, budgetCurrencyCode, false),
+            budget: formatCurrency(effectiveBudgetCents, budgetCurrencyCode, false),
+            status: exceeds
+              ? t("budgets.live.over", {
+                  amount: formatCurrency(exceededByCents, budgetCurrencyCode, false),
+                })
+              : t("budgets.live.left", {
+                  amount: formatCurrency(remainingAfterCents, budgetCurrencyCode, false),
+                }),
+          })}
         </Text>
       </View>
     </View>

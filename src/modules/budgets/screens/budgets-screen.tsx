@@ -57,16 +57,16 @@ import type {
 
 type FrequencyFilter = "all" | BudgetFrequency;
 
-const FILTER_TABS: Array<{ key: FrequencyFilter; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "daily", label: "Daily" },
-  { key: "weekly", label: "Weekly" },
-  { key: "biweekly", label: "Bi-Weekly" },
-  { key: "semi_monthly", label: "Semi-Monthly" },
-  { key: "monthly", label: "Monthly" },
-  { key: "quarterly", label: "Quarterly" },
-  { key: "custom_monthly", label: "Custom" },
-  { key: "yearly", label: "Yearly" },
+const FILTER_TABS: FrequencyFilter[] = [
+  "all",
+  "daily",
+  "weekly",
+  "biweekly",
+  "semi_monthly",
+  "monthly",
+  "quarterly",
+  "custom_monthly",
+  "yearly",
 ];
 
 export function BudgetsScreen(props?: {
@@ -353,7 +353,7 @@ function BudgetsScreenContent({
         floatingAction={
           budgets.length > 0 ? (
             <FloatingActionButton
-              accessibilityLabel="Set new category budget"
+              accessibilityLabel={t("budgets.form.fabAccessibility")}
               fabRef={fabRef}
               onPress={handleOpenCreate}
               style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
@@ -363,14 +363,14 @@ function BudgetsScreenContent({
       >
       <View style={styles.container}>
         {loading ? (
-          <PageLoadingState message="Loading budgets..." variant="cards" />
+          <PageLoadingState message={t("budgets.loading")} variant="cards" />
         ) : budgets.length === 0 ? (
           <PageEmptyState
-            actionLabel="+ Set Your First Category Budget"
+            actionLabel={t("budgets.emptyAction")}
             actionRef={emptyCreateRef}
-            description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
+            description={t("budgets.emptyDescription")}
             onAction={handleOpenCreate}
-            title="No Budgets Configured"
+            title={t("budgets.emptyTitle")}
           />
         ) : (
           <>
@@ -378,9 +378,9 @@ function BudgetsScreenContent({
             <View collapsable={false} ref={totalActiveCardRef} style={styles.summaryCard}>
               <View style={styles.summaryTop}>
                 <View>
-                  <Text style={styles.summaryTitle}>Total Active Budget</Text>
+                  <Text style={styles.summaryTitle}>{t("budgets.summary.totalActiveBudget")}</Text>
                   <Text style={styles.summarySubtitle}>
-                    {summary.activeCount} active categories budgeted
+                    {t("budgets.summary.activeCount", { count: summary.activeCount })}
                   </Text>
                 </View>
                 <View style={styles.summaryBadgeRow}>
@@ -388,7 +388,7 @@ function BudgetsScreenContent({
                     <View style={styles.exceededBadge}>
                       <AlertCircle color={theme.colors.danger} size={12} />
                       <Text style={styles.exceededBadgeText}>
-                        {summary.exceededCount} Over Budget
+                        {t("budgets.summary.overBudgetBadge", { count: summary.exceededCount })}
                       </Text>
                     </View>
                   )}
@@ -396,7 +396,7 @@ function BudgetsScreenContent({
                     <View style={styles.warningBadge}>
                       <AlertTriangle color={theme.colors.warning} size={12} />
                       <Text style={styles.warningBadgeText}>
-                        {summary.nearLimitCount} Near Limit
+                        {t("budgets.summary.nearLimitBadge", { count: summary.nearLimitCount })}
                       </Text>
                     </View>
                   )}
@@ -425,7 +425,7 @@ function BudgetsScreenContent({
               {/* Summary Metrics */}
               <View style={styles.summaryMetrics}>
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricItemLabel}>Spent</Text>
+                  <Text style={styles.metricItemLabel}>{t("budgets.metrics.spent")}</Text>
                   <Text
                     style={[
                       styles.metricItemValue,
@@ -446,7 +446,7 @@ function BudgetsScreenContent({
                 </View>
                 <View style={styles.metricDivider} />
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricItemLabel}>Budgeted</Text>
+                  <Text style={styles.metricItemLabel}>{t("budgets.metrics.budgeted")}</Text>
                   <Text style={styles.metricItemValue}>
                     {formatCurrency(
                       summary.totalBudgetedCents,
@@ -458,7 +458,7 @@ function BudgetsScreenContent({
                 <View style={styles.metricDivider} />
                 <View style={styles.metricItem}>
                   <Text style={styles.metricItemLabel}>
-                    {isOverallExceeded ? "Over by" : "Remaining"}
+                    {isOverallExceeded ? t("budgets.metrics.overBy") : t("budgets.metrics.remaining")}
                   </Text>
                   <Text
                     style={[
@@ -487,14 +487,14 @@ function BudgetsScreenContent({
               <HorizontalScrollView
                 contentContainerStyle={styles.filterScroll}
               >
-                {FILTER_TABS.map((tab) => {
-                  const active = selectedFilter === tab.key;
-                  const count = countsByFilter[tab.key] ?? 0;
+                {FILTER_TABS.map((tabKey) => {
+                  const active = selectedFilter === tabKey;
+                  const count = countsByFilter[tabKey] ?? 0;
                   return (
                     <Pressable
-                      key={tab.key}
+                      key={tabKey}
                       accessibilityRole="button"
-                      onPress={() => setSelectedFilter(tab.key)}
+                      onPress={() => setSelectedFilter(tabKey)}
                       style={[
                         styles.filterTab,
                         active && styles.filterTabActive,
@@ -506,7 +506,7 @@ function BudgetsScreenContent({
                           active && styles.filterTabTextActive,
                         ]}
                       >
-                        {tab.label}
+                        {t(`budgets.frequencies.${tabKey}` as any)}
                       </Text>
                       <View
                         style={[
@@ -533,7 +533,7 @@ function BudgetsScreenContent({
             {filteredStatuses.length === 0 ? (
               <View style={styles.noFilterResults}>
                 <Text style={styles.noFilterResultsText}>
-                  No {selectedFilter} budgets configured.
+                  {t("budgets.noFilterResults", { filter: t(`budgets.frequencies.${selectedFilter}` as any) })}
                 </Text>
               </View>
             ) : (
@@ -571,12 +571,12 @@ function BudgetsScreenContent({
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        confirmLabel="Remove Budget"
-        message="Are you sure you want to remove this category budget? Past transactions will remain intact."
+        confirmLabel={t("budgets.deleteConfirm.confirm")}
+        message={t("budgets.deleteConfirm.message")}
         onCancel={() => setBudgetToDelete(null)}
         onConfirm={handleConfirmDelete}
         pending={saving}
-        title="Remove Budget"
+        title={t("budgets.deleteConfirm.title")}
         variant="destructive"
         visible={Boolean(budgetToDelete)}
       />
@@ -585,7 +585,7 @@ function BudgetsScreenContent({
       <NotificationModal
         message={error || ""}
         onClose={clearError}
-        title="Error"
+        title={t("budgets.errorTitle")}
         variant="error"
         visible={Boolean(error)}
       />

@@ -13,6 +13,7 @@ export interface CheckExpenseBudgetsInput {
   occurredAt?: Date;
   excludeTransactionId?: string | null;
   context?: DbContext;
+  language?: string;
 }
 
 export interface ExpenseBudgetCheckResult extends BudgetCheckResult {
@@ -59,6 +60,7 @@ export function checkExpenseBudgets(input: CheckExpenseBudgetsInput): ExpenseBud
       occurredAt,
       excludeTransactionId: input.excludeTransactionId,
       context,
+      language: input.language,
     });
     results.push({ ...evaluateBudgetSnapshot(snapshot, amountMinorUnits), budgetId: budget.id });
   }

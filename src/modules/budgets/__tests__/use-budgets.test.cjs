@@ -72,6 +72,7 @@ function createHarness({ categoriesLoading = false } = {}) {
       return { remove: () => events.delete(callback) };
     } } },
     "expo-router": { useFocusEffect: callback => { focusCallback = callback; } },
+    "@/infrastructure/localization": { useLocalization: () => ({ locale: "en", t: (k) => k }) },
     "@/utils/run-deferred-sync-query": deferred,
     "@/infrastructure/database/client": { db: {} },
     "@/modules/categories": { useCategories: () => categoryState },

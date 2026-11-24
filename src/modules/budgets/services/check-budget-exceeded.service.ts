@@ -19,6 +19,7 @@ export interface CheckBudgetExceededInput {
   occurredAt?: Date;
   excludeTransactionId?: string | null;
   context?: DbContext;
+  language?: string;
 }
 
 export type BudgetLiveSnapshotInput = Omit<
@@ -135,6 +136,7 @@ export function getBudgetLiveSnapshotForBudget(
     referenceDate: occurredAt,
     excludeTransactionId,
     context,
+    language: input.language,
   });
 
   const expenseCurrency =

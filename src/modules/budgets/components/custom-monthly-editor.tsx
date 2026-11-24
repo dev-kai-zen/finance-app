@@ -4,8 +4,10 @@ import { Calendar, Copy } from "lucide-react-native";
 import { AmountCalculatorModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 import type { MonthlyTargetInput } from "../types/budget.types";
+import { getLocalizedMonthNames } from "../utils/budget-period";
 
 export interface CustomMonthlyEditorProps {
   year: number;
@@ -14,21 +16,6 @@ export interface CustomMonthlyEditorProps {
   monthlyTargets: MonthlyTargetInput[];
   onChange: (targets: MonthlyTargetInput[]) => void;
 }
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
   year,
@@ -39,6 +26,8 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
 }: CustomMonthlyEditorProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t, locale } = useLocalization();
+  const { full: monthNames, short: shortMonths } = getLocalizedMonthNames(locale);
   const [activeEditingMonth, setActiveEditingMonth] = useState<number | null>(
     null,
   );
@@ -83,7 +72,7 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Calendar color={theme.colors.primary} size={18} />
-          <Text style={styles.title}>{year} Monthly Targets</Text>
+          <Text style={styles.title}>{t("budgets.customMonthly.title", { year })}</Text>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -91,18 +80,17 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
           style={styles.applyAllButton}
         >
           <Copy color={theme.colors.primary} size={14} />
-          <Text style={styles.applyAllText}>Apply default to all</Text>
+          <Text style={styles.applyAllText}>{t("budgets.customMonthly.applyAll")}</Text>
         </Pressable>
       </View>
 
       <Text style={styles.subtext}>
-        Customize budget targets for specific months (e.g. higher in December or
-        summer). Tap a month to edit its amount.
+        {t("budgets.customMonthly.subtitle")}
       </Text>
 
       {/* 12 Months Grid */}
       <View style={styles.grid}>
-        {MONTH_NAMES.map((name, idx) => {
+        {monthNames.map((name, idx) => {
           const monthNumber = idx + 1;
           const amount = getMonthAmount(monthNumber);
           const isCustomized = monthlyTargets.some(
@@ -111,8 +99,8 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
 
           return (
             <Pressable
-              key={name}
-              accessibilityLabel={`Edit budget for ${name}`}
+              key={idx}
+              accessibilityLabel={t("budgets.customMonthly.accessibilityEditMonth", { month: name })}
               accessibilityRole="button"
               onPress={() => setActiveEditingMonth(monthNumber)}
               style={({ pressed }) => [
@@ -122,7 +110,7 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
               ]}
             >
               <Text numberOfLines={1} style={styles.monthName}>
-                {name.slice(0, 3)}
+                {shortMonths[idx]}
               </Text>
               <Text numberOfLines={1} style={styles.monthAmount}>
                 {formatCurrency(amount, currencyCode, false)}
@@ -134,7 +122,7 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
 
       {/* Year Total Banner */}
       <View style={styles.totalBanner}>
-        <Text style={styles.totalLabel}>Annual Total:</Text>
+        <Text style={styles.totalLabel}>{t("budgets.customMonthly.annualTotal")}</Text>
         <Text style={styles.totalValue}>
           {formatCurrency(yearTotalCents, currencyCode, false)}
         </Text>
@@ -150,7 +138,10 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
             handleSetMonthAmount(activeEditingMonth, val);
             setActiveEditingMonth(null);
           }}
-          title={`${MONTH_NAMES[activeEditingMonth - 1]} ${year} Budget`}
+          title={t("budgets.customMonthly.modalTitle", {
+            month: monthNames[activeEditingMonth - 1],
+            year,
+          })}
           visible={activeEditingMonth !== null}
         />
       )}

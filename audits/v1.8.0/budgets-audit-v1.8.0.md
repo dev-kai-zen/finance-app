@@ -353,7 +353,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** No snapshot queries during render; no SQL per amount keystroke; changing category/date cancels stale work. Profile card updates during unrelated screen state changes and stress large ledgers on a release device.
 - **Performance:** These are Section 19 gaps, not evidence of a measured dropped-frame count. Deferral alone cannot guarantee the eventual synchronous work fits 8.3–16.6ms.
 
-### [BUD-F13] Core feature strings and period labels remain English
+### [BUD-F13] Core feature strings and period labels remain English — FIX IMPLEMENTED
 
 - **Evidence:** Frequency labels/descriptions, overview metrics, empty/loading states, form/help text, warnings, custom-month editor, error fallbacks, and accessibility labels are hardcoded across the budget files. [budget-period.ts](../../src/modules/budgets/utils/budget-period.ts) owns English month arrays and “Today.” Some Pro and walkthrough strings already use `t`.
 - **Cause / impact:** Selecting Filipino or Spanish does not translate the core workflow; interpolated period names also remain English in consumers.
