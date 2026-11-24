@@ -3137,6 +3137,8 @@ export const fil = {
     },
   },
   transactions: {
+    categoryShare: "Bahagi ng kategorya: %{amount}",
+    categoryScopeHint: "Mga bahagi ng kategorya ang batayan ng kabuuan bawat araw. Buong transaksyon ang halaga sa bawat hanay.",
     scrollToTop: "Mag-scroll sa itaas",
     swipeDelete: "Tanggalin",
     swipeDuplicate: "Kopyahin",

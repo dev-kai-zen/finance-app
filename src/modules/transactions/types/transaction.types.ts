@@ -54,6 +54,8 @@ export type NewTransaction = Omit<
 };
 
 export interface TransactionListItem extends Transaction {
+  /** Signed account-currency allocation for a category-scoped drill-down; full amount stays intact. */
+  categoryAmountMinorUnits?: number;
   attachmentCount: number;
   accountName: string;
   accountCurrency: string;
@@ -216,6 +218,7 @@ export interface TransactionPageCursor {
 }
 
 export interface TransactionPageFilter {
+  categoryAmountScope?: boolean;
   type?: "all" | "income" | "expense" | "transfer";
   flow?: "inflow" | "outflow";
   accountIds?: string[];

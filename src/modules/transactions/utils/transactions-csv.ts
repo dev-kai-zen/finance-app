@@ -172,11 +172,14 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
 }
 
 export function buildTransactionsCsv(rows: readonly TransactionListItem[]): string {
+  const scoped = rows.some((row) => row.categoryAmountMinorUnits !== undefined);
   const lines = [
-    TRANSACTION_CSV_HEADERS.join(","),
-    ...rows.map((row) =>
-      transactionToCsvRow(row).map((cell) => escapeCsvCell(cell)).join(","),
-    ),
+    [...TRANSACTION_CSV_HEADERS, ...(scoped ? ["Selected Category Amount"] : [])].join(","),
+    ...rows.map((row) => {
+      const cells = transactionToCsvRow(row);
+      if (scoped) cells.push(row.categoryAmountMinorUnits === undefined ? "" : formatMinorUnitsForCsv(row.categoryAmountMinorUnits, exportAmountCurrency(row)));
+      return cells.map((cell) => escapeCsvCell(cell)).join(",");
+    }),
   ];
   return lines.join("\r\n");
 }

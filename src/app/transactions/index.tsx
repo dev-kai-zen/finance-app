@@ -3,6 +3,7 @@ import { TransactionsScreen } from "@/modules/transactions";
 
 export default function TransactionsRoute() {
   const {
+    budgetScope,
     accountId,
     categoryId,
     exactCategory,
@@ -14,6 +15,7 @@ export default function TransactionsRoute() {
     inspectId,
     labelId,
   } = useLocalSearchParams<{
+    budgetScope?: string | string[];
     accountId?: string;
     categoryId?: string;
     exactCategory?: string;
@@ -53,6 +55,7 @@ export default function TransactionsRoute() {
 
   return (
     <TransactionsScreen
+      initialBudgetScope={budgetScope === undefined ? undefined : typeof budgetScope === "string" ? budgetScope : ""}
       initialAccountId={initialAccountId}
       initialCategoryId={initialCategoryId}
       initialExactCategory={initialExactCategory}

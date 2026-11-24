@@ -38,6 +38,7 @@ export type DatePreset =
   | "custom";
 
 export interface TransactionFilterState {
+  categoryAmountScope?: boolean;
   type: TransactionType | "all";
   flow?: "inflow" | "outflow";
   datePreset: DatePreset;

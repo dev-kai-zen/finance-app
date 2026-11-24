@@ -78,6 +78,10 @@ export const getBudgetsSummary = deferFunction(
   () => require("./services/get-budgets-summary.service").getBudgetsSummary,
 ) as typeof import("./services/get-budgets-summary.service").getBudgetsSummary;
 
+export const getBudgetTransactionScope = deferFunction(
+  () => require("./services/get-budget-transaction-scope.service").getBudgetTransactionScope,
+) as typeof import("./services/get-budget-transaction-scope.service").getBudgetTransactionScope;
+
 // Types
 export type {
   BudgetFrequency,

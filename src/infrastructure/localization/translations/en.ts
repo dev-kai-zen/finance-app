@@ -3090,6 +3090,8 @@ export const en = {
     },
   },
   transactions: {
+    categoryShare: "Category share: %{amount}",
+    categoryScopeHint: "Daily totals use category shares. Row amounts show full transactions.",
     scrollToTop: "Scroll to top",
     swipeDelete: "Delete",
     swipeDuplicate: "Duplicate",

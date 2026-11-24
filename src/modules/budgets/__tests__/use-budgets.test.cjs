@@ -78,6 +78,7 @@ function createHarness({ categoriesLoading = false } = {}) {
       if (failRead) throw new Error("Read failed");
       return rows;
     } },
+    "../services/get-budget-transaction-scope.service": { getBudgetTransactionScope() {} },
     "../services/calculate-category-budget.service": { calculateBudgetStatusesBatch(list) {
       calculations++;
       return list.map(budget => ({ budget, spentCents: spent, effectiveTargetCents: 500000,

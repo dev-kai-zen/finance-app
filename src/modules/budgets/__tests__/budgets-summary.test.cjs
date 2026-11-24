@@ -383,3 +383,38 @@ test("budgets (P2-02): missing budgets skip child reads; enabled-budget lookups 
   assert.equal(queries.length, 3);
   assert.ok(queries.every(query => (query.match(/\?/g) || []).length <= 501));
 });
+
+
+test("BUD-F02: card spending equals drill-down category shares across all periods and child-budget states", () => {
+  const { db, date, time, expense } = setupParentBudget();
+  const { getBudgetTransactionScope }=require("../services/get-budget-transaction-scope.service");
+  const { listCategoryBudgetsSync }=require("../repositories/category-budgets.repository");
+  const { getCategory, getCategoryChildren }=require("@/modules/categories");
+  const { getTransactionsForExport }=require("@/modules/transactions");
+  sqlite.prepare("INSERT INTO category_budgets (id,category_id,amount_minor_units,currency_code,start_date,created_at,updated_at) VALUES ('child','cat_groceries',600000,'PHP',?,?,?)").run(time,time,time);
+  expense("direct","cat_dining",10000);
+  expense("split_scope","cat_dining",10000);
+  sqlite.prepare("INSERT INTO transaction_entries (id,transaction_id,category_id,amount_minor_units,created_at,updated_at) VALUES ('scope_a','split_scope','cat_restaurants',3000,?,?),('scope_b','split_scope','cat_groceries',7000,?,?)").run(time,time,time,time);
+  expense("refund_scope","cat_restaurants",-2000);
+  const parent={...getCategory("cat_dining",db),subcategories:getCategoryChildren("cat_dining",db)};
+  const map=new Map([[parent.id,parent],...parent.subcategories.map(child=>[child.id,child])]);
+  for(const enabled of [1,0]) {
+    sqlite.prepare("UPDATE category_budgets SET is_enabled=? WHERE id='child'").run(enabled);
+    for(const frequency of ["daily","weekly","biweekly","semi_monthly","monthly","custom_monthly","quarterly","yearly"]) {
+      sqlite.prepare("UPDATE category_budgets SET frequency=? WHERE id='b_parent'").run(frequency);
+      const budgets=listCategoryBudgetsSync(db);
+      const status=calculateBudgetStatusesBatch(budgets,map,date,db).find(status=>status.budget.id==="b_parent");
+      const before=queries.length;
+      const scope=getBudgetTransactionScope(status,budgets);
+      assert.equal(queries.length,before,"Building a link performs zero SQL queries");
+      assert.equal(scope.categoryIds.includes("cat_groceries"),!enabled);
+      const parse=key=>{const [y,m,d]=key.split("-").map(Number);return new Date(y,m-1,d);};
+      const end=parse(scope.dateTo);end.setHours(23,59,59,999);
+      const rows=getTransactionsForExport({type:"expense",categoryIds:scope.categoryIds,categoryAmountScope:true,startDate:parse(scope.dateFrom),endDate:end},db);
+      assert.equal(-rows.reduce((sum,row)=>sum+row.categoryAmountMinorUnits,0),status.spentCents,frequency+" ownership "+enabled);
+      assert.equal(rows.find(row=>row.id==="split_scope").categoryAmountMinorUnits,enabled?-3000:-10000);
+      assert.equal(rows.find(row=>row.id==="refund_scope").categoryAmountMinorUnits,2000);
+    }
+  }
+  sqlite.close();
+});

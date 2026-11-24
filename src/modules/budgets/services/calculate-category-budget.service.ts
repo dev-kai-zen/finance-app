@@ -9,6 +9,7 @@ import type {
   CategoryBudget,
 } from "../types/budget.types";
 import { getBudgetPeriodInfo } from "../utils/budget-period";
+import { getBudgetCategoryIds } from "./get-budget-transaction-scope.service";
 
 export interface CalculateBudgetOptions {
   budget: CategoryBudget;
@@ -47,12 +48,7 @@ export function calculateCategoryBudgetStatus(
 
   // Collect category IDs to include in spending calculations.
   // Include parent category ID and any subcategories that don't have their own active budget.
-  const categoryIds = [category.id];
-  for (const child of childCategories) {
-    if (!activeBudgetCategoryIds.has(child.id)) {
-      categoryIds.push(child.id);
-    }
-  }
+  const categoryIds = getBudgetCategoryIds(category.id, childCategories, activeBudgetCategoryIds);
 
   // 1. Determine base target for current period
   let baseTargetCents = budget.amountMinorUnits;
@@ -192,13 +188,8 @@ export function calculateBudgetStatusesBatch(
       };
       currentGroupMap.set(currKey, currGroup);
     }
-    currGroup.categoryIds.add(category.id);
-    if (category.subcategories) {
-      for (const child of category.subcategories) {
-        if (!activeBudgetCategoryIds.has(child.id)) {
-          currGroup.categoryIds.add(child.id);
-        }
-      }
+    for (const id of getBudgetCategoryIds(category.id, category.subcategories ?? [], activeBudgetCategoryIds)) {
+      currGroup.categoryIds.add(id);
     }
 
     if (budget.allowRollover) {
@@ -213,13 +204,8 @@ export function calculateBudgetStatusesBatch(
         };
         previousGroupMap.set(prevKey, prevGroup);
       }
-      prevGroup.categoryIds.add(category.id);
-      if (category.subcategories) {
-        for (const child of category.subcategories) {
-          if (!activeBudgetCategoryIds.has(child.id)) {
-            prevGroup.categoryIds.add(child.id);
-          }
-        }
+      for (const id of getBudgetCategoryIds(category.id, category.subcategories ?? [], activeBudgetCategoryIds)) {
+        prevGroup.categoryIds.add(id);
       }
     }
   }
@@ -262,14 +248,7 @@ export function calculateBudgetStatusesBatch(
     const currKey = `${period.startDate.getTime()}:${period.endDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
     const currTotals = currentTotalsByGroup.get(currKey) ?? {};
 
-    const catIds = [category.id];
-    if (category.subcategories) {
-      for (const child of category.subcategories) {
-        if (!activeBudgetCategoryIds.has(child.id)) {
-          catIds.push(child.id);
-        }
-      }
-    }
+    const catIds = getBudgetCategoryIds(category.id, category.subcategories ?? [], activeBudgetCategoryIds);
 
     const precomputedSpent = catIds.reduce((sum, id) => sum + (currTotals[id] ?? 0), 0);
 

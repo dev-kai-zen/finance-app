@@ -676,6 +676,19 @@ test("F03: 10,000-row ledger uses transactions_active_feed_index, bounds SQL sta
   assert.equal(page2.items[0].id, "t_09949", "Newer insert must not shift Page 2 cursor or duplicate t_09950");
   assert.ok(midTime > 0);
 
+  // The budget scope must retain bounded page hydration on the same 10k ledger.
+  sqlite.prepare("INSERT INTO categories(id,name,type,created_at,updated_at) VALUES ('cat_big','Big','expense',?,?)").run(baseTime,baseTime);
+  sqlite.exec("UPDATE transactions SET category_id='cat_big' WHERE account_id='acc_big'");
+  statements=0;queries=[];
+  const scoped=listTransactionsPage({filter:{type:"expense",categoryIds:["cat_big"],categoryAmountScope:true,startDate:new Date(baseTime),endDate:new Date(baseTime+10000*60000)},limit:50},database);
+  assert.equal(scoped.items.length,50);assert.equal(scoped.totalCount,10000);
+  assert.ok(statements<=12,"Scoped page statement count: "+statements);
+  assert.ok(scoped.items.every(item=>item.categoryAmountMinorUnits===item.amountMinorUnits));
+  const scopedQuery=queries.find(query=>query.sql.includes("json_each")&&query.sql.includes("order by"));
+  const scopedPlan=sqlite.prepare("EXPLAIN QUERY PLAN "+scopedQuery.sql).all(...scopedQuery.params).map(row=>row.detail).join(" | ");
+  assert.doesNotMatch(scopedPlan,/TEMP B-TREE/i,scopedPlan);
+  assert.match(scopedPlan,/transactions_active_feed_index/,scopedPlan);
+
   sqlite.close();
 });
 
@@ -1599,3 +1612,59 @@ test("Q3: receipt attachment sync stops when Quick Sync is disabled or syncAttac
 
 
 
+
+
+test("BUD-F02: scoped pages expose split category shares without changing full transaction amounts or balances", () => {
+  connectAndMigrate();
+  const { baseTime } = seedMixedLedger();
+  const filter = { type: "expense", categoryIds: ["cat_food", "cat_fee"], categoryAmountScope: true,
+    startDate: new Date(baseTime), endDate: new Date(baseTime + 10000) };
+  const page = collectAllPages(filter, 1);
+  const split = page.items.find(item => item.id === "tx_split");
+  assert.equal(split.categoryAmountMinorUnits, -2500);
+  assert.equal(split.amountMinorUnits, -3500);
+  assert.equal(page.items.find(item => item.id === "tx_tr_fee").categoryAmountMinorUnits, -25);
+  assert.ok(page.items.every(item => item.type === "expense"), "Transfer principal never consumes a budget");
+  const original = findTransactionListItemById("tx_split", database);
+  assert.equal(split.accountBalanceAfterMinorUnits, original.accountBalanceAfterMinorUnits);
+  assert.equal(original.categoryAmountMinorUnits, undefined, "Inspection retains full transaction data");
+  assert.equal(new Set(page.items.map(item => item.id)).size, page.items.length);
+  assert.equal(page.totalCount, page.items.length);
+  const exported = getTransactionsForExport(filter, database);
+  assert.equal(exported.find(item => item.id === "tx_split").categoryAmountMinorUnits, -2500);
+  const ordinary = listTransactionsPage({ filter: { categoryIds: ["cat_food"] } }, database);
+  assert.ok(ordinary.items.every(item => item.categoryAmountMinorUnits === undefined));
+});
+
+test("BUD-F02: split refunds, legacy parent categories, exact bounds and large category scopes match expense aggregates", () => {
+  connectAndMigrate();
+  const { baseTime } = seedMixedLedger();
+  // A legacy split parent must not match Food when every allocation belongs to Coffee.
+  sqlite.prepare("UPDATE transactions SET category_id='cat_food', amount_minor_units=3500 WHERE id='tx_split'").run();
+  sqlite.prepare("UPDATE transaction_entries SET category_id='cat_coffee' WHERE transaction_id='tx_split'").run();
+  const scope = { type: "expense", categoryIds: ["cat_food"], categoryAmountScope: true,
+    startDate: new Date(baseTime), endDate: new Date(baseTime + 10000) };
+  assert.ok(listTransactionsPage({ filter: scope }, database).items.every(item => item.id !== "tx_split"));
+  sqlite.prepare("UPDATE transaction_entries SET category_id='cat_food' WHERE id='ent_1'").run();
+  statements=0;queries=[];
+  const large = { ...scope, categoryIds: ["cat_food", ...Array.from({ length: 1001 }, (_, i) => "missing_"+i)] };
+  const page=listTransactionsPage({ filter: large, includeTotalCount: true }, database);
+  assert.equal(page.items.find(item => item.id === "tx_split").categoryAmountMinorUnits, 2500);
+  assert.ok(queries.every(query => query.params.length < 500), "Category scopes use bounded bindings");
+  assert.ok(statements < 20, "Supporting reads stay bounded to the page");
+  const scopedQuery = queries.find(query => query.sql.includes("json_each") && query.sql.includes("order by"));
+  const scopedPlan = sqlite.prepare("EXPLAIN QUERY PLAN " + scopedQuery.sql).all(...scopedQuery.params).map(row => row.detail).join(" | ");
+  assert.doesNotMatch(scopedPlan, /TEMP B-TREE/i, scopedPlan);
+  assert.match(scopedPlan, /transaction_entries_transaction_id_index/, scopedPlan);
+  const { buildTransactionSections } = require("../utils/group-transactions-sections");
+  const sections = buildTransactionSections(page.items, "date", "PHP");
+  assert.equal(sections.reduce((sum,section)=>sum+section.netMinorUnits,0), page.items.reduce((sum,item)=>sum+item.categoryAmountMinorUnits,0));
+  const { getCategoryExpenseTotal } = require("../services/get-category-expense-summary.service");
+  const total=getCategoryExpenseTotal({ categoryIds: scope.categoryIds, startDate: scope.startDate, endDate: scope.endDate, targetCurrencyCode: "PHP" }, database);
+  assert.equal(-page.items.reduce((sum,item)=>sum+item.categoryAmountMinorUnits,0), total);
+  const outside=listTransactionsPage({ filter: { ...scope, startDate: new Date(baseTime+10001) } },database);
+  assert.equal(outside.items.length,0);
+  const { buildTransactionsCsv }=require("../utils/transactions-csv");
+  const csv=buildTransactionsCsv(getTransactionsForExport(scope,database));
+  assert.ok(csv.split("\r\n")[0].endsWith(",Selected Category Amount"));
+});

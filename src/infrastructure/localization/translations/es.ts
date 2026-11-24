@@ -3122,6 +3122,8 @@ export const es = {
     },
   },
   transactions: {
+    categoryShare: "Parte de la categoría: %{amount}",
+    categoryScopeHint: "Los totales diarios usan las partes de las categorías. Las filas muestran los importes completos.",
     scrollToTop: "Desplazar al principio",
     swipeDelete: "Eliminar",
     swipeDuplicate: "Duplicar",

@@ -125,12 +125,12 @@ export function buildTransactionSections(
       // Ledger amounts are already signed and denominated in the account's currency.
       section.netMinorUnits += currencies.size > 1
         ? convertCurrencyMinorUnits(
-            tx.amountMinorUnits,
+            tx.categoryAmountMinorUnits ?? tx.amountMinorUnits,
             tx.accountCurrency || defaultCurrency,
             defaultCurrency,
             exchangeRates,
           )
-        : tx.amountMinorUnits;
+        : (tx.categoryAmountMinorUnits ?? tx.amountMinorUnits);
     }
   }
   return sections;

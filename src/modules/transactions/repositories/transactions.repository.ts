@@ -641,7 +641,19 @@ function buildTransactionPageConditions(
     );
   }
 
-  if (filter?.categoryIds && filter.categoryIds.length > 0) {
+  if (filter?.categoryAmountScope) {
+    // One JSON binding per lookup avoids variable limits even for large category groups.
+    const categoryIds = JSON.stringify(filter.categoryIds ?? []);
+    conditions.push(eq(transactions.type, "expense"));
+    conditions.push(sql`(
+      ("transactions"."category_id" IN (SELECT value FROM json_each(${categoryIds}))
+        AND NOT EXISTS (SELECT 1 FROM transaction_entries allocated
+          WHERE allocated.transaction_id = "transactions"."id"))
+      OR EXISTS (SELECT 1 FROM transaction_entries allocated
+        WHERE allocated.transaction_id = "transactions"."id"
+          AND allocated.category_id IN (SELECT value FROM json_each(${categoryIds})))
+    )`);
+  } else if (filter?.categoryIds && filter.categoryIds.length > 0) {
     const categoryIds = filter.categoryIds;
     const hasUncategorized = categoryIds.includes("uncategorized");
     const realCategoryIds = categoryIds.filter((id) => id !== "uncategorized");
@@ -1221,6 +1233,18 @@ function hydratePrimaryTransactionRows(
   return applySplitListMetadata(orderedPrimaryItems, context);
 }
 
+/** Project scoped allocations without changing the persisted amount used by edit/inspect. */
+function withCategoryAmounts(items: TransactionListItem[], filter?: TransactionPageFilter): TransactionListItem[] {
+  if (!filter?.categoryAmountScope) return items;
+  const categoryIds = new Set(filter.categoryIds);
+  return items.map((item) => {
+    const allocated = item.splitEntries?.length
+      ? item.splitEntries.reduce((sum, entry) => sum + (categoryIds.has(entry.categoryId) ? entry.amountMinorUnits : 0), 0)
+      : Math.abs(item.amountMinorUnits);
+    return { ...item, categoryAmountMinorUnits: item.amountMinorUnits < 0 ? -allocated : allocated };
+  });
+}
+
 /**
  * Queries one deterministic keyset-paginated page of logical active transactions
  * directly in SQLite, hydrating transfer families, labels, attachments, splits,
@@ -1298,11 +1322,11 @@ export function listTransactionsPage(
 
   const hasMore = fetchedRows.length > limit;
   const pagePrimaryRows = hasMore ? fetchedRows.slice(0, limit) : fetchedRows;
-  const items = hydratePrimaryTransactionRows(
+  const items = withCategoryAmounts(hydratePrimaryTransactionRows(
     pagePrimaryRows,
     { includeBalances: filter?.includeBalances ?? true },
     context,
-  );
+  ), filter);
 
   const lastRow = pagePrimaryRows[pagePrimaryRows.length - 1];
   const nextCursor: TransactionPageCursor | null =
@@ -1351,11 +1375,11 @@ export function listAllFilteredTransactions(
     .orderBy(...getPageOrderClauses(sortBy, sortOrder))
     .all();
 
-  return hydratePrimaryTransactionRows(
+  return withCategoryAmounts(hydratePrimaryTransactionRows(
     primaryRows,
     { includeBalances: filter?.includeBalances ?? true },
     context,
-  );
+  ), filter);
 }
 
 /**

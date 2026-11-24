@@ -14,6 +14,7 @@ import {
 } from "@/utils/currency";
 import { listCategoryBudgetsSync } from "../repositories/category-budgets.repository";
 import { calculateBudgetStatusesBatch } from "../services/calculate-category-budget.service";
+import { getBudgetTransactionScope } from "../services/get-budget-transaction-scope.service";
 import { deleteCategoryBudget as deleteCategoryBudgetService } from "../services/delete-category-budget.service";
 import { saveCategoryBudget as saveCategoryBudgetService } from "../services/save-category-budget.service";
 import { toggleCategoryBudget as toggleCategoryBudgetService } from "../services/toggle-category-budget.service";
@@ -239,7 +240,13 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
     [refresh],
   );
 
+  const getTransactionScope = useCallback(
+    (status: BudgetStatus) => getBudgetTransactionScope(status, budgets),
+    [budgets],
+  );
+
   return {
+    getTransactionScope,
     budgets,
     budgetStatuses,
     summary,

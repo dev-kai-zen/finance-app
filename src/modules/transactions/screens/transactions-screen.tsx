@@ -71,7 +71,7 @@ import {
   type DatePreset,
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
-import { normalizeDateRange } from "../utils/transaction-date-filter";
+import { normalizeDateRange, parseBudgetTransactionScope } from "../utils/transaction-date-filter";
 import { buildTransactionSections } from "../utils/group-transactions-sections";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
@@ -171,7 +171,21 @@ function initialFilterState(
   initialLabelId?: string,
   initialFlow?: "inflow" | "outflow",
   initialExactCategory?: boolean,
+  budgetScope?: string,
 ): TransactionFilterState {
+  if (budgetScope !== undefined) {
+    const scope = parseBudgetTransactionScope(budgetScope);
+    return {
+      ...DEFAULT_TRANSACTION_FILTERS,
+      type: "expense",
+      datePreset: "custom",
+      customDateFrom: scope?.dateFrom ?? null,
+      customDateTo: scope?.dateTo ?? null,
+      categoryIds: scope?.categoryIds ?? [],
+      exactCategory: true,
+      categoryAmountScope: true,
+    };
+  }
   const filterType =
     initialType === "expense" || initialType === "income" || initialType === "transfer"
       ? initialType
@@ -205,6 +219,7 @@ function initialFilterState(
 }
 
 export interface TransactionsScreenProps {
+  initialBudgetScope?: string;
   initialCategoryId?: string;
   initialExactCategory?: boolean;
   initialDatePreset?: string;
@@ -226,6 +241,7 @@ export function TransactionsScreen(props: TransactionsScreenProps = {}) {
 }
 
 function TransactionsScreenContent({
+  initialBudgetScope,
   initialCategoryId,
   initialExactCategory,
   initialDatePreset,
@@ -257,6 +273,7 @@ function TransactionsScreenContent({
       initialAction !== "new" ? initialLabelId : undefined,
       initialAction !== "new" ? initialFlow : undefined,
       initialAction !== "new" ? initialExactCategory : undefined,
+      initialAction !== "new" ? initialBudgetScope : undefined,
     ),
   );
 
@@ -277,6 +294,11 @@ function TransactionsScreenContent({
     loading: categoriesLoading,
     refresh: refreshCategories,
   } = useCategories();
+
+  const categoryNamesById = useMemo(
+    () => new Map(categories.flatMap((category) => [category, ...(category.subcategories ?? [])]).map((category) => [category.id, category.name])),
+    [categories],
+  );
 
   const expandedCategoryIds = useMemo(() => {
     if (!filterState.categoryIds || filterState.categoryIds.length === 0) {
@@ -301,6 +323,7 @@ function TransactionsScreenContent({
   const pageFilter = useMemo<TransactionPageFilter>(() => {
     const dateRange = resolveDateRangeForFilter(filterState);
     return {
+      categoryAmountScope: filterState.categoryAmountScope,
       type: filterState.type,
       flow: filterState.flow,
       accountIds:
@@ -506,7 +529,9 @@ function TransactionsScreenContent({
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useEffect(() => {
-    if (initialAction !== "new" && (initialType || initialFlow)) {
+    if (initialAction !== "new" && initialBudgetScope !== undefined) {
+      setFilterState(initialFilterState(undefined, undefined, undefined, undefined, undefined, undefined, undefined, initialBudgetScope));
+    } else if (initialAction !== "new" && (initialType || initialFlow)) {
       setFilterState(
         initialFilterState(
           initialCategoryId,
@@ -533,8 +558,11 @@ function TransactionsScreenContent({
           initialExactCategory,
         ),
       );
+    } else {
+      setFilterState((previous) => previous.categoryAmountScope ? DEFAULT_TRANSACTION_FILTERS : previous);
     }
   }, [
+    initialBudgetScope,
     initialAccountId,
     initialAction,
     initialCategoryId,
@@ -1096,6 +1124,10 @@ function TransactionsScreenContent({
 
         </View>
 
+        {filterState.categoryAmountScope ? (
+          <Text style={styles.resultsCountText}>{t("transactions.categoryScopeHint")}</Text>
+        ) : null}
+
         {/* Sort & Results Bar */}
         <View style={styles.sortBar}>
           <Text style={styles.resultsCountText}>
@@ -1281,7 +1313,7 @@ function TransactionsScreenContent({
               <Pressable
                 style={styles.activeFilterChip}
                 onPress={() =>
-                  setFilterState((prev) => ({ ...prev, type: "all" }))
+                  setFilterState((prev) => ({ ...prev, type: "all", categoryAmountScope: undefined }))
                 }
                 accessibilityRole="button"
               >
@@ -1319,6 +1351,7 @@ function TransactionsScreenContent({
                 onPress={() =>
                   setFilterState((prev) => ({
                     ...prev,
+                    categoryAmountScope: undefined,
                     datePreset: "all",
                     customDateFrom: null,
                     customDateTo: null,
@@ -1363,14 +1396,10 @@ function TransactionsScreenContent({
             })}
 
             {(filterState.categoryIds ?? []).map((catId) => {
-              const allCats = categories.flatMap((c) => [
-                c,
-                ...(c.subcategories ?? []),
-              ]);
               const catName =
                 catId === "uncategorized"
                   ? t("common.uncategorized")
-                  : allCats.find((c) => c.id === catId)?.name ?? "Category";
+                  : categoryNamesById.get(catId) ?? "Category";
               return (
                 <Pressable
                   key={`cat-${catId}`}
@@ -1382,6 +1411,7 @@ function TransactionsScreenContent({
                         (id) => id !== catId,
                       ),
                       exactCategory: false,
+                      categoryAmountScope: undefined,
                     }))
                   }
                   accessibilityRole="button"
@@ -1713,7 +1743,7 @@ function TransactionsScreenContent({
       <TransactionFilterModal
         accounts={accounts}
         filters={filterState}
-        onApply={(newFilters) => setFilterState(newFilters)}
+        onApply={(newFilters) => setFilterState({ ...newFilters, categoryAmountScope: undefined })}
         onClose={() => setIsFilterModalOpen(false)}
         visible={isFilterModalOpen}
       />

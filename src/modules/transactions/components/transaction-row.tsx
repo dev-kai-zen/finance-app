@@ -282,6 +282,9 @@ export const TransactionRow = memo(function TransactionRow({
     false,
   );
 
+  const categoryShareLabel = transaction.categoryAmountMinorUnits === undefined ? null : t("transactions.categoryShare", {
+    amount: isPrivate ? "••••••" : formatCurrency(transaction.categoryAmountMinorUnits, transaction.accountCurrency, false),
+  });
   const displayAmount = isPrivate ? "••••••" : formattedAmount;
   const displaySourceBalance = isPrivate ? "••••••" : sourceBalance;
 
@@ -359,7 +362,7 @@ export const TransactionRow = memo(function TransactionRow({
         <GestureDetector gesture={panGesture}>
           <Animated.View style={animatedRowStyle}>
             <Pressable
-              accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
+              accessibilityLabel={`${title}, ${formattedAmount}${categoryShareLabel ? `, ${categoryShareLabel}` : ""}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
               accessibilityRole="button"
               onPress={handleRowPress}
               style={({ pressed }) => [
@@ -400,6 +403,9 @@ export const TransactionRow = memo(function TransactionRow({
                   >
                     {displayAmount}
                   </Text>
+                  {categoryShareLabel ? (
+                    <Text numberOfLines={1} style={styles.compactBalanceText}>{categoryShareLabel}</Text>
+                  ) : null}
                   <Text numberOfLines={1} style={styles.compactBalanceText}>
                     {displaySourceBalance}
                   </Text>
@@ -447,7 +453,7 @@ export const TransactionRow = memo(function TransactionRow({
       <GestureDetector gesture={panGesture}>
         <Animated.View style={animatedRowStyle}>
           <Pressable
-            accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
+            accessibilityLabel={`${title}, ${formattedAmount}${categoryShareLabel ? `, ${categoryShareLabel}` : ""}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
             accessibilityRole="button"
             onPress={handleRowPress}
       style={({ pressed }) => [
@@ -498,6 +504,10 @@ export const TransactionRow = memo(function TransactionRow({
           </View>
         </View>
       </View>
+
+      {categoryShareLabel ? (
+        <Text style={styles.detailRight}>{categoryShareLabel}</Text>
+      ) : null}
 
       {isTransfer ? (
         <>

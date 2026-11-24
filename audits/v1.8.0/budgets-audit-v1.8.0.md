@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `c73f893` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — BUD-F01 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
+**Stage:** Remediation in progress — BUD-F01 and BUD-F02 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Existing tests pass, but targeted fixtures confirm warning/card inconsistencies, incorrect rollover previews during date edits, and an incorrect widget amount label. Source tracing also identifies currency input, drill-down, draft preservation, recovery, architecture, localization, and performance gaps.
 
-**Changes made:** Initial pass added this audit only. Follow-up BUD-F01 remediation updates budget form/custom-target currency handling and adds ten regression tests. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
+**Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs and split-share presentation. Both have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -19,7 +19,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | 1. Audit Budgets | Complete | Feature inventory, ownership map, financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Budgets | Partial | Existing suites executed; four database-backed defect probes and one extracted UI-handler probe executed. Additional regression cases specified below. |
 | 3. Review findings and policies | Pending | Agree on rollover history, mixed-frequency summaries, notification behavior, and privacy scope. |
-| 4. Remediate findings | In progress | BUD-F01 implemented and regression-tested; manual verification pending. Other findings remain open. |
+| 4. Remediate findings | In progress | BUD-F01 and BUD-F02 implemented and regression-tested; manual verification pending. Other findings remain open. |
 | 5. Feature sign-off | Pending | Financial/UI parity, failure recovery, localization, and measured device performance. |
 
 ### Evidence used
@@ -29,6 +29,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | Budget summary and hook suites, plus budget walkthrough suite | **13 passed**, zero failures/skips; approximately 7 seconds | Six real SQLite summary/snapshot tests, four simulated hook-lifecycle tests, and three walkthrough step-generation tests. Not a native rendering test. |
 | BUD-F01 form-currency regression suite | **10 passed** after remediation; eight failures before the fix | Executes actual TSX and calculator keypad handlers for PHP/USD/JPY/KWD; checks save payloads, reopened fixtures, custom totals, stable draft currency, and closed-form gating. Native children and persistence callbacks are stubbed; device/database round-trip remains a manual check. |
 | BUD-F01 follow-up combined regression run | **46 passed**, zero failures/skips; approximately 10.2 seconds | Ten new currency cases plus the 36 existing budget/walkthrough and related cases above. TypeScript also passed after the production fix. |
+| BUD-F02 follow-up regression run | **157 passed**, zero failures/skips; approximately 18.6 seconds | All Budgets, Transactions, and Walkthrough suites. Includes 16 BUD-F02 cases and an extended existing 10,000-row fixture; TypeScript passed. Tests cover actual SQLite allocations, period/ownership parity, routes, privacy labels, scope clearing, and CSV fields. Native rendering/FPS remain unmeasured. |
 | Related refund, split, form, widget, and reminder-settings suites | **23 passed**, zero failures/skips; approximately 5.7 seconds | Refund aggregation, split persistence, save guards, daily/biweekly DST boundaries, widget configuration, and reminder settings. Does not establish split-warning or widget financial-display correctness. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Repository-wide compile-time integrity. |
 | Isolated actual-service probes | **Four mismatches reproduced** | Zero target, shared-parent split checks, moving an expense from the previous period, and widget remaining/over direction. Uses Drizzle and in-memory SQLite with the existing migration-backed budget harness. |
@@ -41,6 +42,7 @@ Commands executed from the repository root:
 
 ```powershell
 node --test --test-reporter=spec src/modules/budgets/__tests__/budget-form-currency.test.cjs
+node --test --test-reporter=spec src/modules/transactions/__tests__/budget-drill-down.test.cjs
 node --test --test-reporter=spec src/modules/budgets/__tests__/budgets-summary.test.cjs src/modules/budgets/__tests__/use-budgets.test.cjs src/modules/walkthrough/__tests__/budgets-walkthrough.test.cjs
 node --test --test-concurrency=2 --test-reporter=spec src/modules/transactions/__tests__/category-expense-refunds.test.cjs src/modules/transactions/__tests__/transactions-split.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs src/modules/widgets/__tests__/widgets.test.cjs src/modules/notifications/__tests__/reminder-settings.test.cjs
 npx tsc --noEmit
@@ -124,7 +126,7 @@ flowchart TD
 | Enable rollover | Pro-guarded UI; calculation adds previous base/custom target minus previous spending, with optional deficit. | One-period, not cumulative. Start date only anchors biweekly periods; creation/history policy requires agreement. |
 | Pause / resume | Single local update then hook refresh. Paused cards retain calculations; active totals skip them. | Existing tests protect paused history and child fallback. No need to remove paused-card calculations as a speculative optimization. |
 | Remove | Confirmation calls local delete; FK cascade removes monthly targets. | Screen ignores returned failure and closes edit/confirmation even when delete fails. |
-| View transactions | Navigates with category ID and `datePreset=this_month`. | Wrong date window for six non-monthly frequencies; hierarchy exclusions also differ. |
+| View transactions | Passes the displayed period and exact budget-owned category IDs through a validated scope parameter. | BUD-F02 fixed. Scoped rows expose category shares; daily totals use those shares while inspection/editing retain full transactions. |
 | Type an expense | Indicator memoizes a snapshot by category/date/currency/exclusion, then evaluates amounts in pure JS. | Zero-query amount typing is covered; initial snapshot still queries during render. Refund indicator uses expense semantics. |
 | Save an expense / split | Form checks spending immediately before saving; splits checked line by line. | Shared-budget split totals are missed; zero-target and previous-period edit mismatches reproduced. |
 | Receive threshold notification | Post-commit transaction path invokes notification service without awaiting it. | Month-based deduplication conflicts with non-monthly periods; split transactions with null parent category bypass this path. |
@@ -145,12 +147,12 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-**BUD-F01 is implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
+**BUD-F01 and BUD-F02 are implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | BUD-F01 | High | Input currency/precision differs from stored budget currency | Fixed; 10 regression tests pass; manual check pending |
-| BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Source-confirmed |
+| BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Fixed; automated period/ownership/SQL parity verified; manual check pending |
 | BUD-F03 | High | Split lines bypass a shared budget warning | Executable services + form source |
 | BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Executable |
 | BUD-F05 | Medium | Moving an expense out of the previous period leaves it in rollover preview | Executable |
@@ -187,13 +189,38 @@ flowchart TD
 
 These steps verify native display and actual persistence; they have not been run on a device in this remediation pass. Budgets created with the earlier defect keep their stored values and may need the user to correct their intended amounts manually.
 
-### [BUD-F02] “View transactions” always opens this month and includes separately budgeted children
+### [BUD-F02] “View transactions” always opens this month and includes separately budgeted children — FIX IMPLEMENTED
 
 - **Problem / evidence:** [BudgetsScreen:528](../../src/modules/budgets/screens/budgets-screen.tsx#L528) always sends `datePreset=this_month`, ignoring `status.periodStart` / `periodEnd`. It also omits an expense filter and exclusions for children with their own enabled budgets.
 - **Cause / impact:** On November 15, a daily card covers November 15 but the link includes November 1–30. A parent card excludes separately budgeted children; normal parent-category transaction filtering includes them. The opened records cannot reliably explain the card amount.
 - **Smallest fix:** Pass the actual period and expense/category scope through the existing transaction route/filter contract, adding only missing route inputs. Preserve refund rows and split attribution; a split parent amount may need allocation-aware presentation to explain a partial-category total.
 - **Regression proof:** All eight frequencies, boundary-spanning weeks, parent/child enabled and paused states, fees, refunds, and mixed-category splits. Assert both matching IDs and attributed spending, not just route text.
 - **Performance:** Keep filtering in bounded SQLite queries using the existing paginated feed; do not fetch a full ledger to reconcile in JS.
+
+**Implemented fix — November 24, 2026:** [get-budget-transaction-scope.service.ts](../../src/modules/budgets/services/get-budget-transaction-scope.service.ts) snapshots the card's actual local dates and eligible categories without database reads. Cards and drill-downs share one category-ownership helper. The existing Transactions route remains a thin adapter; the screen validates the scope and initializes exact category, custom date, and expense filters. Invalid scopes resolve to an empty result rather than an all-time feed. Opening another budget link refreshes the snapshot; changing a child's enabled state is reflected when opening a new link from Budgets.
+
+Scoped SQL includes unsplit expenses or matching split allocations, excludes deleted rows and transfer principal, and retains positive expense refunds. Split parents do not match solely through a legacy parent category when none of their allocations belong to the scope. Page results gain a separate signed, account-currency `categoryAmountMinorUnits`; original amounts, balances, split entries, edit/duplicate data, and amount-sort cursors remain intact. Both row layouts and accessibility labels expose a localized **Category share**. A localized hint explains that row amounts are full transactions and daily totals use category shares. CSV retains full original values and appends **Selected Category Amount** only for a scoped export. Clearing filters or navigating to ordinary Transactions removes scoped presentation.
+
+**Automated proof:**
+
+- [budget-drill-down.test.cjs](../../src/modules/transactions/__tests__/budget-drill-down.test.cjs): all eight frequencies, cross-month weeks, child ownership, malformed dates/links, actual navigation callback, route reset/clear, and private share-label formatting.
+- [budgets-summary.test.cjs](../../src/modules/budgets/__tests__/budgets-summary.test.cjs): actual card-versus-exported-share parity across all eight frequencies and both child-budget states, including split allocations and refunds; link generation performs zero SQL.
+- [paginated-transactions.test.cjs](../../src/modules/transactions/__tests__/paginated-transactions.test.cjs): keyset paging, unchanged original amounts/balances, transfer fees, refunds, legacy split parents, exact bounds, CSV shares, and 1,002 selected IDs. The existing 10,000-row test now also verifies scoped pages: 50 returned rows, at most 12 statements, the active-feed index, and no temporary sorting B-tree. The two new SQL cases failed before implementation and pass afterward.
+- All 157 Budgets/Transactions/Walkthrough tests pass. Full TypeScript check passes. Physical-device rendering, touch behavior, and frame timing remain pending.
+
+**Performance:** Scope generation is O(budgets + children) at tap time and adds no query, context provider, or route subscription. Scoped allocation projection reuses hydrated split entries only for the returned page; it adds no SQL statements. Category-chip labels use one memoized Map rather than repeatedly rebuilding the category tree for every selected ID. Category IDs use parameterized JSON membership, avoiding an unbounded list of SQL bind variables; SQLite documents this table-valued lookup in [its JSON reference](https://www.sqlite.org/json1.html#jeach). Query-plan assertions establish bounded/indexed work for the fixtures, not measured 60–120fps on a phone. Ordinary CSV headers and unscoped feed amounts retain their existing behavior.
+
+**Manual verification guide:** Use PHP accounts and budgets, with rollover off, to compare amounts directly. Expenses appear negative in Transactions; a daily net of **−PHP 200** corresponds to **PHP 200 Spent** on the budget card.
+
+1. **Daily dates:** On an unused expense category, create a PHP 1,000 daily budget. Add PHP 200 today and PHP 300 on a different day within the same month. The card shows Spent 200. Its **View transactions** link shows today's expense only; inspect the Custom Dates filter to confirm both dates equal today.
+2. **Parent ownership:** Create a Food expense group with Dining and Groceries children. Add monthly budgets of PHP 5,000 for Food and PHP 2,000 for Groceries. Record PHP 300 Dining and PHP 800 Groceries this month. Food shows Spent 300; its link includes Dining and excludes the separate Groceries expense. Groceries' link shows its own PHP 800.
+3. **Split contribution:** Record one PHP 1,000 split expense: PHP 300 Dining and PHP 700 Groceries. Food now shows Spent 600. Food's link includes the full PHP 1,000 split row with **Category share: −PHP 300**; its day's net uses the PHP 300 contribution. Tap that row: transaction details/edit must still contain the complete PHP 1,000 transaction and both allocations. Check compact and detailed row layouts.
+4. **Refund:** Record a positive PHP 50 expense refund under Dining. Food shows Spent 550. Its link includes the refund with a positive PHP 50 share; if the Dining expenses and refund are on one day, that day's net is −PHP 550. A refund is an expense with a positive sign, not an income record.
+5. **Paused child:** Return to Budgets, pause Groceries' budget, and open Food's link again. Its spending now includes both children: PHP 2,050 for the fixture above. Resume Groceries and reopen Food's link; Food returns to PHP 550. Each new link should agree with the current card.
+6. **Other periods:** Repeat with a weekly budget spanning a month boundary and quarterly/yearly budgets. Custom Dates must match the period printed on each card, rather than always selecting this month.
+7. **Normal navigation/export:** In the scoped list, use **Clear all**: the category-share labels and hint disappear and the normal feed returns. Open ordinary Transactions from navigation and confirm no budget filter remains. Scoped CSV has full transaction amounts plus a Selected Category Amount column; an ordinary export keeps the standard columns.
+
+These manual steps have not yet been executed on a native device. Daily totals retain the existing account-currency/mixed-currency conversion conventions; category-share labels and CSV shares use each transaction's account currency, while budget cards may use a different budget currency. Compare like currencies when checking totals.
 
 ### [BUD-F03] Splits consuming one budget are checked independently
 
@@ -385,7 +412,7 @@ Add focused cases to the existing budget suites and the owning consumers' suites
 
 ## 11. Mandatory pre-change gate for remediation
 
-The initial audit was documentation-only. BUD-F01 remediation answered these four questions before production edits and first reproduced the issue with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
+The initial audit was documentation-only. BUD-F01 and BUD-F02 remediation answered these four questions before production edits and first reproduced issues with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
 
 1. **What is the actual problem?** State the exact incorrect amount/interaction and show a failing regression or the concrete source/executable evidence above. Convert source-only UI scenarios into a focused reproduction before changing behavior.
 2. **Why does the implementation cause it?** Identify the cited function and complete caller path. For split warnings, for example: transaction form loop → independent snapshot checks → same unchanged ledger baseline.
