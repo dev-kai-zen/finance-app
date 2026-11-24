@@ -12,6 +12,7 @@ import {
   findStatement,
   insertStatement,
   insertStatementEntry,
+  listBilledInstallmentIdsForPlans,
   listEntriesForStatements,
   listInstallmentPlansForAccount,
   listInstallmentsForPlans,
@@ -210,15 +211,22 @@ function* reconcileAccount(
     );
   }
 
+  const activePlanIds = plans
+    .filter((plan) => activePlanTransactionIds.has(plan.purchaseTransactionId))
+    .map((plan) => plan.id);
   const installments = listInstallmentsForPlans(
-    plans.filter((plan) => activePlanTransactionIds.has(plan.purchaseTransactionId)).map((plan) => plan.id),
+    activePlanIds,
+    context,
+  );
+  const billedInstallmentIds = listBilledInstallmentIdsForPlans(
+    activePlanIds,
     context,
   );
   const planById = new Map(plans.map((plan) => [plan.id, plan]));
   for (const installment of installments) {
     yield;
     if (installment.scheduledStatementOn > todayOn) continue;
-    if (findEntryForInstallment(installment.id, context)) continue;
+    if (billedInstallmentIds.has(installment.id)) continue;
     const plan = planById.get(installment.planId);
     if (!plan) continue;
     const purchase = transactionById.get(plan.purchaseTransactionId);
@@ -248,6 +256,7 @@ function* reconcileAccount(
       },
       context,
     );
+    billedInstallmentIds.add(installment.id);
   }
 
   let statements = listStatementsForAccount(account.id, context);
@@ -698,9 +707,9 @@ export function reconcileCreditCardBillingInContext(
   today: Date,
   context: DbContext,
 ): void {
-  const cards = getAccountsWithBalances(context).filter(
-    (account) => account.creditCardDetails,
-  );
+  const cards = getAccountsWithBalances(context, {
+    includeManagementFlags: false,
+  }).filter((account) => account.creditCardDetails);
   // Existing callers drain the work synchronously inside their transaction.
   for (const card of cards) {
     const work = reconcileAccount(card, today, context);

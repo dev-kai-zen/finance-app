@@ -191,15 +191,62 @@ export function listInstallmentsForPlans(
   context: DbContext = db,
 ) {
   if (planIds.length === 0) return [];
-  return context
-    .select()
-    .from(creditCardInstallments)
-    .where(inArray(creditCardInstallments.planId, planIds))
-    .orderBy(
-      asc(creditCardInstallments.scheduledStatementOn),
-      asc(creditCardInstallments.installmentNumber),
-    )
-    .all();
+  const installments: Array<typeof creditCardInstallments.$inferSelect> = [];
+  for (let offset = 0; offset < planIds.length; offset += 500) {
+    installments.push(
+      ...context
+        .select()
+        .from(creditCardInstallments)
+        .where(
+          inArray(
+            creditCardInstallments.planId,
+            planIds.slice(offset, offset + 500),
+          ),
+        )
+        .orderBy(
+          asc(creditCardInstallments.scheduledStatementOn),
+          asc(creditCardInstallments.installmentNumber),
+        )
+        .all(),
+    );
+  }
+  if (planIds.length > 500) {
+    installments.sort(
+      (left, right) =>
+        (left.scheduledStatementOn > right.scheduledStatementOn
+          ? 1
+          : left.scheduledStatementOn < right.scheduledStatementOn
+            ? -1
+            : 0) || left.installmentNumber - right.installmentNumber,
+    );
+  }
+  return installments;
+}
+
+export function listBilledInstallmentIdsForPlans(
+  planIds: string[],
+  context: DbContext = db,
+): Set<string> {
+  if (planIds.length === 0) return new Set();
+  const billedIds = new Set<string>();
+  for (let offset = 0; offset < planIds.length; offset += 500) {
+    const chunk = planIds.slice(offset, offset + 500);
+    const rows = context
+      .select({ installmentId: creditCardStatementEntries.installmentId })
+      .from(creditCardStatementEntries)
+      .innerJoin(
+        creditCardInstallments,
+        eq(creditCardStatementEntries.installmentId, creditCardInstallments.id),
+      )
+      .where(inArray(creditCardInstallments.planId, chunk))
+      .all();
+    for (const row of rows) {
+      if (row.installmentId) {
+        billedIds.add(row.installmentId);
+      }
+    }
+  }
+  return billedIds;
 }
 
 export function deleteInstallmentsForPlan(

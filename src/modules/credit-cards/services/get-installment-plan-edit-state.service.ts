@@ -1,9 +1,8 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
-  findEntryForInstallment,
   findInstallmentPlanByTransactionId,
+  listBilledInstallmentIdsForPlans,
   listEntriesForTransaction,
-  listInstallmentsForPlans,
 } from "../repositories/credit-card-billing.repository";
 import type {
   CreditCardInstallmentPlan,
@@ -29,13 +28,11 @@ export function getInstallmentPlanEditState(
     };
   }
 
-  const installments = listInstallmentsForPlans([plan.id], context);
-  let billedInstallmentCount = 0;
-  for (const installment of installments) {
-    if (findEntryForInstallment(installment.id, context)) {
-      billedInstallmentCount += 1;
-    }
-  }
+  const billedInstallmentIds = listBilledInstallmentIdsForPlans(
+    [plan.id],
+    context,
+  );
+  const billedInstallmentCount = billedInstallmentIds.size;
 
   return {
     plan,

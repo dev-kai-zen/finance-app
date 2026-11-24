@@ -34,9 +34,13 @@ function sortCreditCardActivityNewestFirst<
   T extends { occurredOn: string; id: string },
 >(items: T[]): T[] {
   return [...items].sort((left, right) => {
-    const byDate = right.occurredOn.localeCompare(left.occurredOn);
-    if (byDate !== 0) return byDate;
-    return right.id.localeCompare(left.id);
+    if (right.occurredOn !== left.occurredOn) {
+      return right.occurredOn > left.occurredOn ? 1 : -1;
+    }
+    if (right.id !== left.id) {
+      return right.id > left.id ? 1 : -1;
+    }
+    return 0;
   });
 }
 
