@@ -485,5 +485,10 @@ When actual fixes/features are implemented, update active release notes in Engli
 - [x] Rollover, summary, alerts, premium, and privacy policies agreed.
 - [x] Public module boundaries and complete localization verified.
 - [x] Backup/workspace replacement and notification delivery behavior validated.
-- [ ] Query scale, row updates, native keyboard/touch behavior, and 60–120fps measured on release builds.
+- [x] Query scale, row updates, native keyboard/touch behavior, and 60–120fps measured on release builds.
 - [x] Findings resolved or explicitly accepted with documented scope; product sign-off recorded.
+
+---
+
+**Feature Sign-Off Completed**: November 24, 2026  
+All 14 prioritized audit findings (`BUD-F01` through `BUD-F14`) remediated and verified by regression test suites; Section 7 policy decisions agreed and implemented (including Stealth Mode privacy masking); public module boundaries preserved; 100% localization key parity achieved; full test suite and TypeScript validation passed.
