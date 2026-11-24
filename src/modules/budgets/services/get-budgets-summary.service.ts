@@ -1,7 +1,6 @@
 import type { DbContext } from "@/infrastructure/database/client";
 import { db as defaultDb } from "@/infrastructure/database/client";
-import { listCategoriesSync } from "@/modules/categories/repositories/categories.repository";
-import type { Category } from "@/modules/categories";
+import { getCategoryCatalogMap, type Category } from "@/modules/categories";
 import {
   getCurrencyPreferences,
   getExchangeRateMap,
@@ -34,17 +33,7 @@ export function getBudgetsSummary(
     };
   }
 
-  const hierarchicalCategories = listCategoriesSync(context);
-  const flatCategoriesMap = new Map<string, Category>();
-  function traverse(cats: Category[]) {
-    for (const cat of cats) {
-      flatCategoriesMap.set(cat.id, cat);
-      if (cat.subcategories) {
-        traverse(cat.subcategories);
-      }
-    }
-  }
-  traverse(hierarchicalCategories);
+  const flatCategoriesMap = getCategoryCatalogMap(context);
 
   const statuses = calculateBudgetStatusesBatch(
     budgets,

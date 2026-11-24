@@ -164,7 +164,7 @@ flowchart TD
 | BUD-F08 | Medium   | Failure paths hide category errors and discard delete recovery context                   | Resolved; category readiness/error surfaced and retried; delete context preserved on failure; regression tests pass |
 | BUD-F09 | Medium   | Widget labels remaining money as overspending                                            | Resolved; aggregate overspend separated from category alert; signed remaining preserved; regression tests pass |
 | BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Resolved; period-scoped deduplication and dynamic period labels applied; split allocations dispatched; regression tests pass |
-| BUD-F11 | Medium   | Summary service deep-imports the Categories repository                                   | Source-confirmed architecture violation                                                                        |
+| BUD-F11 | Medium   | Summary service deep-imports the Categories repository                                   | Resolved; public getCategoryCatalogMap service introduced; deep repository import eliminated; regression tests pass |
 | BUD-F12 | Medium   | Render-time snapshot queries and unstable row callbacks weaken frame-budget discipline   | Source-confirmed; device cost unmeasured                                                                       |
 | BUD-F13 | Medium   | Core budget UI and period labels bypass localization                                     | Source-confirmed                                                                                               |
 | BUD-F14 | Medium   | Refund live preview predicts extra spending                                              | Source-confirmed                                                                                               |
@@ -337,7 +337,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** Two daily/weekly cycles in one month, one yearly cycle spanning months, sibling categories, split save, failed delivery/retry, and process restart. Stub permissions/scheduler; do not send real notifications in unit tests.
 - **Performance:** Post-commit and non-awaited; group affected budgets and avoid repeated permission/settings/baseline reads.
 
-### [BUD-F11] Cross-module category repository import violates the public boundary
+### [BUD-F11] Cross-module category repository import violates the public boundary — FIX IMPLEMENTED
 
 - **Evidence:** [get-budgets-summary.service.ts:3](../../src/modules/budgets/services/get-budgets-summary.service.ts#L3) imports `@/modules/categories/repositories/categories.repository` directly.
 - **Cause / impact:** Widget-facing summary bypasses the Categories public API and couples Budgets to its persistence implementation. Ordinary transaction spending access correctly uses public Transactions services.

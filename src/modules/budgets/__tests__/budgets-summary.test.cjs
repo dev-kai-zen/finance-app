@@ -259,11 +259,10 @@ test("budgets (P1-13): toggling a budget OFF preserves its displayed spentCents 
   insertTx.run("tx_curr", "acc_1", "cat_dining", "expense", -150000, currMonthMid, currMonthMid, currMonthMid);
 
   const { listCategoryBudgetsSync } = require("../repositories/category-budgets.repository");
-  const { listCategoriesSync } = require("@/modules/categories/repositories/categories.repository");
+  const { getCategoryCatalogMap } = require("@/modules/categories");
 
   const budgets = listCategoryBudgetsSync(db);
-  const categories = listCategoriesSync(db);
-  const flatMap = new Map(categories.map((c) => [c.id, c]));
+  const flatMap = getCategoryCatalogMap(db);
 
   const statuses = calculateBudgetStatusesBatch(budgets, flatMap, now, db);
   assert.equal(statuses.length, 1);
