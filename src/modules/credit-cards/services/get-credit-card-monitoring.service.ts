@@ -45,6 +45,7 @@ export function computeCreditCardAccountMonitoring(
     id: string;
     name: string;
     currencyCode: string;
+    openingBalanceMinorUnits?: number;
     creditCardDetails?: {
       creditLimitMinorUnits: number;
       statementDay: number;
@@ -65,10 +66,16 @@ export function computeCreditCardAccountMonitoring(
   const entries = listEntriesForStatements(
     statements.map((statement) => statement.id),
   );
+  const cycleStatementIds = new Set(
+    statements
+      .filter((statement) => statement.kind === "billing_cycle")
+      .map((statement) => statement.id),
+  );
   const entriesByStatementId = new Map<string, typeof entries>();
   const billedTransactionIds = new Set<string>();
   const installmentBilledByTxId = new Map<string, number>();
   const allocatedCreditsByTxId = new Map<string, number>();
+  let allocatedOpeningCredit = 0;
 
   for (const entry of entries) {
     let bucket = entriesByStatementId.get(entry.statementId);
@@ -93,6 +100,11 @@ export function computeCreditCardAccountMonitoring(
         entry.transactionId,
         (allocatedCreditsByTxId.get(entry.transactionId) ?? 0) - entry.amountMinorUnits,
       );
+    } else if (
+      cycleStatementIds.has(entry.statementId) &&
+      (entry.entryType === "payment" || entry.entryType === "adjustment")
+    ) {
+      allocatedOpeningCredit -= entry.amountMinorUnits;
     }
   }
 
@@ -208,12 +220,18 @@ export function computeCreditCardAccountMonitoring(
   const sortedBilledItems = sortCreditCardActivityNewestFirst(billedItems);
   const sortedUnbilledItems =
     sortCreditCardActivityNewestFirst(unbilledItems);
-  const unallocatedCredits = ledger
+  const unallocatedTransactionCredits = ledger
     .filter((transaction) => transaction.amountMinorUnits > 0)
     .reduce((sum, transaction) => {
       const allocated = Math.max(0, allocatedCreditsByTxId.get(transaction.id) ?? 0);
       return sum + Math.max(0, transaction.amountMinorUnits - allocated);
     }, 0);
+  const openingCredit = Math.max(0, account.openingBalanceMinorUnits ?? 0);
+  const unallocatedOpeningCredit = Math.max(
+    0,
+    openingCredit - Math.max(0, allocatedOpeningCredit),
+  );
+  const unallocatedCredits = unallocatedTransactionCredits + unallocatedOpeningCredit;
   const billed = calculateCreditCardBilled(statementSummaries);
   const unbilled = calculateCreditCardUnbilled(
     sortedUnbilledItems,

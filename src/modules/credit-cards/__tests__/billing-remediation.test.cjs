@@ -1232,5 +1232,142 @@ test("CC-F04: multiple reconciliation runs across mixed opening-debt payments wr
   } finally { sqlite.close(); }
 });
 
+test("CC-F05: positive opening credit offsets unbilled purchases and maintains ledger parity", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 100000 WHERE id = 'card'");
+    f.charge("unbilled", -200000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling();
+    const parity = assertCardLedgerParity();
+    assert.equal(parity.billed, 0);
+    assert.equal(parity.unbilled, 100000);
+    assert.equal(parity.outstanding, 100000);
+    assert.equal(parity.available, 4900000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F05: positive opening credit allocates to billed cycle statements in oldest-first order", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 100000 WHERE id = 'card'");
+    f.charge("billed", -200000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'billed'").run(new Date(2026, 10, 5, 12).getTime());
+    reconcileCreditCardBilling();
+    const parity = assertCardLedgerParity();
+    assert.equal(parity.billed, 100000);
+    assert.equal(parity.unbilled, 0);
+    assert.equal(parity.outstanding, 100000);
+    assert.equal(parity.available, 4900000);
+    assert.equal(parity.statements[0].issued, 200000);
+    assert.equal(parity.statements[0].remaining, 100000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F05: surplus opening credit covers all charges with zero outstanding debt and capped available limit", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 100000 WHERE id = 'card'");
+    f.charge("billed", -40000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'billed'").run(new Date(2026, 10, 5, 12).getTime());
+    f.charge("unbilled", -30000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling();
+    const parity = assertCardLedgerParity();
+    assert.equal(parity.billed, 0);
+    assert.equal(parity.unbilled, 0);
+    assert.equal(parity.outstanding, 0);
+    assert.equal(parity.available, 5000000);
+    assert.equal(parity.statements[0].issued, 40000);
+    assert.equal(parity.statements[0].remaining, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F05: positive opening credit offsets unbilled installment principal and subsequent bills", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 8, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 100000 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    // Before first bill: principal 120,000 - opening credit 100,000 = 20,000 unbilled debt
+    const before = assertCardLedgerParity();
+    assert.equal(before.billed, 0);
+    assert.equal(before.unbilled, 20000);
+    assert.equal(before.outstanding, 20000);
+
+    // After first cutoff (Nov 21): 40,000 billed, fully covered by opening credit
+    t.mock.timers.setTime(new Date(2026, 10, 21, 12).getTime());
+    reconcileCreditCardBilling();
+    const after = assertCardLedgerParity();
+    assert.equal(after.billed, 0);
+    assert.equal(after.unbilled, 20000);
+    assert.equal(after.outstanding, 20000);
+    assert.equal(after.statements[0].issued, 40000);
+    assert.equal(after.statements[0].remaining, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F05: opening credit and subsequent payments apply chronologically to multiple statements", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 50000 WHERE id = 'card'");
+    f.charge("oct_billed", -100000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'oct_billed'").run(new Date(2026, 9, 5, 12).getTime());
+    f.charge("payment", 150000, "transfer");
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'payment'").run(new Date(2026, 10, 2, 12).getTime());
+    f.charge("nov_billed", -100000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'nov_billed'").run(new Date(2026, 10, 5, 12).getTime());
+    reconcileCreditCardBilling();
+    const parity = assertCardLedgerParity();
+    assert.equal(parity.billed, 0);
+    assert.equal(parity.unbilled, 0);
+    assert.equal(parity.outstanding, 0);
+    assert.equal(parity.available, 5000000);
+    assert.equal(parity.statements[0].remaining, 0);
+    assert.equal(parity.statements[1].remaining, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F05: editing positive opening balance adjusts allocations and converges with zero phantom writes", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 100000 WHERE id = 'card'");
+    f.charge("billed", -200000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'billed'").run(new Date(2026, 10, 5, 12).getTime());
+    reconcileCreditCardBilling();
+    const initial = assertCardLedgerParity();
+    assert.equal(initial.billed, 100000);
+    assert.equal(initial.outstanding, 100000);
+
+    // Decrease opening balance: 100,000 -> 40,000 (debt increases to 160,000)
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 40000 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const decreased = assertCardLedgerParity();
+    assert.equal(decreased.billed, 160000);
+    assert.equal(decreased.outstanding, 160000);
+
+    // Clear opening balance: 40,000 -> 0 (debt increases to full 200,000)
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 0 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const cleared = assertCardLedgerParity();
+    assert.equal(cleared.billed, 200000);
+    assert.equal(cleared.outstanding, 200000);
+
+    // Repeated runs write zero queries
+    for (let run = 0; run < 10; run++) {
+      queries = [];
+      reconcileCreditCardBilling();
+      assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)), `Run ${run + 1} must write nothing`);
+    }
+    assert.deepEqual(assertCardLedgerParity(), cleared);
+  } finally { sqlite.close(); }
+});
+
+
 
 

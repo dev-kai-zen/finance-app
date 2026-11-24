@@ -453,17 +453,59 @@ function* reconcileAccount(
   statements.sort((left, right) =>
     left.statementOn.localeCompare(right.statementOn) || left.id.localeCompare(right.id),
   );
-  const creditTransactions = activeTransactions
-    .filter((transaction) => transaction.amountMinorUnits > 0)
-    .sort((left, right) =>
-      left.occurredAt.getTime() - right.occurredAt.getTime() ||
-      left.createdAt.getTime() - right.createdAt.getTime() ||
-      left.id.localeCompare(right.id),
-    );
-  const creditIds = new Set(creditTransactions.map((transaction) => transaction.id));
+  const openingCredit = Math.max(0, account.openingBalanceMinorUnits);
+  const openingDate = account.openingBalanceAt ?? new Date(0);
+  const OPENING_CREDIT_KEY = "__opening_credit__";
+
+  type CreditSource = {
+    key: string;
+    transactionId: string | null;
+    amountMinorUnits: number;
+    occurredAt: Date;
+    createdAt: Date;
+    type: "payment" | "refund";
+    name: string;
+  };
+
+  const creditSources: CreditSource[] = [];
+  if (openingCredit > 0) {
+    creditSources.push({
+      key: OPENING_CREDIT_KEY,
+      transactionId: null,
+      amountMinorUnits: openingCredit,
+      occurredAt: openingDate,
+      createdAt: openingDate,
+      type: "payment",
+      name: "Opening balance credit",
+    });
+  }
+  for (const tx of activeTransactions.filter((t) => t.amountMinorUnits > 0)) {
+    creditSources.push({
+      key: tx.id,
+      transactionId: tx.id,
+      amountMinorUnits: tx.amountMinorUnits,
+      occurredAt: tx.occurredAt,
+      createdAt: tx.createdAt,
+      type: tx.type === "transfer" ? "payment" : "refund",
+      name: tx.name ?? (tx.type === "transfer" ? "Card payment" : "Card credit"),
+    });
+  }
+  creditSources.sort((left, right) =>
+    left.occurredAt.getTime() - right.occurredAt.getTime() ||
+    left.createdAt.getTime() - right.createdAt.getTime() ||
+    left.key.localeCompare(right.key),
+  );
+
+  const cycleStatementIds = new Set(
+    statements.filter((statement) => statement.kind === "billing_cycle").map((statement) => statement.id),
+  );
+  const creditIds = new Set(creditSources.map((source) => source.key));
   for (const entry of entries) {
     if (entry.transactionId && (entry.entryType === "payment" || entry.entryType === "refund")) {
       creditIds.add(entry.transactionId);
+    }
+    if (!entry.transactionId && cycleStatementIds.has(entry.statementId) && (entry.entryType === "payment" || entry.entryType === "adjustment")) {
+      creditIds.add(OPENING_CREDIT_KEY);
     }
   }
   const remainingByStatementId = new Map<string, number>();
@@ -475,30 +517,38 @@ function* reconcileAccount(
       entry.statementId,
       (remainingByStatementId.get(entry.statementId) ?? 0) + entry.amountMinorUnits,
     );
-    if (!entry.transactionId || !creditIds.has(entry.transactionId)) {
+    const isCreditEntry =
+      (entry.transactionId && creditIds.has(entry.transactionId)) ||
+      (!entry.transactionId && cycleStatementIds.has(entry.statementId) && (entry.entryType === "payment" || entry.entryType === "adjustment"));
+    if (!isCreditEntry) {
       chargesByStatementId.set(entry.statementId,
         (chargesByStatementId.get(entry.statementId) ?? 0) + entry.amountMinorUnits);
     }
   }
 
-  const allocationsByTransaction = new Map<
+  const allocationsByCreditKey = new Map<
     string,
     Map<string, { amount: number; lastEntryId: string }>
   >();
-  entriesByTransaction.clear();
+  const entriesByCreditKey = new Map<string, typeof entries>();
   for (const entry of entries) {
-    if (!entry.transactionId) continue;
-    const group = entriesByTransaction.get(entry.transactionId) ?? [];
+    const key = entry.transactionId ?? (cycleStatementIds.has(entry.statementId) ? OPENING_CREDIT_KEY : null);
+    if (!key) continue;
+    const group = entriesByCreditKey.get(key) ?? [];
     group.push(entry);
-    entriesByTransaction.set(entry.transactionId, group);
-    if (creditIds.has(entry.transactionId)) {
-      const allocations = allocationsByTransaction.get(entry.transactionId) ??
+    entriesByCreditKey.set(key, group);
+    const isCredit =
+      key === OPENING_CREDIT_KEY
+        ? (entry.entryType === "payment" || entry.entryType === "adjustment")
+        : creditIds.has(key);
+    if (isCredit) {
+      const allocations = allocationsByCreditKey.get(key) ??
         new Map<string, { amount: number; lastEntryId: string }>();
       const allocation = allocations.get(entry.statementId) ?? { amount: 0, lastEntryId: entry.id };
       allocation.amount -= entry.amountMinorUnits;
       allocation.lastEntryId = entry.id;
       allocations.set(entry.statementId, allocation);
-      allocationsByTransaction.set(entry.transactionId, allocations);
+      allocationsByCreditKey.set(key, allocations);
     }
   }
 
@@ -508,9 +558,9 @@ function* reconcileAccount(
     [statement.id, Math.max(0, chargesByStatementId.get(statement.id) ?? 0)],
   ));
   let targetStatementIndex = 0;
-  for (const transaction of creditTransactions) {
+  for (const source of creditSources) {
     yield;
-    let available = transaction.amountMinorUnits;
+    let available = source.amountMinorUnits;
     const targets = new Map<string, number>();
     while (available > 0 && targetStatementIndex < statements.length) {
       yield;
@@ -526,46 +576,51 @@ function* reconcileAccount(
       available -= applied;
       if (remaining === applied) targetStatementIndex++;
     }
-    targetAllocations.set(transaction.id, targets);
+    targetAllocations.set(source.key, targets);
   }
 
   // Release only allocation differences; original payment/refund entries stay intact.
-  for (const [transactionId, allocations] of allocationsByTransaction) {
+  for (const [key, allocations] of allocationsByCreditKey) {
     for (const [statementId, allocation] of allocations) {
       yield;
-      const target = targetAllocations.get(transactionId)?.get(statementId) ?? 0;
+      const target = targetAllocations.get(key)?.get(statementId) ?? 0;
       const release = allocation.amount - target;
       if (release <= 0) continue;
+      const txId = key === OPENING_CREDIT_KEY ? null : key;
       const adjustment: (typeof entries)[number] = {
         id: newCreditCardBillingId(context),
         statementId,
-        transactionId,
+        transactionId: txId,
         installmentId: null,
         entryType: "adjustment",
         amountMinorUnits: release,
-        descriptionSnapshot: "Credit allocation adjusted",
+        descriptionSnapshot: key === OPENING_CREDIT_KEY
+          ? "Opening credit allocation adjusted"
+          : "Credit allocation adjusted",
         occurredOnSnapshot: todayOn,
         reversesEntryId: allocation.lastEntryId,
         createdAt: new Date(),
       };
       insertStatementEntry(adjustment, context);
-      entriesByTransaction.get(transactionId)!.push(adjustment);
+      const group = entriesByCreditKey.get(key) ?? [];
+      group.push(adjustment);
+      entriesByCreditKey.set(key, group);
       remainingByStatementId.set(statementId,
         (remainingByStatementId.get(statementId) ?? 0) + release);
     }
   }
 
   let statementIndex = 0;
-  for (const transaction of creditTransactions) {
+  for (const source of creditSources) {
     yield;
     const allocated = Math.max(
       0,
-      (entriesByTransaction.get(transaction.id) ?? []).reduce(
+      (entriesByCreditKey.get(source.key) ?? []).reduce(
         (sum, entry) => sum - entry.amountMinorUnits,
         0,
       ),
     );
-    let available = transaction.amountMinorUnits - allocated;
+    let available = source.amountMinorUnits - allocated;
     if (available <= 0) continue;
     while (available > 0 && statementIndex < statements.length) {
       yield;
@@ -583,14 +638,12 @@ function* reconcileAccount(
         {
           id: newCreditCardBillingId(context),
           statementId: statement.id,
-          transactionId: transaction.id,
+          transactionId: source.transactionId,
           installmentId: null,
-          entryType: transaction.type === "transfer" ? "payment" : "refund",
+          entryType: source.type,
           amountMinorUnits: -applied,
-          descriptionSnapshot:
-            transaction.name ??
-            (transaction.type === "transfer" ? "Card payment" : "Card credit"),
-          occurredOnSnapshot: toCalendarDate(transaction.occurredAt),
+          descriptionSnapshot: source.name,
+          occurredOnSnapshot: toCalendarDate(source.occurredAt),
           reversesEntryId: null,
           createdAt: new Date(),
         },
@@ -616,8 +669,11 @@ function* reconcileAccount(
   for (const entry of entries) {
     yield;
     if (entry.entryType === "payment" || entry.entryType === "refund") continue;
-    if (entry.entryType === "adjustment" && entry.transactionId &&
-        creditTransactionIds.has(entry.transactionId)) continue;
+    const isCreditAdjustment = entry.entryType === "adjustment" && (
+      (entry.transactionId && creditTransactionIds.has(entry.transactionId)) ||
+      (!entry.transactionId && cycleStatementIds.has(entry.statementId))
+    );
+    if (isCreditAdjustment) continue;
     issuedByStatement.set(entry.statementId,
       (issuedByStatement.get(entry.statementId) ?? 0) + entry.amountMinorUnits);
   }
