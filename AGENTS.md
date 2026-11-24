@@ -402,6 +402,7 @@ When modifying this project, AI agents must:
 14. **Version History & Semantic Versioning Rule**: Follow the Version History and Semantic Versioning (`MAJOR.MINOR.PATCH`) guidelines in Section 18 when updating or adding release notes. Whenever a new feature (`MINOR`), bug fix/polish (`PATCH`), or breaking change (`MAJOR`) is implemented, proactively ask the user whether to bump the version across `package.json`, `app.json`, `android/app/build.gradle`, and `RELEASE_NOTES`.
 15. **Mandatory Performance Assessment & 60–120fps Standard**: Every new feature, refactor, bug fix, or architectural/thought discussion ("asking for thoughts") must explicitly evaluate runtime performance impact and strictly follow the 60–120fps engineering rules in Section 19.
 16. **Mandatory Pre-Change 4-Question Gate**: Before changing any production code (especially during audits, bug fixes, or refactors), AI agents must explicitly answer the four mandatory pre-change questions in Section 20 to prevent unnecessary code sprawl and maintain full codebase clarity.
+17. **No Auto-Commits Without Explicit Instruction**: AI agents must never automatically create git commits (`git commit`) unless the user explicitly instructs them to do so. Always keep changes in the working tree, report what was modified, run validations, and wait for the user's explicit instruction before committing.
 
 ---
 
