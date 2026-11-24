@@ -28,8 +28,15 @@ function createHarness({ categoriesLoading = false } = {}) {
   const events = new Set();
   let focusCallback, activeFocus, cleanup;
   let focused = true, unmounted = false;
-  let spent = 100000, reads = 0, calculations = 0, failRead = false;
-  const categoryState = { categories: [{ id: "food" }], loading: categoriesLoading };
+  let spent = 100000, reads = 0, calculations = 0, failRead = false, failDelete = false;
+  let categoryRefreshes = 0;
+  const categoryState = {
+    categories: [{ id: "food" }],
+    loading: categoriesLoading,
+    error: null,
+    refresh() { categoryRefreshes++; return Promise.resolve(); },
+    clearError() { categoryState.error = null; },
+  };
   const rows = [{ id: "budget", categoryId: "food", isEnabled: true, currencyCode: "PHP" }];
   const same = (a, b) => a && a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
   const react = {
@@ -86,7 +93,9 @@ function createHarness({ categoriesLoading = false } = {}) {
     } },
     "../services/save-category-budget.service": { saveCategoryBudget() {} },
     "../services/toggle-category-budget.service": { toggleCategoryBudget() {} },
-    "../services/delete-category-budget.service": { deleteCategoryBudget() {} },
+    "../services/delete-category-budget.service": { deleteCategoryBudget() {
+      if (failDelete) throw new Error("Failed to delete budget from database.");
+    } },
   });
   return {
     render(date) {
@@ -106,10 +115,12 @@ function createHarness({ categoriesLoading = false } = {}) {
     unmount() { this.blur(); unmounted = true; },
     set spent(value) { spent = value; },
     set failRead(value) { failRead = value; },
+    set failDelete(value) { failDelete = value; },
     get reads() { return reads; },
     get calculations() { return calculations; },
     get pending() { return scheduled.size; },
     get listeners() { return events.size; },
+    get categoryRefreshes() { return categoryRefreshes; },
     categoryState,
     rows,
   };
@@ -200,5 +211,43 @@ test("budgets (P2-03): category readiness and stable date values avoid duplicate
     assert.equal(h.pending, 1);
     h.flush(); await save;
     assert.equal(h.reads, 2, "Saving uses the same refresh pipeline");
+  } finally { h.unmount(); }
+});
+
+test("BUD-F08: category load errors propagate and coordinated refresh retries categories", async () => {
+  const h = createHarness();
+  try {
+    h.categoryState.categories = [];
+    h.categoryState.error = "Categories failed to load";
+    let state = h.render();
+    assert.equal(state.error, "Categories failed to load");
+    const initialRefreshes = h.categoryRefreshes;
+
+    // Call refresh() on useBudgets: it should retry categories
+    await state.refresh();
+    assert.equal(h.categoryRefreshes, initialRefreshes + 1);
+
+    // After retry succeeds:
+    h.categoryState.categories = [{ id: "food" }];
+    h.categoryState.error = null;
+    h.render();
+    h.flush();
+    state = h.render();
+    assert.equal(state.error, null);
+    assert.equal(state.summary.activeCount, 1);
+  } finally { h.unmount(); }
+});
+
+test("BUD-F08: delete failures preserve recovery state and return false", async () => {
+  const h = createHarness();
+  try {
+    h.render();
+    h.flush();
+    h.failDelete = true;
+    const state = h.render();
+    const success = await state.deleteBudget("b-1");
+    assert.equal(success, false, "Delete returns false on failure");
+    const afterState = h.render();
+    assert.equal(afterState.error, "Failed to delete budget from database.");
   } finally { h.unmount(); }
 });

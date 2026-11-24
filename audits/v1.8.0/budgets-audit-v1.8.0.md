@@ -161,7 +161,7 @@ flowchart TD
 | BUD-F05 | Medium   | Moving an expense out of the previous period leaves it in rollover preview               | Resolved; edit exclusion applied to previous-period spending query; regression tests pass                      |
 | BUD-F06 | Medium   | Background refresh resets an open form draft                                             | Resolved; draft state session-initialized; supporting data refresh preserves form state; regression tests pass |
 | BUD-F07 | Medium   | Apply-all discards other-year custom targets                                             | Resolved; other-year overrides preserved on apply-all; regression tests pass                                   |
-| BUD-F08 | Medium   | Failure paths hide category errors and discard delete recovery context                   | Source-confirmed                                                                                               |
+| BUD-F08 | Medium   | Failure paths hide category errors and discard delete recovery context                   | Resolved; category readiness/error surfaced and retried; delete context preserved on failure; regression tests pass |
 | BUD-F09 | Medium   | Widget labels remaining money as overspending                                            | Executable summary + widget source                                                                             |
 | BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Source-confirmed                                                                                               |
 | BUD-F11 | Medium   | Summary service deep-imports the Categories repository                                   | Source-confirmed architecture violation                                                                        |
@@ -313,7 +313,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** Carry at least two years of overrides, apply defaults to one year, save/reload, and verify untouched years and January's previous-December target.
 - **Performance:** One O(number of targets) filter plus twelve replacements; no extra read.
 
-### [BUD-F08] Load/delete failures lose useful recovery state
+### [BUD-F08] Load/delete failures lose useful recovery state — FIX IMPLEMENTED
 
 - **Category-load path:** [useBudgets:90](../../src/modules/budgets/hooks/use-budgets.ts#L90) takes only categories/loading from `useCategories`, dropping its error. A failed initial category read can leave persisted budgets with no statuses and zero totals, without surfacing the actual failure. Budget `refresh` also does not retry the category read.
 - **Delete path:** [handleConfirmDelete:307](../../src/modules/budgets/screens/budgets-screen.tsx#L307) ignores `deleteBudget`'s boolean and closes both confirmation and form even when the write failed. The error host exists, but edit/retry context is discarded.

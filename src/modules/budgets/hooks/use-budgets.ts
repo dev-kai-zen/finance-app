@@ -88,7 +88,13 @@ function summarizeBudgetStatuses(statuses: BudgetStatus[]): BudgetsSummary {
 export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean }) {
   const skipQuery = options?.skipQuery ?? false;
   const referenceDateMs = referenceDate?.getTime();
-  const { categories, loading: categoriesLoading } = useCategories({ skipQuery });
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    refresh: refreshCategories,
+    clearError: clearCategoriesError,
+  } = useCategories({ skipQuery });
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -98,7 +104,10 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
   const focusedRef = useRef(false);
   const requestIdRef = useRef(0);
   const cancelPendingRef = useRef<(() => void) | null>(null);
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => {
+    setError(null);
+    clearCategoriesError();
+  }, [clearCategoriesError]);
 
   // Flatten categories map for quick category lookup
   const flatCategoriesMap = useMemo(() => {
@@ -124,9 +133,12 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
   const refresh = useCallback((): Promise<void> => {
     cancelPending();
     if (skipQuery || !focusedRef.current || categoriesLoading) return Promise.resolve();
+    if (categoriesError) {
+      return refreshCategories();
+    }
     const requestId = requestIdRef.current;
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       const cancelQuery = runDeferredSyncQuery(
         { hasCachedResult: false, setLoading },
         () => {
@@ -164,7 +176,7 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
         resolve();
       };
     });
-  }, [cancelPending, categoriesLoading, flatCategoriesMap, referenceDateMs, skipQuery]);
+  }, [cancelPending, categoriesError, categoriesLoading, flatCategoriesMap, referenceDateMs, refreshCategories, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
@@ -253,7 +265,7 @@ export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean
     categories,
     loading: loading || categoriesLoading,
     saving,
-    error,
+    error: error || categoriesError,
     clearError,
     refresh,
     saveBudget,

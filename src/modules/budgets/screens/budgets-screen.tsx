@@ -307,10 +307,12 @@ function BudgetsScreenContent({
 
   const handleConfirmDelete = async () => {
     if (budgetToDelete) {
-      await deleteBudget(budgetToDelete);
+      const success = await deleteBudget(budgetToDelete);
       setBudgetToDelete(null);
-      setIsFormOpen(false);
-      setBudgetToEdit(null);
+      if (success) {
+        setIsFormOpen(false);
+        setBudgetToEdit(null);
+      }
     }
   };
 
