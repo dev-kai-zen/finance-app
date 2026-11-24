@@ -313,3 +313,36 @@ test("BUD-F06: background supporting data refresh preserves unsaved form changes
   assert.equal(hNew.saved[0].amountMinorUnits, 800000);
   hNew.unmount();
 });
+
+test("BUD-F07: apply-all preserves overrides belonging to other years", () => {
+  let updatedTargets = null;
+  const props = {
+    year: 2026,
+    currencyCode: "PHP",
+    baseAmountCents: 600000,
+    monthlyTargets: [
+      { year: 2025, month: 12, amountMinorUnits: 1000000 },
+      { year: 2027, month: 1, amountMinorUnits: 700000 },
+      { year: 2026, month: 3, amountMinorUnits: 800000 },
+    ],
+    onChange: targets => { updatedTargets = targets; },
+  };
+  const e = editor(props);
+  const tree = e.render();
+  const applyAllBtn = find(tree, node => node.props?.onPress && find(node, child => child?.props?.children === "Apply default to all"));
+  assert.ok(applyAllBtn, "Apply all button must exist");
+  applyAllBtn.props.onPress();
+
+  assert.ok(updatedTargets, "onChange must be called");
+  // Without fix: updatedTargets has length 12 (2025 and 2027 overrides lost!).
+  // With fix: updatedTargets has length 14 (two other-year overrides + twelve 2026 entries).
+  const dec2025 = updatedTargets.find(t => t.year === 2025 && t.month === 12);
+  const jan2027 = updatedTargets.find(t => t.year === 2027 && t.month === 1);
+  assert.ok(dec2025, "December 2025 target must be preserved");
+  assert.equal(dec2025.amountMinorUnits, 1000000);
+  assert.ok(jan2027, "January 2027 target must be preserved");
+  assert.equal(jan2027.amountMinorUnits, 700000);
+  assert.equal(updatedTargets.filter(t => t.year === 2026).length, 12);
+  assert.ok(updatedTargets.filter(t => t.year === 2026).every(t => t.amountMinorUnits === 600000));
+  e.unmount();
+});

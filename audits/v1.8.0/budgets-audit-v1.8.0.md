@@ -160,7 +160,7 @@ flowchart TD
 | BUD-F04 | Medium   | Zero effective targets suppress over-budget checks                                       | Fixed; seven regression cases pass; manual check pending                                                       |
 | BUD-F05 | Medium   | Moving an expense out of the previous period leaves it in rollover preview               | Resolved; edit exclusion applied to previous-period spending query; regression tests pass                      |
 | BUD-F06 | Medium   | Background refresh resets an open form draft                                             | Resolved; draft state session-initialized; supporting data refresh preserves form state; regression tests pass |
-| BUD-F07 | Medium   | Apply-all discards other-year custom targets                                             | Executable handler + persistence source                                                                        |
+| BUD-F07 | Medium   | Apply-all discards other-year custom targets                                             | Resolved; other-year overrides preserved on apply-all; regression tests pass                                   |
 | BUD-F08 | Medium   | Failure paths hide category errors and discard delete recovery context                   | Source-confirmed                                                                                               |
 | BUD-F09 | Medium   | Widget labels remaining money as overspending                                            | Executable summary + widget source                                                                             |
 | BUD-F10 | Medium   | Notification identity uses months instead of budget periods; splits skip delivery checks | Source-confirmed                                                                                               |
@@ -305,7 +305,7 @@ The existing notification deduplication key and post-commit dispatch remain unch
 - **Regression proof:** Edit/new drafts survive transaction refresh, category rename, and supporting-array identity changes. Reopening or selecting another budget resets correctly; dirty-close protection remains accurate.
 - **Performance:** Reduces redundant state updates and render work; no database changes.
 
-### [BUD-F07] Apply-all removes overrides belonging to other years
+### [BUD-F07] Apply-all removes overrides belonging to other years — FIX IMPLEMENTED
 
 - **Problem / reproduction:** Execute current [handleApplyBaseToAll:62](../../src/modules/budgets/components/custom-monthly-editor.tsx#L62) in the 2026 editor with a stored December 2025 override. Output contains exactly twelve 2026 entries and **no 2025 entry**.
 - **Cause / impact:** Handler calls `onChange(all12)` instead of preserving other-year entries. Save repository deletes all existing targets and inserts the submitted array at [lines 234–253](../../src/modules/budgets/repositories/category-budgets.repository.ts#L234). Saving can therefore alter historical targets and January rollover.

@@ -62,11 +62,12 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
   };
 
   const handleApplyBaseToAll = () => {
+    const otherYears = monthlyTargets.filter((t) => t.year !== year);
     const all12: MonthlyTargetInput[] = [];
     for (let m = 1; m <= 12; m++) {
       all12.push({ year, month: m, amountMinorUnits: baseAmountCents });
     }
-    onChange(all12);
+    onChange([...otherYears, ...all12]);
   };
 
   let yearTotalCents = 0;
@@ -165,6 +166,7 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
       marginTop: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
       padding: theme.spacing.md,
     },
     header: {
