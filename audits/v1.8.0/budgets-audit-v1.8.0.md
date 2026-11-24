@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `c73f893` (clean working tree before this audit).
 
-**Stage:** 1 — Source audit complete; baseline tests and targeted executable validation complete. Full regression expansion, remediation, and native validation remain pending.
+**Stage:** Remediation in progress — BUD-F01 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Existing tests pass, but targeted fixtures confirm warning/card inconsistencies, incorrect rollover previews during date edits, and an incorrect widget amount label. Source tracing also identifies currency input, drill-down, draft preservation, recovery, architecture, localization, and performance gaps.
 
-**Changes made:** Added this audit only. No application code, migrations, tests, versions, or release notes changed. Suggested fixes below are proposals, not completed remediation.
+**Changes made:** Initial pass added this audit only. Follow-up BUD-F01 remediation updates budget form/custom-target currency handling and adds ten regression tests. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -19,7 +19,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 | 1. Audit Budgets | Complete | Feature inventory, ownership map, financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Budgets | Partial | Existing suites executed; four database-backed defect probes and one extracted UI-handler probe executed. Additional regression cases specified below. |
 | 3. Review findings and policies | Pending | Agree on rollover history, mixed-frequency summaries, notification behavior, and privacy scope. |
-| 4. Remediate findings | Not started | Surgical fixes with regression evidence and the Section 20 investigation gate. |
+| 4. Remediate findings | In progress | BUD-F01 implemented and regression-tested; manual verification pending. Other findings remain open. |
 | 5. Feature sign-off | Pending | Financial/UI parity, failure recovery, localization, and measured device performance. |
 
 ### Evidence used
@@ -27,6 +27,8 @@ This follows the inventory, ownership, action review, findings, performance, and
 | Check | Result in this pass | What it establishes / limits |
 | --- | --- | --- |
 | Budget summary and hook suites, plus budget walkthrough suite | **13 passed**, zero failures/skips; approximately 7 seconds | Six real SQLite summary/snapshot tests, four simulated hook-lifecycle tests, and three walkthrough step-generation tests. Not a native rendering test. |
+| BUD-F01 form-currency regression suite | **10 passed** after remediation; eight failures before the fix | Executes actual TSX and calculator keypad handlers for PHP/USD/JPY/KWD; checks save payloads, reopened fixtures, custom totals, stable draft currency, and closed-form gating. Native children and persistence callbacks are stubbed; device/database round-trip remains a manual check. |
+| BUD-F01 follow-up combined regression run | **46 passed**, zero failures/skips; approximately 10.2 seconds | Ten new currency cases plus the 36 existing budget/walkthrough and related cases above. TypeScript also passed after the production fix. |
 | Related refund, split, form, widget, and reminder-settings suites | **23 passed**, zero failures/skips; approximately 5.7 seconds | Refund aggregation, split persistence, save guards, daily/biweekly DST boundaries, widget configuration, and reminder settings. Does not establish split-warning or widget financial-display correctness. |
 | `npx tsc --noEmit` | **Passed, exit 0** | Repository-wide compile-time integrity. |
 | Isolated actual-service probes | **Four mismatches reproduced** | Zero target, shared-parent split checks, moving an expense from the previous period, and widget remaining/over direction. Uses Drizzle and in-memory SQLite with the existing migration-backed budget harness. |
@@ -38,6 +40,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 Commands executed from the repository root:
 
 ```powershell
+node --test --test-reporter=spec src/modules/budgets/__tests__/budget-form-currency.test.cjs
 node --test --test-reporter=spec src/modules/budgets/__tests__/budgets-summary.test.cjs src/modules/budgets/__tests__/use-budgets.test.cjs src/modules/walkthrough/__tests__/budgets-walkthrough.test.cjs
 node --test --test-concurrency=2 --test-reporter=spec src/modules/transactions/__tests__/category-expense-refunds.test.cjs src/modules/transactions/__tests__/transactions-split.test.cjs src/modules/transactions/__tests__/form-integrity.test.cjs src/modules/widgets/__tests__/widgets.test.cjs src/modules/notifications/__tests__/reminder-settings.test.cjs
 npx tsc --noEmit
@@ -116,7 +119,7 @@ flowchart TD
 | Open / refocus / pull to refresh | Category hook loads first; `useBudgets.refresh` defers budget hydration/calculation, sorts exceeded/near-limit first, and commits totals with rows. | Cancellation and coalescing covered by tests. Category-load error is dropped; device timing pending. |
 | Filter by frequency | In-memory filter and one-pass count map over loaded statuses. Overview remains all active budgets. | No new SQL per filter. Whether overview should follow the filter is a policy question. |
 | Create | Screen applies free-budget-count guard, opens gated form, chooses first unbudgeted top-level expense category. | Picker still allows an already-budgeted category; repository updates it by category. Decide whether this create-as-update behavior is intended. |
-| Edit / change frequency | Existing category is locked; form submits stored currency and current fields; non-custom saves clear monthly targets. | Currency display/calculator mismatch; background snapshots can reset the draft. Clearing overrides on frequency change needs explicit policy. |
+| Edit / change frequency | Existing category is locked; form submits stored currency and current fields; non-custom saves clear monthly targets. | BUD-F01 currency mismatch fixed. Background snapshots can still reset the draft. Clearing overrides on frequency change needs explicit policy. |
 | Edit custom monthly targets | Current year only; missing overrides fall back to base amount; monthly and annual totals shown. | “Apply default to all” replaces the entire multi-year array. Other-year overrides are lost on save. |
 | Enable rollover | Pro-guarded UI; calculation adds previous base/custom target minus previous spending, with optional deficit. | One-period, not cumulative. Start date only anchors biweekly periods; creation/history policy requires agreement. |
 | Pause / resume | Single local update then hook refresh. Paused cards retain calculations; active totals skip them. | Existing tests protect paused history and child fallback. No need to remove paused-card calculations as a speculative optimization. |
@@ -142,11 +145,11 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-All findings are **OPEN**. “Executable” means actual current code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending.
+**BUD-F01 is implemented and automatically verified; manual verification remains pending. All other findings are OPEN.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
-| BUD-F01 | High | Input currency/precision differs from stored budget currency | Source-confirmed |
+| BUD-F01 | High | Input currency/precision differs from stored budget currency | Fixed; 10 regression tests pass; manual check pending |
 | BUD-F02 | Medium | Transaction drill-down does not explain budget spending | Source-confirmed |
 | BUD-F03 | High | Split lines bypass a shared budget warning | Executable services + form source |
 | BUD-F04 | Medium | Zero effective targets suppress over-budget checks | Executable |
@@ -161,13 +164,28 @@ All findings are **OPEN**. “Executable” means actual current code was exerci
 | BUD-F13 | Medium | Core budget UI and period labels bypass localization | Source-confirmed |
 | BUD-F14 | Medium | Refund live preview predicts extra spending | Source-confirmed |
 
-### [BUD-F01] Form and calculators use PHP while saves use the budget currency
+### [BUD-F01] Form and calculators use PHP while saves use the budget currency — FIX IMPLEMENTED
 
 - **Problem / evidence:** [BudgetFormModal:469](../../src/modules/budgets/components/budget-form-modal.tsx#L469) hardcodes `currencyCode="PHP"`. Its calculator at line 668 omits currency, whose shared default is PHP. [CustomMonthlyEditor:125](../../src/modules/budgets/components/custom-monthly-editor.tsx#L125) and line 136 also format PHP; its calculator omits currency too. Save at form lines 283–284 instead uses the existing budget currency or home currency.
 - **Cause / impact:** New USD budgets show peso input; JPY/KWD also use the wrong minor-unit exponent. For example, entering 1,000 through a two-decimal PHP calculator yields 100,000 minor units, which a JPY budget interprets as JPY 100,000. Existing non-PHP edits are affected as well.
 - **Smallest fix:** Resolve effective budget currency once in the form and pass it to the field, both calculators, and custom editor. No conversion of stored amounts or new currency framework is needed.
 - **Regression proof:** Create/edit PHP, USD, JPY, and KWD budgets and custom targets; assert displayed amounts, calculator output, stored minor units, and card values. Changing home currency must not relabel an existing budget.
 - **Performance:** Scalar prop plumbing; no additional database reads or root context changes.
+
+**Implemented fix — November 24, 2026:** The form captures `initialBudget.currencyCode` for an edit or the current default currency for a new session. That stable value feeds the main field/calculator, custom editor/month calculator, monthly/annual formatting, and save payload. Existing keyed form content and visibility gating reset the currency for each new session. Existing saved amounts are not converted. The only production changes are in the two budget components; shared calculator behavior is reused.
+
+**Automated proof:** [budget-form-currency.test.cjs](../../src/modules/budgets/__tests__/budget-form-currency.test.cjs) checks PHP/USD/JPY/KWD entry precision, existing-currency precedence after home-currency changes, custom month entry and annual totals, save payloads and reopened fixtures, currency preference updates during a draft, and closed-form preference-hook gating. Before the production fix, eight cases failed and two passed. All ten pass after the fix.
+
+**Manual verification guide:**
+
+1. Load the updated app. In currency settings, set **Default currency → JPY**. Create a new monthly budget on an unused expense category, with rollover disabled.
+2. Open the amount calculator and enter **1,000**. The field and calculator must identify JPY, with no fractional yen. Save: the card must show **JPY 1,000**, not JPY 100,000. Close/reopen the form and confirm the same amount, then save again.
+3. Change the default currency to **PHP**, then reopen that JPY budget. Its field and calculator must still use JPY and show 1,000. Save/reopen once more to confirm the denomination persists. The overview may convert totals into PHP; assess the individual budget card for this check.
+4. Set the default currency to **KWD**. Create another budget on an unused category. Enter **10.125**: all three decimal places must survive calculator confirmation, save, and reopening. Repeat with **PHP 1,000.00** and **USD 1,000.00** to verify two-decimal currencies.
+5. For a KWD budget, select **Custom (12-Mo)**, set default monthly amount **10.125**, and give the current month **20.250**. All twelve month amounts, the month calculator, and annual total must use KWD. With no other overrides, annual total must be **131.625**. Save/reopen: current month remains 20.250 and other months remain 10.125; keep rollover disabled when comparing the current card target.
+6. Close/discard the form, change the default currency, and open a fresh new-budget session. It must use the new default. Reopening existing budgets must retain their own currencies.
+
+These steps verify native display and actual persistence; they have not been run on a device in this remediation pass. Budgets created with the earlier defect keep their stored values and may need the user to correct their intended amounts manually.
 
 ### [BUD-F02] “View transactions” always opens this month and includes separately budgeted children
 
@@ -367,7 +385,7 @@ Add focused cases to the existing budget suites and the owning consumers' suites
 
 ## 11. Mandatory pre-change gate for remediation
 
-No production change was needed for this documentation-only task. Before each future production fix, explicitly answer the four Section 20 questions using the corresponding finding:
+The initial audit was documentation-only. BUD-F01 remediation answered these four questions before production edits and first reproduced the issue with failing regression tests. Before each further production fix, explicitly answer the four Section 20 questions using the corresponding finding:
 
 1. **What is the actual problem?** State the exact incorrect amount/interaction and show a failing regression or the concrete source/executable evidence above. Convert source-only UI scenarios into a focused reproduction before changing behavior.
 2. **Why does the implementation cause it?** Identify the cited function and complete caller path. For split warnings, for example: transaction form loop → independent snapshot checks → same unchanged ledger baseline.

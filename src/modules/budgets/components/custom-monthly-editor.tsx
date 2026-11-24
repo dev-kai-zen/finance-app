@@ -9,6 +9,7 @@ import type { MonthlyTargetInput } from "../types/budget.types";
 
 export interface CustomMonthlyEditorProps {
   year: number;
+  currencyCode: string;
   baseAmountCents: number;
   monthlyTargets: MonthlyTargetInput[];
   onChange: (targets: MonthlyTargetInput[]) => void;
@@ -31,6 +32,7 @@ const MONTH_NAMES = [
 
 export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
   year,
+  currencyCode,
   baseAmountCents,
   monthlyTargets,
   onChange,
@@ -122,7 +124,7 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
                 {name.slice(0, 3)}
               </Text>
               <Text numberOfLines={1} style={styles.monthAmount}>
-                {formatCurrency(amount, "PHP", false)}
+                {formatCurrency(amount, currencyCode, false)}
               </Text>
             </Pressable>
           );
@@ -133,13 +135,14 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
       <View style={styles.totalBanner}>
         <Text style={styles.totalLabel}>Annual Total:</Text>
         <Text style={styles.totalValue}>
-          {formatCurrency(yearTotalCents, "PHP", false)}
+          {formatCurrency(yearTotalCents, currencyCode, false)}
         </Text>
       </View>
 
       {/* Modal for editing specific month */}
       {activeEditingMonth !== null && (
         <AmountCalculatorModal
+          currencyCode={currencyCode}
           initialMinorUnits={currentEditingAmount}
           onClose={() => setActiveEditingMonth(null)}
           onConfirm={(val) => {

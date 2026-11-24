@@ -107,6 +107,10 @@ function BudgetFormModalContent({
   const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
     useProGuard();
 
+  // Keep the draft denomination stable until this form session unmounts.
+  const [budgetCurrencyCode] = useState(
+    () => initialBudget?.currencyCode ?? preferences.defaultCurrency,
+  );
   const [categoryId, setCategoryId] = useState<string>(
     () => initialBudget?.categoryId ?? "",
   );
@@ -280,8 +284,7 @@ function BudgetFormModalContent({
       categoryId,
       isEnabled,
       amountMinorUnits,
-      currencyCode:
-        initialBudget?.currencyCode ?? preferences.defaultCurrency,
+      currencyCode: budgetCurrencyCode,
       frequency,
       allowRollover,
       rolloverMode,
@@ -466,7 +469,7 @@ function BudgetFormModalContent({
                   <AmountCalculatorField
                     amountMinorUnits={amountMinorUnits}
                     amountSign="+"
-                    currencyCode="PHP"
+                    currencyCode={budgetCurrencyCode}
                     label={
                       frequency === "custom_monthly"
                         ? "DEFAULT MONTHLY AMOUNT"
@@ -520,6 +523,7 @@ function BudgetFormModalContent({
               {frequency === "custom_monthly" && (
                 <CustomMonthlyEditor
                   baseAmountCents={amountMinorUnits}
+                  currencyCode={budgetCurrencyCode}
                   monthlyTargets={monthlyTargets}
                   onChange={setMonthlyTargets}
                   year={new Date().getFullYear()}
@@ -666,6 +670,7 @@ function BudgetFormModalContent({
 
       {/* Amount Calculator Modal */}
       <AmountCalculatorModal
+        currencyCode={budgetCurrencyCode}
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(val) => {
