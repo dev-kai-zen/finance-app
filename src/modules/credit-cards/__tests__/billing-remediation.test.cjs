@@ -201,7 +201,7 @@ const { reconcileCreditCardBilling, reconcileCreditCardBillingInContext } = requ
 const { getCreditCardMonitoring } = require("../services/get-credit-card-monitoring.service");
 const { checkCreditLimitExceeded } = require("../services/check-credit-limit-exceeded.service");
 const { createCreditCardInstallmentPlan } = require("../services/create-installment-plan.service");
-const { getTransactionsByIds, removeTransaction, restoreTransaction } = require("@/modules/transactions");
+const { createTransaction, createTransfer, getTransactionsByIds, removeTransaction, restoreTransaction, updateTransaction } = require("@/modules/transactions");
 function fixture() {
   const db = setupTestDb();
   const today = new Date(2026, 10, 21, 12);
@@ -727,7 +727,11 @@ for (const payment of [20000, 40000, 70000]) {
       const allocations = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment' ORDER BY id").all();
       removeTransaction("purchase"); restoreTransaction("purchase");
       assert.deepEqual(installmentFinancialSnapshot(), before);
-      assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment' ORDER BY id").all(), allocations);
+      const restoredAllocations = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = 'payment' ORDER BY id").all();
+      for (const original of allocations) {
+        assert.deepEqual(restoredAllocations.find(entry => entry.id === original.id), original);
+      }
+      assert.equal(restoredAllocations.reduce((sum, entry) => sum + entry.amount_minor_units, 0), allocations.reduce((sum, entry) => sum + entry.amount_minor_units, 0), "Release/reapplication history preserves the original net allocation");
     } finally { sqlite.close(); }
   });
 }
@@ -841,6 +845,273 @@ test("CC-F02: a 120-statement restore adds corrections without adding history re
     assert.equal(sqlite.prepare("SELECT count(*) AS n FROM credit_card_statement_entries WHERE entry_type = 'installment'").get().n, 120);
     queries = [];
     reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+  } finally { sqlite.close(); }
+});
+
+function paidPurchaseFixture() {
+  const f = fixture();
+  f.charge("paid_purchase", -100000);
+  f.charge("payment", 100000, "transfer");
+  f.charge("unbilled", -100000);
+  sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'payment'").run(new Date(2026, 10, 11, 12).getTime());
+  sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+  reconcileCreditCardBilling();
+  return f;
+}
+
+function assertCardLedgerParity() {
+  const snapshot = installmentFinancialSnapshot();
+  const balance = sqlite.prepare("SELECT opening_balance_minor_units + (SELECT coalesce(sum(amount_minor_units), 0) FROM transactions WHERE account_id = 'card' AND deleted_at IS NULL) AS balance FROM accounts WHERE id = 'card'").get().balance;
+  assert.equal(snapshot.outstanding, Math.max(0, -balance), "Monitoring debt must match the independent signed ledger");
+  const negativeStatements = sqlite.prepare("SELECT statement_id FROM credit_card_statement_entries GROUP BY statement_id HAVING sum(amount_minor_units) < 0").all();
+  assert.deepEqual(negativeStatements, [], "No statement may retain an excess credit allocation");
+  return snapshot;
+}
+
+test("CC-F03: deleting a paid charge releases a real transfer's credit to unbilled spending", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    f.charge("paid_purchase", -100000); reconcileCreditCardBilling();
+    const payment = createTransfer({ fromAccountId: "acc_1", toAccountId: "card", amountMinorUnits: 100000, occurredAt: new Date(2026, 10, 11, 12) });
+    f.charge("unbilled", -100000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling();
+    const transferRows = sqlite.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY id").all(payment.transactionGroupId);
+    const originalEntry = sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE transaction_id = ?").get(payment.inLeg.id);
+    removeTransaction("paid_purchase");
+    const after = assertCardLedgerParity();
+    assert.equal(after.billed, 0); assert.equal(after.unbilled, 0); assert.equal(after.outstanding, 0); assert.equal(after.available, 5000000);
+    assert.equal(after.statements[0].issued, 0); assert.equal(after.statements[0].remaining, 0);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY id").all(payment.transactionGroupId), transferRows);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries WHERE id = ?").get(originalEntry.id), originalEntry);
+    assert.equal(sqlite.prepare("SELECT sum(amount_minor_units) AS n FROM credit_card_statement_entries WHERE transaction_id = ?").get(payment.inLeg.id).n, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: reducing and re-increasing a paid charge preserves debt and issued-charge totals", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    const before = installmentFinancialSnapshot();
+    const input = { accountId: "card", categoryId: "cat_dining", type: "expense", amountMinorUnits: -40000, occurredAt: new Date(f.occurred) };
+    await updateTransaction("paid_purchase", input);
+    const reduced = assertCardLedgerParity();
+    assert.equal(reduced.billed, 0); assert.equal(reduced.unbilled, 40000); assert.equal(reduced.outstanding, 40000);
+    assert.equal(reduced.statements[0].issued, 40000);
+    await updateTransaction("paid_purchase", { ...input, amountMinorUnits: -100000 });
+    assert.deepEqual(assertCardLedgerParity(), before);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: moving a paid charge to cash and back releases and reapplies credit atomically", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    const before = installmentFinancialSnapshot();
+    const input = { accountId: "acc_1", categoryId: "cat_dining", type: "expense", amountMinorUnits: -100000, occurredAt: new Date(f.occurred) };
+    await updateTransaction("paid_purchase", input);
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    await updateTransaction("paid_purchase", { ...input, accountId: "card" });
+    assert.deepEqual(assertCardLedgerParity(), before);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: released credit pays a newer statement and returns to the oldest on restoration", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    t.mock.timers.setTime(new Date(2026, 11, 21, 12).getTime());
+    reconcileCreditCardBilling();
+    const before = assertCardLedgerParity();
+    assert.equal(before.billed, 100000); assert.equal(before.overdue, 0);
+    removeTransaction("paid_purchase");
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    restoreTransaction("paid_purchase");
+    assert.deepEqual(assertCardLedgerParity(), before, "Oldest-first allocation must restore due/overdue parity too");
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: mixed payment/refund credits remain available after charge deletion and credit restore", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    f.charge("paid_purchase", -100000); f.charge("payment", 60000, "transfer"); f.charge("refund", 40000);
+    f.charge("unbilled", -50000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling(); removeTransaction("paid_purchase");
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    f.charge("more_unbilled", -80000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'more_unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling();
+    assert.equal(assertCardLedgerParity().outstanding, 30000);
+    removeTransaction("refund"); assert.equal(assertCardLedgerParity().outstanding, 70000);
+    restoreTransaction("refund"); assert.equal(assertCardLedgerParity().outstanding, 30000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: surplus credit survives a release, later spending, and payment deletion/restoration", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 150000 WHERE id = 'payment'");
+    reconcileCreditCardBilling(); removeTransaction("paid_purchase");
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    f.charge("extra", -100000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'extra'").run(new Date(2026, 10, 16, 12).getTime());
+    reconcileCreditCardBilling();
+    assert.equal(assertCardLedgerParity().outstanding, 50000);
+    removeTransaction("payment"); assert.equal(assertCardLedgerParity().outstanding, 200000);
+    restoreTransaction("payment"); assert.equal(assertCardLedgerParity().outstanding, 50000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: released credit offsets unbilled installment principal without changing its schedule", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    createTransaction({ accountId: "card", categoryId: "cat_dining", type: "expense", amountMinorUnits: -120000, occurredAt: new Date(2026, 10, 15, 12), installment: { termMonths: 3 } });
+    const schedule = sqlite.prepare("SELECT * FROM credit_card_installments ORDER BY id").all();
+    removeTransaction("paid_purchase");
+    const after = assertCardLedgerParity();
+    assert.equal(after.billed, 0); assert.equal(after.unbilled, 120000); assert.equal(after.outstanding, 120000);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_installments ORDER BY id").all(), schedule);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: split parents and transfer fees consume released credit exactly once", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    f.charge("paid_purchase", -100000); reconcileCreditCardBilling();
+    createTransfer({ fromAccountId: "acc_1", toAccountId: "card", amountMinorUnits: 100000, occurredAt: new Date(2026, 10, 15, 12), fee: { accountId: "card", categoryId: "cat_dining", amountMinorUnits: 10000 } });
+    createTransaction({ accountId: "card", type: "expense", amountMinorUnits: -60000, occurredAt: new Date(2026, 10, 15, 12), splitEntries: [{ categoryId: "cat_dining", amountMinorUnits: 20000 }, { categoryId: "cat_groceries", amountMinorUnits: 40000 }] });
+    removeTransaction("paid_purchase");
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    createTransaction({ accountId: "card", categoryId: "cat_dining", type: "expense", amountMinorUnits: -50000, occurredAt: new Date(2026, 10, 16, 12) });
+    assert.equal(assertCardLedgerParity().outstanding, 20000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: tied credit timestamps have stable ID ordering and release the later credit first", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    f.charge("paid_purchase", -100000);
+    f.charge("credit_z", 60000, "transfer"); f.charge("credit_a", 60000, "transfer");
+    reconcileCreditCardBilling();
+    const net = id => Math.max(0, -sqlite.prepare("SELECT coalesce(sum(amount_minor_units), 0) AS n FROM credit_card_statement_entries WHERE transaction_id = ?").get(id).n);
+    assert.equal(net("credit_a"), 60000); assert.equal(net("credit_z"), 40000);
+    sqlite.exec("UPDATE transactions SET amount_minor_units = -50000 WHERE id = 'paid_purchase'");
+    reconcileCreditCardBilling();
+    assert.equal(net("credit_a"), 50000); assert.equal(net("credit_z"), 0);
+    assertCardLedgerParity();
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: existing released allocations are read as net credit, not gross negative entries", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    removeTransaction("paid_purchase");
+    // Seed the corrected allocation explicitly to isolate monitoring from reconciliation.
+    sqlite.exec("DELETE FROM credit_card_statement_entries WHERE transaction_id = 'payment' AND entry_type = 'adjustment'");
+    const statementId = f.statement().id;
+    sqlite.prepare("INSERT INTO credit_card_statement_entries (id, statement_id, transaction_id, entry_type, amount_minor_units, occurred_on_snapshot, created_at) VALUES ('manual_release', ?, 'payment', 'adjustment', 100000, '2026-11-24', ?)").run(statementId, Date.now());
+    const after = installmentFinancialSnapshot();
+    assert.equal(after.billed, 0); assert.equal(after.unbilled, 0); assert.equal(after.outstanding, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: explicit reconciliation heals already-stranded credit and converges without writes", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    removeTransaction("paid_purchase");
+    sqlite.exec("DELETE FROM credit_card_statement_entries WHERE transaction_id = 'payment' AND entry_type = 'adjustment'");
+    reconcileCreditCardBilling();
+    assert.equal(assertCardLedgerParity().outstanding, 0);
+    const before = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    queries = []; reconcileCreditCardBilling(); reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all(), before);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: credit-release failure rolls back charge deletion and billing history together", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    const tables = ["transactions", "credit_card_statements", "credit_card_statement_entries"];
+    const snapshot = () => tables.map(table => sqlite.prepare(`SELECT * FROM ${table} ORDER BY id`).all());
+    const before = snapshot();
+    sqlite.exec("CREATE TRIGGER fail_credit_release BEFORE INSERT ON credit_card_statement_entries WHEN NEW.transaction_id = 'payment' AND NEW.entry_type = 'adjustment' AND NEW.amount_minor_units > 0 BEGIN SELECT RAISE(ABORT, 'credit release failed'); END");
+    assert.throws(() => removeTransaction("paid_purchase"), /credit release failed/);
+    assert.deepEqual(snapshot(), before);
+    sqlite.exec("DROP TRIGGER fail_credit_release");
+    removeTransaction("paid_purchase"); assert.equal(assertCardLedgerParity().outstanding, 0);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: allocation failure rolls back release, deletion, and the destination bill", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 11, 21, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    const tables = ["transactions", "credit_card_statements", "credit_card_statement_entries"];
+    const snapshot = () => tables.map(table => sqlite.prepare(`SELECT * FROM ${table} ORDER BY id`).all());
+    const before = snapshot();
+    const newerStatement = sqlite.prepare("SELECT id FROM credit_card_statements WHERE statement_on = '2026-12-10'").get().id;
+    sqlite.exec(`CREATE TRIGGER fail_reallocation BEFORE INSERT ON credit_card_statement_entries WHEN NEW.transaction_id = 'payment' AND NEW.entry_type = 'payment' AND NEW.statement_id = '${newerStatement}' BEGIN SELECT RAISE(ABORT, 'reallocation failed'); END`);
+    assert.throws(() => removeTransaction("paid_purchase"), /reallocation failed/);
+    assert.deepEqual(snapshot(), before);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: payment-owned corrections never rewrite opening principal on subsequent reconciliation", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    f.charge("payment", 100000, "transfer"); reconcileCreditCardBilling();
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -40000 WHERE id = 'card'");
+    f.charge("unbilled", -100000);
+    sqlite.prepare("UPDATE transactions SET occurred_at = ? WHERE id = 'unbilled'").run(new Date(2026, 10, 15, 12).getTime());
+    reconcileCreditCardBilling();
+    const after = assertCardLedgerParity();
+    assert.equal(after.billed, 0); assert.equal(after.unbilled, 40000); assert.equal(after.statements[0].issued, 40000);
+    const entries = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    reconcileCreditCardBilling();
+    assert.deepEqual(assertCardLedgerParity(), after);
+    assert.deepEqual(sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all(), entries);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: reduced opening-debt payments stay correct across repeated reconciliation", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    f.charge("payment", 100000, "transfer"); reconcileCreditCardBilling();
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 50000 WHERE id = 'payment'");
+    reconcileCreditCardBilling(); reconcileCreditCardBilling();
+    const after = assertCardLedgerParity();
+    assert.equal(after.billed, 50000); assert.equal(after.statements[0].issued, 100000);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F03: 10k ledger rows add no history reads for credit release or idle reconciliation", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = paidPurchaseFixture();
+  try {
+    for (let index = 0; index < 10000; index++) f.charge("bulk_" + index, -1);
+    reconcileCreditCardBilling();
+    queries = []; reconcileCreditCardBilling();
+    const historyReads = queries.filter(query => /^\s*select\b/i.test(query) && !/randomblob/i.test(query)).length;
+    queries = []; removeTransaction("paid_purchase");
+    assert.equal(queries.filter(query => /^\s*select\b/i.test(query) && !/randomblob/i.test(query)).length, historyReads + 1);
+    assert.equal(assertCardLedgerParity().outstanding, 10000);
+    queries = []; reconcileCreditCardBilling();
     assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
   } finally { sqlite.close(); }
 });

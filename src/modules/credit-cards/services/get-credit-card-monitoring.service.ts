@@ -89,13 +89,10 @@ export function computeCreditCardAccountMonitoring(
             entry.amountMinorUnits,
         );
       }
-      if (entry.amountMinorUnits < 0) {
-        allocatedCreditsByTxId.set(
-          entry.transactionId,
-          (allocatedCreditsByTxId.get(entry.transactionId) ?? 0) +
-            Math.abs(entry.amountMinorUnits),
-        );
-      }
+      allocatedCreditsByTxId.set(
+        entry.transactionId,
+        (allocatedCreditsByTxId.get(entry.transactionId) ?? 0) - entry.amountMinorUnits,
+      );
     }
   }
 
@@ -214,7 +211,7 @@ export function computeCreditCardAccountMonitoring(
   const unallocatedCredits = ledger
     .filter((transaction) => transaction.amountMinorUnits > 0)
     .reduce((sum, transaction) => {
-      const allocated = allocatedCreditsByTxId.get(transaction.id) ?? 0;
+      const allocated = Math.max(0, allocatedCreditsByTxId.get(transaction.id) ?? 0);
       return sum + Math.max(0, transaction.amountMinorUnits - allocated);
     }, 0);
   const billed = calculateCreditCardBilled(statementSummaries);

@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 and CC-F02 fixed with automated regression coverage. Other findings and native sign-off remain pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F03 fixed with automated regression coverage. CC-F04's ownership guard is implemented as required support for CC-F03; its remaining validation, other findings, and native sign-off remain pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** CC-F01's incorrect credit-limit warnings and CC-F02's missing installment debt after restore are fixed; the combined selected regression run passes 137 tests. Stranded payment credit, opening-balance inconsistencies, and CC-F03 through CC-F12 remain open. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, and stranded payment credit are fixed; the combined selected regression run passes 153 tests. Opening-principal ownership is guarded, with two relevant regressions passing. Further CC-F04 validation and CC-F05 through CC-F12 remain pending. Native UI and frame timing remain unverified.
 
-**Changes made:** The initial pass added this audit only. CC-F01 now calculates the proposed debt from the signed local ledger balance, with edit exclusion and prepaid credit preserved. CC-F02 now restores issued installment amounts with compensating adjustments in the existing transaction. Added 24 actual-service/SQLite regressions and two form-handler regressions in existing test files across both fixes. No migration or dependency changes. Release notes skipped for both fixes at the user's request; application versions remain unchanged pending a version decision.
+**Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. Opening-principal reconciliation excludes transaction-owned adjustments so credit releases cannot rewrite it. Added 40 actual-service/SQLite regressions and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
 ## 1. Workflow and current status
 
@@ -17,9 +17,9 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | Stage | Status | Deliverable |
 | --- | --- | --- |
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
-| 2. Validate Credit Cards | Partial | Existing suites and isolated probes executed; CC-F01 and CC-F02 have permanent regressions. Other regressions and native checks remain. |
+| 2. Validate Credit Cards | Partial | CC-F01 through CC-F03 have permanent regressions; CC-F04 has ownership-guard coverage. Additional opening-balance and native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 and CC-F02 fixed and regression-tested. CC-F03 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F03 fixed; CC-F04 guard implemented with validation still pending. CC-F05 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -33,6 +33,8 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | CC-F01 combined regression run | **125 passed**, zero failures/skips; approximately 21.7 seconds | Credit Cards, card walkthroughs, Accounts, selected Transactions, notification settings, and user-data registry suites. Includes all 14 new regressions. Native validation remains pending. |
 | CC-F02 targeted regression run | **12 passed**, zero failures/skips; approximately 9.1 seconds | Actual delete/restore/reconciliation services and migration-backed SQLite, with fixed clocks. Eleven cases failed before the production fix. Includes preserved history, payments, BNPL, crossed cutoffs, existing broken-state repair, atomic rollback, and 120-statement read bounds. |
 | CC-F02 combined regression run | **137 passed**, zero failures/skips; approximately 24.8 seconds | Same combined suites as CC-F01, now including all 12 CC-F02 regressions. Native validation and device frame timing remain pending. |
+| CC-F03 regression coverage | **16 passed** in the combined run; all sixteen failed before the production fix | Actual transfer/delete/restore/update/create services and SQLite. Covers released credit, canonical allocation order, refunds, surplus, installments, splits/fees, existing broken states, failure rollback, opening ownership, and 10k-row read bounds. |
+| CC-F03 combined regression run | **153 passed**, zero failures/skips; approximately 19.1 seconds; TypeScript also passed | Same combined suites as CC-F02, including all 16 new cases. Earlier CC-F02 payment tests now preserve original records and compare net allocations while allowing release/reapplication history. Native/device checks remain pending. |
 | Actual-service financial probes | **Eight financial/validation scenarios reproduced** | Calls production monitoring, limit-check, installment creation, and reconciliation services with migration-backed in-memory SQLite. Fixture edits use explicit SQL; this is not a native interaction test. See Section 5. |
 | Calendar/status probe | UTC/local mismatch and overdue-partial precedence reproduced | Executes the actual status helper and the date expression used by the UI with a fixed instant. Native clock rollover remains untested. |
 | Query counts and query plan | Cold monitor **30 statements / 3 writes**; warm monitor **8 statements**; 120-month edit-state read **123 statements** | Fixture-specific counts, including transaction control where applicable. Expo bridge/device costs are not measured. |
@@ -60,6 +62,12 @@ CC-F02 follow-up: reran the combined command above, `npx tsc --noEmit`, and the 
 
 ```powershell
 node --test --test-name-pattern=CC-F02 --test-reporter=spec src/modules/credit-cards/__tests__/billing-remediation.test.cjs
+```
+
+CC-F03 validation reran the combined command above and `npx tsc --noEmit`. Its 16 cases can also be selected with:
+
+```powershell
+node --test --test-name-pattern=CC-F03 --test-reporter=spec src/modules/credit-cards/__tests__/billing-remediation.test.cjs
 ```
 
 The probes reuse `setupTestDb` and `fixture` from [billing-remediation.test.cjs](../../src/modules/credit-cards/__tests__/billing-remediation.test.cjs), compiling the setup portion with the original filename so relative imports resolve normally, without registering its existing tests. The harness adapts Drizzle's Expo SQLite driver to `node:sqlite`; native modules are mocked. Temporary scripts are in `%TEMP%`:
@@ -139,7 +147,7 @@ The reviewed cross-module calls use public APIs. Screens/components do not query
 | Create expense / installment / BNPL | Transaction service inserts ledger row, creates schedule, then reconciles within the same transaction. | Atomic structure is sound. Term/principal edge fails at a DB constraint; CC-F11. BNPL has existing schedule coverage. |
 | Check limit before save | Expense form calls `checkCreditLimitExceeded`, then offers Proceed/Cancel if exceeded. | CC-F01 fixed: signed ledger balance, edit exclusion, preserved credit, three read-only queries. No server request is required. |
 | Edit purchase | Transaction update obtains edit state; billed installments protect account/amount/date, then applies allowed plan changes and reconciliation. | Authoritative billed-plan guard exists. An edit-state read performs up to 123 SQL statements; CC-F07. Moving a billed one-time purchase's date does not relocate its statement; policy Q-CC01. |
-| Pay card / refund | Positive ledger amounts allocate against oldest outstanding statements; unused credit offsets unbilled activity. | Ordinary payment-reduction tests pass. Credit stranded after a charge disappears, and opening corrections interact incorrectly with payment adjustments; CC-F03/04. |
+| Pay card / refund | Positive ledger amounts allocate against oldest outstanding statements; unused credit offsets unbilled activity. | CC-F03 fixed: excess/misplaced allocations release through adjustments and reapply oldest-first. Monitoring uses net allocations; payment-owned corrections no longer alter opening principal. |
 | Delete / restore purchase | Ledger service changes deletion state and reconciles in the same transaction. | CC-F02 fixed: issued installment amounts recover through compensating adjustments; original schedules/entries remain intact. Actual-service rollback and repeated-cycle coverage passes. |
 | Change opening balance / card configuration | Accounts saves native-currency details and invokes billing reconciliation for card-related edits. | Positive opening credit is lost in monitoring; CC-F05. Existing statement due dates are retained; policy Q-CC01. |
 | Finish an installment schedule | Scheduled installment entries are issued, and monitoring counts `status === "active"`. | Even a fully billed, fully paid plan remains active; CC-F10. |
@@ -152,7 +160,7 @@ The [Transactions audit's settled advisory-warning policy](transactions-audit-v1
 
 ## 5. Independent reproducible checks
 
-Unless overridden below, use the existing billing fixture: `today = new Date(2026, 10, 21, 12)`, card `card`, PHP limit `5000000`, statement day `10`, due day `25`, zero opening balance, and charges dated November 5 at local noon. `f.reconcile()` invokes `reconcileCreditCardBillingInContext` inside a Drizzle transaction; `f.monitor()` invokes `getCreditCardMonitoring`. The Actual result column preserves the initial, pre-remediation observations; CC-F01's first two rows and CC-F02's installment delete/restore row now produce the expected results.
+Unless overridden below, use the existing billing fixture: `today = new Date(2026, 10, 21, 12)`, card `card`, PHP limit `5000000`, statement day `10`, due day `25`, zero opening balance, and charges dated November 5 at local noon. `f.reconcile()` invokes `reconcileCreditCardBillingInContext` inside a Drizzle transaction; `f.monitor()` invokes `getCreditCardMonitoring`. The Actual result column preserves initial, pre-remediation observations. CC-F01's first two rows, CC-F02's installment restore, CC-F03's released credit, and the opening-payment repeat case covered by the supporting ownership guard now produce the expected results.
 
 | Probe | Fixture operations | Expected result | Actual result |
 | --- | --- | --- | --- |
@@ -167,18 +175,18 @@ Unless overridden below, use the existing billing fixture: `today = new Date(202
 
 For the date probe, use `2026-11-23T16:30:00Z`: it is **November 24, 00:30 in Manila**, but `toISOString().slice(0, 10)` is `2026-11-23`. A fully unpaid bill due November 23 is classified `unpaid` by the UI date path while the service's local-date comparison marks it overdue. Separately, `getStatementPaymentStatus({ issuedAmountMinorUnits: 100, remainingAmountMinorUnits: 50, dueOn: "2026-11-01" }, "2026-11-24")` returns `partial`, concealing overdue status when only one badge is displayed.
 
-These original probes characterize the initial defects. CC-F01 and CC-F02 now have permanent regressions asserting the desired results; the other findings still require that coverage before remediation sign-off.
+These original probes characterize the initial defects. CC-F01 through CC-F03 now have permanent regressions; the CC-F04 ownership guard also has direct regression coverage. Further validation remains as described under each finding.
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 and CC-F02 are fixed with automated coverage; CC-F03 through CC-F12 remain open. Native verification of both fixes is still pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F03 are fixed with automated coverage. CC-F04's guard is implemented with further validation pending; CC-F05 through CC-F12 remain open. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | CC-F01 | P1 — FIXED | Credit-limit preview double-counts billed edits and loses unused credit. | Fixed; 12 actual-service/SQLite and two form-handler regressions pass. |
 | CC-F02 | P1 — FIXED | Restoring an installment purchase does not restore its billed debt. | Fixed; 12 actual-service/SQLite regressions pass, including failure rollback and 120 statements. |
-| CC-F03 | P1 | Removing/reducing paid charges leaves credit trapped in statements. | Actual-service/SQLite deletion probe; reductions share the path. |
-| CC-F04 | P1 | Opening reconciliation absorbs payment adjustments and changes debt on repeat. | Actual-service/SQLite two-run probe. |
+| CC-F03 | P1 — FIXED | Removing/reducing paid charges leaves credit trapped in statements. | Fixed; 16 new cases pass, including net monitoring, ordered reallocation, rollback, and ownership support. |
+| CC-F04 | P1 — GUARD IMPLEMENTED | Opening reconciliation absorbs payment adjustments and changes debt on repeat. | Ownership guard required for CC-F03 is implemented; two direct regressions pass. Expanded opening-lifecycle validation remains pending. |
 | CC-F05 | P1 | Positive opening credit is ignored by billing/monitoring. | Actual-service/SQLite probe. |
 | CC-F06 | P2 | Focused monitoring does not refresh after external mutations. | Hook/event source trace; lifecycle regression pending. |
 | CC-F07 | P2 | All-card synchronous history reads, per-installment probes, and incomplete chunking violate performance requirements. | SQL counts, query plan, scale probes, and source trace. |
@@ -257,25 +265,52 @@ Use the updated app and a clean test card so unrelated transactions cannot alter
 
 For a purchase restored before this fix, fully restart the updated app and open Credit Cards to run first-use billing reconciliation. The already-active purchase should recover its missing billed amounts without deleting/recreating the purchase or schedule. Automated coverage also verifies this repair through explicit reconciliation.
 
-**Status:** CC-F02 is fixed and automated-test verified. Native UI verification remains pending; CC-F03's credit-reallocation issue and the other findings remain separate open work.
+**Status:** CC-F02 is fixed and automated-test verified. Native UI verification remains pending. CC-F03 below now also fixes credit reallocation, preserving net payment effects while appending correction history.
 
-### [CC-F03] Credit remains allocated to statements that no longer owe it
+### [CC-F03] Credit remains allocated to statements that no longer owe it — FIXED
 
 **Problem / evidence:** A paid PHP 1,000 charge is removed while a PHP 1,000 unbilled purchase remains. The ledger nets to zero but monitoring reports PHP 1,000 outstanding.
 
-**Cause / path:** The charge-reversal branch reduces its statement total below zero. The positive-transaction loop only releases allocation if the payment itself was reduced, and treats its original `100000` as fully allocated. Monitoring clamps each negative statement total to zero, so that surplus cannot offset another statement or unbilled principal.
+**Original cause / path:** The charge-reversal branch reduced its statement total below zero. The positive-transaction loop only released allocation if the payment itself was reduced, and treated its original `100000` as fully allocated. Monitoring clamped each negative statement total to zero and counted only negative credit entries, ignoring positive release adjustments. That surplus could not offset another statement or unbilled principal.
 
 **Smallest reasonable fix:** Release excess payment/refund allocations when statement charges shrink, then reapply credit in the existing deterministic oldest-first order. Preserve adjustment history and the signed credit pool; do not patch only the displayed total, which would leave reminder allocations wrong.
 
-**Proof required:** Paid charge deletion, amount reduction, move to another account, refund, restore, and overpayment across multiple statements/unbilled installments. Assert aggregate debt equals ledger debt and allocations never consume more than current charges; verify idempotence, issued-amount parity, and rollback.
+**Implemented:** The existing [reconciliation service](../../src/modules/credit-cards/services/reconcile-credit-card-billing.service.ts) separates charge principal from credit-owned entries, groups signed allocations by transaction/statement, and computes oldest-first allocation targets from loaded data. Credit order is occurrence date, creation date, then ID; statement order is statement date, then ID. Only allocations exceeding those targets receive positive compensating adjustments. Freed credit fills unpaid statements using advancing cursors; any remainder stays available for unbilled spending. Original ledger transfers, statement entries, and installment schedules remain intact. Restoring an older charge moves credit back to the older bill rather than incorrectly leaving it overdue while a newer bill stays paid.
 
-### [CC-F04] Opening-balance repair incorrectly includes payment-linked adjustments
+The [monitoring service](../../src/modules/credit-cards/services/get-credit-card-monitoring.service.ts) now sums signed entries, including positive releases, before calculating unused credit. Opening reconciliation excludes transaction-owned adjustments, a necessary CC-F04 support guard so released payment credit cannot change opening principal. All corrections remain inside the existing mutation transaction; no new persistence layer or allocation engine was introduced.
+
+```text
+netAllocatedCredit = max(0, -sum(all entries linked to the credit transaction))
+unusedCredit = max(0, creditTransactionAmount - netAllocatedCredit)
+```
+
+**Regression evidence:** All 16 new cases in [billing-remediation.test.cjs](../../src/modules/credit-cards/__tests__/billing-remediation.test.cjs) failed against the pre-fix implementation and pass in the combined 153-test run. They cover the actual two-leg payment transfer, charge reduction/re-increase, account moves, older/newer statement restoration with due/overdue parity, mixed refunds/payments, surplus credit, credit deletion/restoration, unbilled installment principal, split parents and transfer fees, tied credit timestamps, isolated signed-net monitoring, existing stranded-credit repair, repeated no-write convergence, and two trigger-induced rollback points. The two opening-principal cases verify release ownership and payment reduction across repeated reconciliation. A 10k-row case verifies signed-ledger debt parity and no added history reads. CC-F01 and CC-F02 regressions also pass; installment payment tests retain original records and compare net allocation while allowing the new correction history.
+
+**Performance:** Added maps and sorted targets reuse loaded rows. Grouping is linear in entries/allocation pairs; sorting costs `O(C log C + S log S)` for credits/statements. Target and actual allocation passes use advancing cursors rather than filtering all statements for every credit. There are no added history queries, mount/focus queries, React contexts, or UI subscriptions. Required corrections still generate IDs and insert entries; valid repeated reconciliation writes nothing. The 10k-row test confirms the delete path adds only its source lookup to the existing history-read count, explicitly excluding ID-generation reads. Full-ledger hydration and other reconciliation costs remain CC-F07; native 60–120fps is not claimed.
+
+#### Manual verification guide — CC-F03
+
+Run the updated app with clean test accounts. No database migration/reset is required. Use actual transfers from a funded bank account; keep unrelated card activity out of these fixtures.
+
+1. **Create the fixture.** Add a PHP card with **PHP 50,000 limit**, **zero opening balance**, statement day **10**, and due day **25**. Record **PHP 1,000 dated November 5, 2026** and open Credit Cards so it appears on the November 10 bill. Transfer **PHP 1,000 into the card**, dated November 11. Add a second **PHP 1,000 expense dated November 15**. For this audit's November 24 date, expect **PHP 0 billed**, **PHP 1,000 unbilled/outstanding**, and **PHP 49,000 available**.
+2. **Delete the paid purchase.** Delete the **November 5 purchase only**. Keep the payment and November 15 expense. Return to Credit Cards. Expect **PHP 0 billed**, **PHP 0 unbilled/outstanding**, and **PHP 50,000 available**. The remaining PHP 1,000 purchase is covered by the existing PHP 1,000 credit. Confirm the bank transfer remains recorded once and its bank deduction is unchanged.
+3. **Restore and repeat.** Restore the November 5 purchase from Trash, then reopen Credit Cards. Expect **PHP 1,000 outstanding**, all unbilled, and **PHP 49,000 available** again. Repeat delete/restore and reopen the screen; amounts must stay consistent. Statement history may show allocation adjustments and reapplications; these are corrections, not duplicate ledger transfers.
+4. **Check a reduced charge.** With the first purchase restored, edit it from **PHP 1,000 to PHP 400**. Expect **PHP 0 billed**, **PHP 400 unbilled/outstanding**, and **PHP 49,600 available**: PHP 600 of the existing payment now covers the second purchase. Return the first purchase to PHP 1,000; expect the previous PHP 1,000 outstanding again.
+5. **Optional two-bill ordering check.** On another clean card, use the same amounts with the first purchase dated **October 5**, its payment **October 11**, and the second purchase **November 5, 2026**. Initially the October bill is paid and November owes PHP 1,000. Delete the October purchase: both bills should owe zero. Restore it: the October bill should be paid again, November should owe PHP 1,000 due November 25, and the card should not incorrectly report the restored October bill as overdue.
+
+For already-stranded credit, fully restart the updated app and open Credit Cards to trigger first-use reconciliation. The existing payment should cover the correct remaining debt without deleting/recreating it. Automated coverage also verifies repair through explicit reconciliation.
+
+**Status:** CC-F03 is fixed and automated-test verified. Native screen and notification delivery checks remain pending. Release notes were explicitly skipped; application versions are unchanged.
+
+### [CC-F04] Opening-balance repair incorrectly includes payment-linked adjustments — OWNERSHIP GUARD IMPLEMENTED
 
 **Problem / evidence:** Reducing a PHP 1,000 payment to PHP 500 first produces PHP 500 remaining debt. A second reconciliation erases it without a ledger change.
 
-**Cause / path:** `openingBase` at lines 123–127 of reconciliation sums all `opening_balance` and `adjustment` entries in the opening statement. It includes the `+50000` adjustment linked to the reduced payment. The next run treats that payment correction as an opening-balance change and inserts an unrelated `-50000` adjustment.
+**Original cause / path:** `openingBase` summed all `opening_balance` and `adjustment` entries in the opening statement. It included the `+50000` adjustment linked to the reduced payment. The next run treated that payment correction as an opening-balance change and inserted an unrelated `-50000` adjustment.
 
 **Smallest reasonable fix:** Restrict opening-principal reconciliation to opening entries and opening-owned adjustments, excluding transaction-linked payment/refund corrections. Preserve the existing append-only adjustment pattern.
+
+**Supporting change during CC-F03:** Implemented that ownership filter because credit release writes payment-linked adjustments into opening statements too. Two actual-service/SQLite cases now pass: reducing opening principal releases unused payment credit without changing principal on the next run; reducing a payment from PHP 1,000 to PHP 500 leaves PHP 500 debt after repeated reconciliation. This addresses the reproduced normal-operation path. Broader opening-lifecycle/historical-state and native verification remain pending under this finding.
 
 **Proof required:** Opening debt with payment reduction/increase/delete/restore, refund corrections, actual opening-balance edits, and multiple reconciliation runs. Assert both issued and remaining amounts, ledger equality, and stable entry counts after convergence.
 
@@ -370,7 +405,7 @@ For a purchase restored before this fix, fully restart the updated app and open 
 | Q-CC05 | Does privacy mode mask the pending-expense warning too? | Historical inspection leakage is CC-F08 regardless. Agree whether the form's own proposed amount and the warning's account totals should follow the same mask policy. |
 | Q-CC06 | Reminder identifiers use account + due date + lead offset, without statement ID. Opening and regular statements can share a due date. Utilization alert keys are marked delivered before scheduling completes and remain in memory. | Test identifier collision/coalescing, scheduling failure/retry, threshold re-entry, restart, payment rescheduling, Pro gating, and OS permission changes before claiming reminder sign-off. These are source risks; no native delivery defect was reproduced here. |
 | Q-CC07 | Reconciliation cache is published inside the caller's transaction before outer commit. | Probe an outer rollback after successful reconciliation and subsequent same-day read. Cache resets on database replacement, which is good; commit/rollback invalidation remains unproven. |
-| Q-CC08 | Ledger order is timestamp/creation time without a final ID tie-breaker, and the card stores an inspection snapshot in local state. | Add equal-timestamp allocation parity and refresh-while-modal-open tests. Do not assume deterministic allocation or a live updating modal from current unit tests. |
+| Q-CC08 | Allocation ordering is now explicit under CC-F03: credit occurrence/creation/ID and statement date/ID. The inspection modal still stores a local snapshot. | Tied-credit ordering has SQLite coverage. Refresh-while-modal-open and native presentation remain unverified; deterministic allocation does not establish a live updating modal. |
 
 ## 8. Runtime performance assessment — 60–120fps
 
@@ -389,11 +424,11 @@ Measured after the actual service has loaded in the test process; module-import/
 
 For `C` cards each having 1–500 statement IDs, the observed warm-service shape is approximately **`4 + 4C`** queries without preloaded accounts; an empty statement set skips entry hydration, and extra statement chunks add queries. Preloaded account arrays avoid the first two queries. Cold reconciliation, settings hooks, notification passes, and imports have additional work.
 
-The account balance aggregate scans active ledger data across accounts. Per-card monitoring then hydrates `T` transactions, `E` statement entries, `S` statements, and `P` plans. Maps avoid several nested lookups, but item sorting is up to `O(E log E + T log T)` and memory grows with history. Reconciliation additionally does per-installment existence probes and can filter all statements for each positive ledger transaction (`O(credits × S)`). It is not an `O(1)` focus read.
+The account balance aggregate scans active ledger data across accounts. Per-card monitoring then hydrates `T` transactions, `E` statement entries, `S` statements, and `P` plans. Maps avoid several nested lookups, but item sorting is up to `O(E log E + T log T)` and memory grows with history. Reconciliation still does per-installment existence probes. CC-F03 replaces the positive-credit allocation loop's repeated statement filtering with sorted targets and advancing cursors; the remaining full-history work is still not an `O(1)` focus read.
 
 ### Measured synchronous duration
 
-Single samples from warm `f.monitor()` using the existing Drizzle/Node SQLite harness, all transactions on one card and already reconciled:
+Initial-audit samples, before CC-F01 through CC-F03 remediation, from warm `f.monitor()` using the existing Drizzle/Node SQLite harness; all transactions on one card and already reconciled:
 
 | Transactions | SQL statements | Elapsed |
 | --- | ---: | ---: |
@@ -463,14 +498,14 @@ Extend the existing billing/service tests where practical. A small hook/render h
 
 ## 11. Mandatory pre-change gate for remediation
 
-The initial audit changed no production code. CC-F01's reproduced warnings, calculation path, existing scalar ledger service, and failing-before/passing-after tests answered the four questions before its production edit. CC-F02 likewise identified the missing installment correction, reproduced it with failing actual-service tests, added a single grouped correction branch, and verified financial parity/rollback/read bounds. Before each subsequent fix, explicitly answer the four questions again against the then-current code:
+The initial audit changed no production code. CC-F01's reproduced warnings, calculation path, existing scalar ledger service, and failing-before/passing-after tests answered the four questions before its production edit. CC-F02 likewise reproduced the missing installment correction, added a grouped correction branch, and verified parity/rollback/read bounds. CC-F03 reproduced trapped credit, identified both the allocation and signed-net monitoring paths, added ordered correction/reapplication with an opening-ownership guard, and verified all sixteen failing-before cases. Before each subsequent fix, explicitly answer the four questions again against the then-current code:
 
 1. **What is the actual problem?** Use the finding's concrete fixture or a failing regression; distinguish confirmed defects from Section 7 policy questions.
 2. **Why does the current implementation cause it?** Confirm the named function and full caller path, including the transaction boundary and presentation consumer.
 3. **What is the smallest reasonable fix?** Use the localized recommendation above. Explain any proposed new file; avoid surrounding refactors, new caches, and duplicate financial formulas.
 4. **How will we prove the fix does not break other features?** Specify the actual-service, failure/rollback, query-bound, and UI regression cases applicable to that finding; run `npx tsc --noEmit` and the affected suites.
 
-CC-F01 and CC-F02 are now fixed. Next, add the remaining independent financial fixtures and fix CC-F03/04/05; then address performance/refresh, lifecycle/input validation, privacy/date/localization, and reminder/restore validation. Keep production diffs surgical. Release notes were explicitly skipped for both fixes; versions remain unchanged pending the repository-required version decision.
+CC-F01 through CC-F03 are fixed; CC-F04's necessary ownership guard is implemented with expanded validation pending. Next, complete opening-lifecycle coverage and fix CC-F05; then address performance/refresh, lifecycle/input validation, privacy/date/localization, and reminder/restore validation. Keep production diffs surgical. Release notes were explicitly skipped for the requested fixes; versions remain unchanged pending the repository-required version decision.
 
 ## 12. Feature sign-off checklist
 
@@ -478,10 +513,11 @@ CC-F01 and CC-F02 are now fixed. Next, add the remaining independent financial f
 - [x] Run the existing Credit Cards/walkthrough and selected related suites: 111 passed.
 - [x] Fix CC-F01 with 14 new regressions; combined selected run: 125 passed.
 - [x] Fix CC-F02 with 12 new actual-service regressions; combined selected run: 137 passed.
+- [x] Fix CC-F03 with 16 new regressions, including required opening-ownership support; combined selected run: 153 passed.
 - [x] Run repository TypeScript verification successfully.
 - [x] Reproduce financial discrepancies through actual services and real SQLite fixtures.
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
-- [ ] Implement and regression-test CC-F03 through CC-F12; preserve exact monetary and historical parity.
+- [ ] Complete expanded CC-F04 validation and implement/regression-test CC-F05 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.
