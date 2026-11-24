@@ -1116,5 +1116,121 @@ test("CC-F03: 10k ledger rows add no history reads for credit release or idle re
   } finally { sqlite.close(); }
 });
 
+test("CC-F04: deleting and restoring an opening-debt payment releases credit and restores debt without altering opening principal", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    const payment = createTransfer({ fromAccountId: "acc_1", toAccountId: "card", amountMinorUnits: 100000, occurredAt: new Date(2026, 10, 5, 12) });
+    const paidState = assertCardLedgerParity();
+    assert.equal(paidState.billed, 0); assert.equal(paidState.outstanding, 0);
+
+    // Delete payment: credit is released, opening debt is restored to 100,000
+    removeTransaction(payment.inLeg.id);
+    const deletedState = assertCardLedgerParity();
+    assert.equal(deletedState.billed, 100000); assert.equal(deletedState.outstanding, 100000);
+
+    // Repeated reconciliation writes nothing and does not corrupt opening principal
+    queries = [];
+    reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+    assert.deepEqual(assertCardLedgerParity(), deletedState);
+
+    // Restore payment: debt returns to 0
+    restoreTransaction(payment.inLeg.id);
+    const restoredState = assertCardLedgerParity();
+    assert.equal(restoredState.billed, 0); assert.equal(restoredState.outstanding, 0);
+    queries = [];
+    reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F04: refund corrections against opening debt maintain ledger parity and stable entry counts", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    f.charge("refund", 50000, "income");
+    reconcileCreditCardBilling();
+    const halfPaid = assertCardLedgerParity();
+    assert.equal(halfPaid.billed, 50000); assert.equal(halfPaid.outstanding, 50000);
+
+    // Increase refund to cover full debt
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 100000 WHERE id = 'refund'");
+    reconcileCreditCardBilling();
+    const fullyPaid = assertCardLedgerParity();
+    assert.equal(fullyPaid.billed, 0); assert.equal(fullyPaid.outstanding, 0);
+
+    // Repeated reconciliation converges with zero writes
+    const entriesBefore = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    for (let i = 0; i < 5; i++) reconcileCreditCardBilling();
+    const entriesAfter = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    assert.deepEqual(entriesAfter, entriesBefore);
+    assert.deepEqual(assertCardLedgerParity(), fullyPaid);
+  } finally { sqlite.close(); }
+});
+
+test("CC-F04: account opening balance edits update issued amounts and converge without phantom entries", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const initial = assertCardLedgerParity();
+    assert.equal(initial.billed, 100000); assert.equal(initial.statements[0].issued, 100000);
+
+    // Decrease opening debt: -100,000 -> -40,000
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -40000 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const decreased = assertCardLedgerParity();
+    assert.equal(decreased.billed, 40000); assert.equal(decreased.statements[0].issued, 40000);
+
+    // Second run must be write-free
+    queries = [];
+    reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+
+    // Increase opening debt: -40,000 -> -150,000
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -150000 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const increased = assertCardLedgerParity();
+    assert.equal(increased.billed, 150000); assert.equal(increased.statements[0].issued, 150000);
+
+    // Clear opening debt: -150,000 -> 0
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = 0 WHERE id = 'card'");
+    reconcileCreditCardBilling();
+    const cleared = assertCardLedgerParity();
+    assert.equal(cleared.billed, 0); assert.equal(cleared.statements[0].issued, 0);
+    queries = [];
+    reconcileCreditCardBilling();
+    assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)));
+  } finally { sqlite.close(); }
+});
+
+test("CC-F04: multiple reconciliation runs across mixed opening-debt payments write zero rows after initial convergence", t => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 24, 12).getTime() });
+  const f = fixture();
+  try {
+    sqlite.exec("UPDATE accounts SET opening_balance_minor_units = -100000 WHERE id = 'card'");
+    f.charge("payment", 100000, "transfer");
+    reconcileCreditCardBilling();
+    sqlite.exec("UPDATE transactions SET amount_minor_units = 60000 WHERE id = 'payment'");
+    reconcileCreditCardBilling();
+    const parity = assertCardLedgerParity();
+    assert.equal(parity.billed, 40000); assert.equal(parity.outstanding, 40000);
+
+    const snapshot = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    for (let run = 0; run < 10; run++) {
+      queries = [];
+      reconcileCreditCardBilling();
+      assert.ok(queries.every(query => !/^\s*(insert|update|delete)\b/i.test(query)), `Run ${run + 1} must write nothing`);
+    }
+    const after = sqlite.prepare("SELECT * FROM credit_card_statement_entries ORDER BY id").all();
+    assert.deepEqual(after, snapshot);
+    assert.deepEqual(assertCardLedgerParity(), parity);
+  } finally { sqlite.close(); }
+});
+
 
 
