@@ -205,6 +205,8 @@ Module._load = function (request, ...args) {
     getScheduleBySubscriptionId: () => null,
     processDueSchedules() {},
     saveScheduledTransactionInContext: (...args) => require("../../scheduled-transactions/services/save-scheduled-transaction.service").saveScheduledTransactionInContext(...args),
+    resolveScheduleOccurrencePaidInContext: (...args) =>
+      require("../../scheduled-transactions/services/resolve-schedule-paid.service").resolveScheduleOccurrencePaidInContext(...args),
     setScheduledTransactionPaused() {},
     getScheduledTransaction: (...args) => require("../../scheduled-transactions/repositories/scheduled-transactions.repository").findScheduledTransaction(...args),
   };
@@ -403,7 +405,12 @@ test("V2-01: migration repairs only linked future payments, preserves history an
     assert.equal(sqlite.prepare('SELECT amount_minor_units FROM transactions').get().amount_minor_units,14900,'Historical records require review');
     assert.equal(JSON.parse(sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE id='pending-sign'").get().template_snapshot).amountMinorUnits,-14900);
     assert.equal(sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE schedule_id=? AND status='posted'").get(schedule).template_snapshot,postedSnapshot);
-    assert.equal(JSON.parse(evidence).postedPaymentsForReview.length,1);
+    const repairEvidence = JSON.parse(evidence);
+    const postedPaymentsForReview =
+      typeof repairEvidence.postedPaymentsForReview === "string"
+        ? JSON.parse(repairEvidence.postedPaymentsForReview)
+        : repairEvidence.postedPaymentsForReview;
+    assert.equal(postedPaymentsForReview.length, 1);
     sqlite.exec(migration);
     assert.equal(sqlite.prepare("SELECT value FROM settings WHERE key='__subscription_payment_sign_repair_v1'").get().value,evidence);
   } finally { sqlite.close(); }

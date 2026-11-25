@@ -122,7 +122,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | ST-F01 | P1 | **Fix:** Editing an existing schedule rebuilds the next date from the original start. | Was `anchorOccurrenceNumber = nextOccurrenceNumber` on every update. **Fixed:** preserve anchor, next sequence, and next dates when recurrence fields are unchanged; re-anchor only on recurrence edits. Regression: `save-scheduled-transaction-remediation.test.cjs`. |
-| ST-F02 | P1 | One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Resolver loop plus `transaction_schedule_postings_transaction_unique`. The payment service catches the failure after the renewal date has already moved. |
+| ST-F02 | P1 | **Fix:** One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Was a loop over all pending plus swallowed errors in Mark Paid. **Fixed:** link oldest pending only, idempotent by `transactionId`, schedule sync fails the payment transaction. Regression: `resolve-schedule-paid-remediation.test.cjs`. |
 | ST-F03 | P1 | Subscription history errors are ignored after the ledger post. | Empty `catch` around `handleSubscriptionScheduleExecutedInContext` in both automatic and manual post. |
 | ST-F04 | P2 | Advance post does not tell other screens that a transaction was saved. | Service ends after `db.transaction`. Manual Post emits the mutation event. Advance post does not. |
 | ST-F05 | P2 | Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | `getCalendarScheduleOccurrences` calls `listScheduledTransactions` and `listScheduleOccurrences()` with no date predicate. Projection stops at 100 steps per schedule. |
@@ -138,8 +138,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 - **Smallest fix:** Keep the stored anchor and the stored next sequence when the recurrence fields did not change. Recalculate from the existing anchor only when start, frequency, interval, end, or weekend policy changes. Refresh unprocessed snapshots’ amounts and notes without moving their nominal dates.
 - **Regression proof:** February start, three posted months, next date in May, note-only save, assert May and anchor 1. A real frequency change may move the future sequence. A subscription notes-only save must not call catch-up on February. No new ledger row in either notes-only case.
 
-### ST-F02 — One payment cannot close several due occurrences
+### ST-F02 — One payment cannot close several due occurrences (**Fix**)
 
+- **Status:** **Fixed** in `resolve-schedule-paid.service.ts` and `record-subscription-payment.service.ts` (tests in `resolve-schedule-paid-remediation.test.cjs`).
 - **Problem:** Two overdue manual occurrences and one Mark Paid should change one period. The resolver marks every unprocessed occurrence posted and inserts the same `transactionId` for each. The second insert violates `transaction_schedule_postings_transaction_unique`. The payment service catches that error, so the subscription renewal can commit while the schedule cursor and the remaining due card do not match it.
 - **Cause:** [resolve-schedule-paid.service.ts](../../src/modules/scheduled-transactions/services/resolve-schedule-paid.service.ts) loops all unprocessed rows, then always advances `nextOccurrenceNumber + 1`. The unique index is in [transaction-schedules.ts](../../src/infrastructure/database/schema/transaction-schedules.ts). The `try/catch` is in [record-subscription-payment.service.ts](../../src/modules/subscriptions/services/record-subscription-payment.service.ts).
 - **Smallest fix:** Choose the single oldest unprocessed occurrence, link that one row, and advance one step. If none is waiting, advance only when the product rules say this payment is the next period, and insert one occurrence for that period. Do not catch a constraint failure inside the money transaction.
@@ -294,7 +295,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Run the existing Scheduled Transactions tests: 18 passed.
 - [ ] Add service-level regressions for save, post, skip, retry, Mark Paid, and advance post.
 - [x] Fix ST-F01 so a non-recurrence edit keeps the next date.
-- [ ] Fix ST-F02 so one payment links one occurrence.
+- [x] Fix ST-F02 so one payment links one occurrence.
 - [ ] Fix ST-F03 so subscription history commits with the ledger row.
 - [ ] Fix ST-F04 so advance post refreshes open ledger screens.
 - [ ] Bound calendar occurrence reads (ST-F05).

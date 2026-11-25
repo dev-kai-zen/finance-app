@@ -349,6 +349,21 @@ export function updateScheduleOccurrenceRecord(
     .run();
 }
 
+export function findSchedulePostingByTransactionId(
+  transactionId: string,
+  context: DbContext = db,
+): { id: string; occurrenceId: string } | null {
+  const row = context
+    .select({
+      id: transactionSchedulePostings.id,
+      occurrenceId: transactionSchedulePostings.occurrenceId,
+    })
+    .from(transactionSchedulePostings)
+    .where(eq(transactionSchedulePostings.transactionId, transactionId))
+    .get();
+  return row ?? null;
+}
+
 export function insertSchedulePosting(
   occurrenceId: string,
   transactionId: string,

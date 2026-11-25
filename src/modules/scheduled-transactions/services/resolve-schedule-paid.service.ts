@@ -1,6 +1,7 @@
 import type { DbContext } from "@/infrastructure/database/client";
 import {
   findScheduledTransaction,
+  findSchedulePostingByTransactionId,
   insertSchedulePosting,
   listUnprocessedScheduleOccurrences,
   updateScheduleOccurrenceRecord,
@@ -8,8 +9,8 @@ import {
 import { advanceSchedule } from "./process-due-schedules.service";
 
 /**
- * Marks any pending/due occurrences for a linked schedule as posted and advances the recurrence sequence.
- * Used when an external feature (e.g. Subscriptions) records a payment for a linked schedule.
+ * Marks the oldest pending/due occurrence as posted for an external payment and advances
+ * the schedule by one step. Used when Subscriptions records Mark Paid.
  */
 export function resolveScheduleOccurrencePaidInContext(
   scheduleId: string,
@@ -17,6 +18,10 @@ export function resolveScheduleOccurrencePaidInContext(
   paidAt: Date,
   context: DbContext,
 ): void {
+  if (findSchedulePostingByTransactionId(transactionId, context)) {
+    return;
+  }
+
   const schedule = findScheduledTransaction(scheduleId, context);
   if (!schedule) return;
 
@@ -26,19 +31,20 @@ export function resolveScheduleOccurrencePaidInContext(
   );
 
   if (pendingOccurrences.length > 0) {
-    for (const occ of pendingOccurrences) {
-      updateScheduleOccurrenceRecord(
-        occ.id,
-        {
-          status: "posted",
-          processedAt: paidAt,
-          errorMessage: null,
-          updatedAt: paidAt,
-        },
-        context,
-      );
-      insertSchedulePosting(occ.id, transactionId, paidAt, context);
-    }
+    const target = pendingOccurrences[0];
+    updateScheduleOccurrenceRecord(
+      target.id,
+      {
+        status: "posted",
+        processedAt: paidAt,
+        errorMessage: null,
+        updatedAt: paidAt,
+      },
+      context,
+    );
+    insertSchedulePosting(target.id, transactionId, paidAt, context);
+    advanceSchedule(schedule, target.sequenceNumber + 1, paidAt, context);
+    return;
   }
 
   advanceSchedule(

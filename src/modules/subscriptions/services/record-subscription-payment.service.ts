@@ -125,16 +125,12 @@ export function recordSubscriptionPaymentInContext(
 
   // 4. Synchronize linked schedule to clear "Needs attention" in Scheduled Transactions
   if (subscription.scheduleId) {
-    try {
-      resolveScheduleOccurrencePaidInContext(
-        subscription.scheduleId,
-        txRecord.id,
-        paidDate,
-        context,
-      );
-    } catch {
-      // Continue even if schedule sync encounters an issue
-    }
+    resolveScheduleOccurrencePaidInContext(
+      subscription.scheduleId,
+      txRecord.id,
+      paidDate,
+      context,
+    );
   }
 
   return {
