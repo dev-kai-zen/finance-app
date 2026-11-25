@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F07 fixed with automated regression coverage; CC-F08 closed as designed. CC-F09 through CC-F12 remain open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F07 and CC-F09 fixed with automated regression coverage; CC-F08 closed as designed. CC-F10 through CC-F12 remain open, and native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, and plan inspection query explosion are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests. CC-F09 through CC-F12 remain pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, and statement due-badge date/status parity are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09 status regressions. CC-F10 through CC-F12 remain pending. Native UI and frame timing remain unverified.
 
 **Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. CC-F07 batches billed installment checks (reducing 120-month plan edit inspection from 123 queries to 3), eliminates per-installment existence loops in reconciliation, chunks `planIds` at $\le 500$ in `listInstallmentsForPlans` and `listBilledInstallmentIdsForPlans`, omits unused account management flags, and optimizes activity string comparison. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, 5 query-performance regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
@@ -19,7 +19,7 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Credit Cards | Partial | CC-F01 through CC-F07 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F07 fixed; CC-F08 closed by design; CC-F09 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F07 and CC-F09 fixed; CC-F08 closed by design; CC-F10 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -179,7 +179,7 @@ These original probes characterize the initial defects. CC-F01 through CC-F04 no
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F06 are fixed with automated coverage; CC-F07 through CC-F12 remain open. Native verification remains pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07 and CC-F09 are fixed with automated coverage; CC-F10 through CC-F12 remain open. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -191,7 +191,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F06 | P2 — FIXED | Focused monitoring does not refresh after external mutations. | Fixed; 6 dedicated hook lifecycle regressions pass covering focus, burst coalescing, blur cleanup, DB replacement, and day rollover. |
 | CC-F07 | P2 — FIXED | All-card synchronous history reads, per-installment probes, and incomplete chunking violate performance requirements. | Fixed; 5 dedicated query-performance and chunking regressions pass. 120-month plan edit inspection reduced from 123 to 3 queries. |
 | CC-F08 | P2 — BY DESIGN | Activity modal displays itemized amounts regardless of privacy mode. | Closed per product design: Overview cards mask amounts under Privacy Mode; modal opening is an explicit inspection action where itemized amounts are intentionally visible. |
-| CC-F09 | P2 | Statement badges use UTC/stale dates and hide overdue partial bills. | Fixed-date/helper probe plus UI source. |
+| CC-F09 | P2 — FIXED | Statement badges use UTC/stale dates and hide overdue partial bills. | Four dedicated helper regressions pass; UI consumes `evaluatedCalendarDate` from monitoring reads. |
 | CC-F10 | P2 | Completed/fully paid schedules remain counted as active installments. | Actual-service/SQLite probe; completion policy requires agreement. |
 | CC-F11 | P2 | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Actual-service/SQLite probe. |
 | CC-F12 | P2 | Core feature strings are untranslated; activity close omits keyboard dismissal. | Source trace; native/localized checks pending. |
@@ -475,15 +475,31 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** Closed as designed. No code changes required.
 
-### [CC-F09] Due-status badges disagree with local-date monitoring
+### [CC-F09] Due-status badges disagree with local-date monitoring — FIXED
 
 **Problem / evidence:** At Manila 00:30 on November 24, a November 23 bill remains “unpaid” in the UTC-based badge path although the service counts it overdue. Partially paid overdue bills are classified “partial” before overdue is considered.
 
-**Cause / path:** The monitoring card freezes `new Date().toISOString().slice(0, 10)` in a mount-only `useMemo` at line 89. The activity modal also uses a UTC date inside a memo depending only on `statementSummary`. The service uses `toCalendarDate(today)`. The helper/card/modal each prioritize partial payment over past due.
+**Cause / path:** The monitoring card froze `new Date().toISOString().slice(0, 10)` in a mount-only `useMemo`. The activity modal used the same UTC slice. Monitoring totals used `toCalendarDate(today)`. Status helpers evaluated partial payment before overdue.
 
-**Smallest reasonable fix:** Use a shared local-date/status calculation and update its date on the established focus/resume/day-change path. Represent overdue and payment progress together, or give overdue priority in the single badge. Avoid a permanent per-card ticking timer.
+**Implemented:**
+1. `getCreditCardMonitoring` returns `evaluatedCalendarDate: toCalendarDate(today)` alongside card payloads.
+2. `useCreditCardMonitoring` refresh paths (focus, mutation, DB replacement, local day rollover) reload that date with the same read—no per-card timer.
+3. `getStatementPaymentStatus` and `getStatementPaymentPresentation` evaluate overdue (`dueOn < todayOn`) before in-term partial payment; past-due partial bills surface as **`overdue_partial`** with label **“Past due · partially paid”** and overdue styling.
+4. The monitoring card and activity modal consume `evaluatedCalendarDate` instead of UTC ISO dates.
 
-**Proof required:** Fixed clocks in Manila and a negative UTC offset, local midnight/resume, due today versus yesterday, partial/unpaid/paid bills, and helper/card/modal parity. Keep “paid” correct at zero remaining balance.
+**Regression evidence:** Four cases in [statement-status-cc-f09.test.cjs](../../src/modules/credit-cards/__tests__/statement-status-cc-f09.test.cjs) cover overdue-after-due partial bills, due-on versus overdue boundaries, local `toCalendarDate` versus UTC ISO divergence, and in-term partial pay. Updated [statement-activity.test.cjs](../../src/modules/credit-cards/__tests__/statement-activity.test.cjs) mirrors the status ordering.
+
+**Performance:** Pure in-memory string compares on already-hydrated statement rows; zero added SQLite or mount subscriptions beyond existing CC-F06 refresh coalescing.
+
+#### Manual verification guide — CC-F09
+
+1. **Partial pay, past due (logic):** On a card with statement day 10 / due day 25, bill PHP 1,000 due on the 25th of a past month with PHP 500 paid. With local today after that due date, confirm the summary header **PAST DUE** matches the statement badge **Past due · partially paid** (not “Partially paid” alone). Open activity modal: same label.
+2. **UTC vs local (timezone):** With device timezone UTC+8, set local time just after midnight with a bill due yesterday (unpaid). Confirm **Past due** on the statement while the top summary shows overdue. Badges must not stay on “Remaining balance” because UTC is still the previous calendar day.
+3. **Midnight while focused:** Open Credit Cards before local midnight on an overdue statement; after midnight, background/resume the app without leaving the screen. Statement badge must flip to overdue when totals refresh—no need to navigate away.
+4. **Due today boundary:** Bill due **today** local with remaining balance: badge **Remaining balance** or unpaid (not overdue). Bill due **yesterday**: **Past due**.
+5. **Paid / in-term partial:** Fully paid → **Paid in full**. Partial pay before due date → **Partially paid** only.
+
+**Status:** CC-F09 is fixed and automated-test verified. Native timezone smoke remains recommended. Release notes skipped as requested.
 
 ### [CC-F10] Active installment count never completes a schedule
 
@@ -643,7 +659,8 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Reproduce financial discrepancies through actual services and real SQLite fixtures.
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
 - [x] Settle CC-F08 privacy policy: activity inspection modal intentionally displays itemized amounts by design.
-- [ ] Implement and regression-test CC-F09 through CC-F12; preserve exact monetary and historical parity.
+- [x] Fix CC-F09 with 4 new statement-status regressions; card/modal use `evaluatedCalendarDate` from monitoring reads.
+- [ ] Implement and regression-test CC-F10 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.

@@ -19,7 +19,16 @@ export type StatementPaymentStatus =
   | "paid"
   | "partial"
   | "overdue"
+  | "overdue_partial"
   | "unpaid";
+
+export type StatementPaymentBadgeKind = "paid" | "partial" | "overdue" | "none";
+
+export interface StatementPaymentPresentation {
+  status: StatementPaymentStatus;
+  label: string;
+  badgeKind: StatementPaymentBadgeKind;
+}
 
 export function formatBillPillDate(statementOn: string | null): string {
   if (!statementOn) return "Bill";
@@ -49,13 +58,42 @@ export function getStatementPaymentStatus(
   if (statement.remainingAmountMinorUnits <= 0) {
     return "paid";
   }
-  if (statement.remainingAmountMinorUnits < statement.issuedAmountMinorUnits) {
+  const isPartial =
+    statement.remainingAmountMinorUnits < statement.issuedAmountMinorUnits;
+  const isOverdue = statement.dueOn < todayOn;
+  if (isOverdue) {
+    return isPartial ? "overdue_partial" : "overdue";
+  }
+  if (isPartial) {
     return "partial";
   }
-  if (statement.dueOn < todayOn) {
-    return "overdue";
-  }
   return "unpaid";
+}
+
+export function getStatementPaymentPresentation(
+  statement: Pick<
+    CreditCardStatementSummary,
+    "issuedAmountMinorUnits" | "remainingAmountMinorUnits" | "dueOn"
+  >,
+  todayOn: string,
+): StatementPaymentPresentation {
+  const status = getStatementPaymentStatus(statement, todayOn);
+  switch (status) {
+    case "paid":
+      return { status, label: "Paid in full", badgeKind: "paid" };
+    case "partial":
+      return { status, label: "Partially paid", badgeKind: "partial" };
+    case "overdue":
+      return { status, label: "Past due", badgeKind: "overdue" };
+    case "overdue_partial":
+      return {
+        status,
+        label: "Past due · partially paid",
+        badgeKind: "overdue",
+      };
+    default:
+      return { status, label: "Remaining balance", badgeKind: "none" };
+  }
 }
 
 export function getStatementDisplayItems(

@@ -288,6 +288,7 @@ export function getCreditCardMonitoring(
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
 
   return {
+    evaluatedCalendarDate: toCalendarDate(today),
     cards,
     dueThisMonthMinorUnits: cards.reduce(
       (sum, card) =>

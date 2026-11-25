@@ -120,7 +120,10 @@ export {
   formatBillPillDate,
   formatBillPillLabel,
   getStatementDisplayItems,
+  getStatementPaymentPresentation,
   getStatementPaymentStatus,
   type StatementDisplayItem,
+  type StatementPaymentBadgeKind,
+  type StatementPaymentPresentation,
   type StatementPaymentStatus,
 } from "./utils/statement-activity";

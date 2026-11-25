@@ -65,4 +65,6 @@ export interface CreditCardMonitoringSummary {
   cards: CreditCardMonitoringItem[];
   dueThisMonthMinorUnits: number;
   overdueMinorUnits: number;
+  /** Local calendar date used for due/overdue totals; matches monitoring reads. */
+  evaluatedCalendarDate: string;
 }

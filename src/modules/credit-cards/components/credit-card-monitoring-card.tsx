@@ -23,6 +23,7 @@ import type {
 import {
   formatBillPillLabel,
   getStatementDisplayItems,
+  getStatementPaymentPresentation,
   getStatementPaymentStatus,
   type StatementDisplayItem,
 } from "../utils/statement-activity";
@@ -46,8 +47,10 @@ function formatDate(value: string | null) {
 
 export function CreditCardMonitoringCard({
   card,
+  evaluatedCalendarDate,
 }: {
   card: CreditCardMonitoringItem;
+  evaluatedCalendarDate: string;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -85,8 +88,6 @@ export function CreditCardMonitoringCard({
     if (!activeStatement) return [];
     return getStatementDisplayItems(activeStatement);
   }, [activeStatement]);
-
-  const todayOn = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const openStatementModal = (
     statement: CreditCardStatementSummary,
@@ -237,7 +238,10 @@ export function CreditCardMonitoringCard({
               {card.statements.map((statement, index) => {
                 const isSelected = statement.id === activeStatement?.id;
                 const isLatest = index === 0;
-                const status = getStatementPaymentStatus(statement, todayOn);
+                const status = getStatementPaymentStatus(
+                  statement,
+                  evaluatedCalendarDate,
+                );
                 const pillLabel = formatBillPillLabel(statement);
 
                 return (
@@ -336,28 +340,44 @@ export function CreditCardMonitoringCard({
                         isPrivate,
                       )}
                     </Text>
-                    {activeStatement.remainingAmountMinorUnits <= 0 ? (
-                      <View style={styles.statusBadgePaid}>
-                        <Text style={styles.statusBadgePaidText}>Paid in full</Text>
-                      </View>
-                    ) : activeStatement.remainingAmountMinorUnits <
-                      activeStatement.issuedAmountMinorUnits ? (
-                      <View style={styles.statusBadgePartial}>
-                        <Text style={styles.statusBadgePartialText}>
-                          Partially paid
+                    {(() => {
+                      const presentation = getStatementPaymentPresentation(
+                        activeStatement,
+                        evaluatedCalendarDate,
+                      );
+                      if (presentation.badgeKind === "paid") {
+                        return (
+                          <View style={styles.statusBadgePaid}>
+                            <Text style={styles.statusBadgePaidText}>
+                              {presentation.label}
+                            </Text>
+                          </View>
+                        );
+                      }
+                      if (presentation.badgeKind === "partial") {
+                        return (
+                          <View style={styles.statusBadgePartial}>
+                            <Text style={styles.statusBadgePartialText}>
+                              {presentation.label}
+                            </Text>
+                          </View>
+                        );
+                      }
+                      if (presentation.badgeKind === "overdue") {
+                        return (
+                          <View style={styles.statusBadgeOverdue}>
+                            <Text style={styles.statusBadgeOverdueText}>
+                              {presentation.label}
+                            </Text>
+                          </View>
+                        );
+                      }
+                      return (
+                        <Text style={styles.statementUnpaidNote}>
+                          {presentation.label}
                         </Text>
-                      </View>
-                    ) : activeStatement.dueOn < todayOn ? (
-                      <View style={styles.statusBadgeOverdue}>
-                        <Text style={styles.statusBadgeOverdueText}>
-                          Past due
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.statementUnpaidNote}>
-                        Remaining balance
-                      </Text>
-                    )}
+                      );
+                    })()}
                   </View>
                 </View>
               </View>
@@ -492,6 +512,7 @@ export function CreditCardMonitoringCard({
       {modalConfig ? (
         <CreditCardActivityModal
           currencyCode={card.currencyCode}
+          evaluatedCalendarDate={evaluatedCalendarDate}
           items={modalConfig.items}
           onClose={() => setModalConfig(null)}
           statementSummary={modalConfig.statementSummary}

@@ -130,6 +130,7 @@ function createHarness({ initialDate = new Date(2026, 10, 24, 12) } = {}) {
           ],
           dueThisMonthMinorUnits: 0,
           overdueMinorUnits: 0,
+          evaluatedCalendarDate: "2026-11-24",
         };
       },
     },

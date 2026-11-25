@@ -22,11 +22,14 @@ function getStatementPaymentStatus(statement, todayOn) {
   if (statement.remainingAmountMinorUnits <= 0) {
     return "paid";
   }
-  if (statement.remainingAmountMinorUnits < statement.issuedAmountMinorUnits) {
-    return "partial";
+  const isPartial =
+    statement.remainingAmountMinorUnits < statement.issuedAmountMinorUnits;
+  const isOverdue = statement.dueOn < todayOn;
+  if (isOverdue) {
+    return isPartial ? "overdue_partial" : "overdue";
   }
-  if (statement.dueOn < todayOn) {
-    return "overdue";
+  if (isPartial) {
+    return "partial";
   }
   return "unpaid";
 }

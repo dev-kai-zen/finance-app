@@ -11,6 +11,7 @@ const EMPTY_SUMMARY: CreditCardMonitoringSummary = {
   cards: [],
   dueThisMonthMinorUnits: 0,
   overdueMinorUnits: 0,
+  evaluatedCalendarDate: toCalendarDate(new Date()),
 };
 
 export function useCreditCardMonitoring() {

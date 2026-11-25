@@ -281,6 +281,7 @@ function CreditCardMonitoringScreenContent() {
           {selectedCard ? (
             <CreditCardMonitoringCard
               card={selectedCard}
+              evaluatedCalendarDate={data.evaluatedCalendarDate}
               key={selectedCard.accountId}
             />
           ) : null}

@@ -20,6 +20,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
+import { getStatementPaymentPresentation } from "../utils/statement-activity";
 
 export interface CreditCardActivityModalItem {
   id: string;
@@ -47,6 +48,7 @@ export interface CreditCardActivityModalProps {
   currencyCode: string;
   items: CreditCardActivityModalItem[];
   statementSummary?: CreditCardStatementSummaryCardProps | null;
+  evaluatedCalendarDate: string;
 }
 
 function formatDate(value: string | null): string {
@@ -74,6 +76,7 @@ function CreditCardActivityModalContent({
   currencyCode,
   items,
   statementSummary,
+  evaluatedCalendarDate,
 }: CreditCardActivityModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -97,22 +100,23 @@ function CreditCardActivityModalContent({
   }, [items, search]);
 
   const status = useMemo(() => {
-    if (!statementSummary) return null;
-    if (statementSummary.remainingAmountMinorUnits <= 0) {
-      return { label: "Paid in full", kind: "paid" };
+    if (!statementSummary?.dueOn) return null;
+    const presentation = getStatementPaymentPresentation(
+      {
+        issuedAmountMinorUnits: statementSummary.issuedAmountMinorUnits,
+        remainingAmountMinorUnits: statementSummary.remainingAmountMinorUnits,
+        dueOn: statementSummary.dueOn,
+      },
+      evaluatedCalendarDate,
+    );
+    if (presentation.badgeKind === "none") {
+      return { label: presentation.label, kind: "unpaid" as const };
     }
-    if (
-      statementSummary.remainingAmountMinorUnits <
-      statementSummary.issuedAmountMinorUnits
-    ) {
-      return { label: "Partially paid", kind: "partial" };
-    }
-    const todayOn = new Date().toISOString().slice(0, 10);
-    if (statementSummary.dueOn && statementSummary.dueOn < todayOn) {
-      return { label: "Past due", kind: "overdue" };
-    }
-    return { label: "Unpaid", kind: "unpaid" };
-  }, [statementSummary]);
+    return {
+      label: presentation.label,
+      kind: presentation.badgeKind,
+    };
+  }, [evaluatedCalendarDate, statementSummary]);
 
   return (
     <Modal
