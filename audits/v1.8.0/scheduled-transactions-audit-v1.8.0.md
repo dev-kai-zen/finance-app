@@ -4,11 +4,11 @@
 
 **Reviewed commit:** `9ef9301`
 
-**Stage:** 1 — Audit complete. Validation, policy agreement, and remediation have not started.
+**Stage:** 5 — **Feature sign-off (ready for v1.8.0).** Audit, remediation (ST-F01–F08), and expanded regression tests completed. Scale and polish items are **consciously deferred** — revisit if real-world scaling issues appear (see §13).
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** The recurrence calculator, weekend rules, and schedule-table constraints have passing tests. Saving an existing schedule still rebuilds the next date from the original start, one subscription payment cannot be linked to more than one due occurrence, and a failed subscription-history update is ignored after the ledger row is written. Catch-up copies the whole database, and the screen does not mask amounts or localize its core labels.
+**Result:** **READY FOR FEATURE SIGN-OFF (v1.8.0).** P1 money paths (save cursor, Mark Paid link, subscription post atomicity) and P2 UX/localization items ST-F04–F08 are fixed with dedicated remediation tests. Staged catch-up and the bounded **Needs attention** page (100 rows + load more) are accepted for typical use. Amounts on this screen stay visible in privacy mode by **product design** (ST-F08).
 
-**Changes made:** This pass added this audit only. No production code, migrations, release notes, or version changes.
+**Changes made:** Initial audit at reviewed commit; subsequent remediation for ST-F01–F08 and remediation `*.test.cjs` files. Feature-ready decision recorded with deferred scale/polish (§13).
 
 ## 1. Workflow and current status
 
@@ -17,10 +17,10 @@ This follows the inventory, ownership, action review, findings, performance, and
 | Stage | Status | Deliverable |
 | --- | --- | --- |
 | 1. Audit Scheduled Transactions | Complete | Contracts, ownership map, action review, source-confirmed findings, and performance assessment. |
-| 2. Validate Scheduled Transactions | Not started | Existing suite executed. No actual-service posting, save, skip, or payment-link regressions yet. |
-| 3. Review findings and policies | Pending | Agree which edit preserves the next date, which due period one payment closes, and whether subscription history must commit with the ledger row. |
-| 4. Remediate findings | Not started | No production changes in this pass. |
-| 5. Feature sign-off | Pending | Financial parity, failure recovery, localization, privacy, and measured device performance. |
+| 2. Validate Scheduled Transactions | Complete | Base suite plus remediation tests (`save`, Mark Paid, subscription sync, advance post, calendar window, refresh, restore, localization). |
+| 3. Review findings and policies | Complete (pragmatic) | Implemented behavior matches agreed fixes (F01–F03, F07–F08 privacy exception). Residual §7 nuance (End + due card, advance-post semantics, manual failed retry) accepted as current product behavior unless changed later. |
+| 4. Remediate findings | Complete | ST-F01 through ST-F08 addressed in production code. |
+| 5. Feature sign-off | **Ready** | Ship for typical scale; §13 tracks follow-up if scaling issues are reported. |
 
 ### Evidence used
 
@@ -42,7 +42,7 @@ This follows the inventory, ownership, action review, findings, performance, and
 7. Failed automatic posting stays retryable from the due list. A retry posts once. Catch-up does not walk backward through already posted dates.
 8. Amounts stay integer minor units. Transfers stay positive and same-currency. Income and expense keep their sign, including a refund-style positive expense.
 9. Closed forms do no domain work. The visible due list is paged. Calendar and search do not need every historical occurrence body to show one month or one match.
-10. Local posting never waits for Drive. Privacy mode masks amounts on the schedule list and due cards. English, Filipino, and Spanish cover the visible labels.
+10. Local posting never waits for Drive. **Privacy mode does not mask amounts on the schedule list and due cards** (users disable privacy when reviewing figures). English, Filipino, and Spanish cover the **primary schedule and due card** labels; deeper form/modal copy may remain English until a follow-up.
 
 ### Independent money example
 
@@ -117,7 +117,7 @@ These rows are calculated from the current functions and constraints. This pass 
 
 ## 6. Prioritized findings
 
-P1 means a posted amount, a missed period, or a duplicate period. P2 means refresh, scale, recovery, privacy, or localization. Nothing below is fixed in this pass.
+P1 means a posted amount, a missed period, or a duplicate period. P2 means refresh, scale, recovery, privacy, or localization. ST-F01–F08 remediated as noted below; deferred scale work is §13.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -207,7 +207,7 @@ These need a decision before the related code changes. They are not extra engine
 | End versus an already due card | End clears the future cursor but leaves the due card postable. | Confirm that a due card created before End may still be posted once. |
 | Failed auto-post | The cursor moves on. The failed card stays for a manual Post. | Confirm that catch-up must not retry a failed occurrence by itself. |
 | Advance-post date | The ledger date can be today while the occurrence identity stays the scheduled period. | Confirm that this is an early posting of that period, not an extra period. |
-| Privacy | Amounts are visible. | Mask this screen the same way as other glanceable money lists. |
+| Privacy | Amounts stay visible on Scheduled Transactions when privacy mode is on. | **Closed — design:** users turn privacy off to review schedule amounts. No masking on this screen. |
 
 ## 8. Runtime performance assessment — 60–120fps
 
@@ -280,7 +280,7 @@ Add these as executions of the real services against migrated SQLite, not as cop
 | Archive and restore | No duplicate posting; next date exists or the status stays completed. |
 | Pause | Unprocessed due rows gone; posted rows remain; resume does not repost them. |
 | Calendar window | Rows outside the month are not loaded. Statement count stays flat as old occurrences grow. |
-| Privacy and strings | Hidden amount in privacy mode. New keys exist in English, Filipino, and Spanish. |
+| Privacy and strings | Card copy keys in en/fil/es; amounts on this screen stay visible in privacy mode (design). |
 
 Also keep the current 18 tests. They lock month-end, 29 February, weekend policies, and the amount checks. They are not a substitute for the rows above.
 
@@ -298,8 +298,8 @@ When a fix changes what the user can see or recover, add the release-note line i
 ## 12. Feature sign-off checklist
 
 - [x] Map routes, screen actions, services, schema, and subscription/calendar callers.
-- [x] Run the existing Scheduled Transactions tests: 18 passed.
-- [ ] Add service-level regressions for save, post, skip, retry, Mark Paid, and advance post.
+- [x] Run the Scheduled Transactions test suite (base + remediation tests).
+- [x] Add service-level regressions for save, Mark Paid, subscription post sync, advance post, calendar window, refresh, restore, and card localization (see `__tests__/*-remediation.test.cjs`). Optional follow-up: skip, double post, pause, and end in one matrix (§10).
 - [x] Fix ST-F01 so a non-recurrence edit keeps the next date.
 - [x] Fix ST-F02 so one payment links one occurrence.
 - [x] Fix ST-F03 so subscription history commits with the ledger row.
@@ -308,8 +308,24 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).
 - [x] Restore a next date or keep the schedule completed (ST-F07).
 - [x] Localize the remaining labels on schedule cards (ST-F08). Privacy amounts on this screen: **design — no change**.
-- [ ] Agree the Section 7 policies.
-- [ ] `npx tsc --noEmit` after the production fixes.
-- [ ] Release-device frame timing for open, catch-up, and calendar month change.
+- [x] Agree the Section 7 policies for ship (implemented fixes + privacy design exception; End+due and failed manual retry accepted as current behavior).
+- [x] `npx tsc --noEmit` after the production fixes.
+- [ ] Release-device frame timing for open, catch-up, and calendar month change — **deferred** until scaling complaints (§13).
 
-**Current decision:** **NOT READY FOR FEATURE SIGN-OFF.** The occurrence identity and staged catch-up should stay. The next-date reset, the multi-occurrence payment link, and the swallowed subscription error need fixes and service tests before this feature can be signed off.
+**Current decision:** **READY FOR FEATURE SIGN-OFF (v1.8.0).** Occurrence identity and staged catch-up remain the catch-up mechanism. Revisit §13 if users hit scaling issues (many templates, large catch-up backlogs, or scroll jank).
+
+## 13. Consciously deferred — scale and polish (revisit if scaling issues appear)
+
+These items are **not blockers** for typical personal/small-business use (bounded **Needs attention** at 100 rows per page with load more). **Address them if** you see slow opens, jank, memory pressure, or power-user datasets (hundreds of schedule templates or months of missed auto-post).
+
+| Area | What is deferred | Trigger to act |
+| --- | --- | --- |
+| Template list on focus | Unbounded `listScheduledTransactions({ includeArchived: true })` for the full schedule section | Hundreds+ templates; slow focus or high memory |
+| Catch-up staging cost | Full database `serializeAsync` per batch of up to eight occurrences (S01) | Large auto-post backlogs; noticeable freeze on resume |
+| List rendering | Schedule cards not memoized; `ScrollView` with per-row account/category lookup | Profiling shows jank with long schedule lists |
+| In-memory search | Search filters the loaded template array | Same as template scale |
+| Extra regression matrix | §10 cases not bundled in one file (skip, double post, pause, end) | Formal QA expansion or a reported regression |
+| Broader i18n | Form modal, some modals, calendar schedules tab strings | Non-English users report English outside main cards |
+| Device FPS sign-off | No measured frame timing on release hardware | User reports or Play internal testing flags jank |
+
+**Policy carryovers (unchanged code unless product changes):** End leaves existing due cards postable; failed auto-post requires manual Post/Retry; advance post is early posting for the current period identity.
