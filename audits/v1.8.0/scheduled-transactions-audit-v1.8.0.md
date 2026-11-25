@@ -124,7 +124,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | ST-F01 | P1 | **Fix:** Editing an existing schedule rebuilds the next date from the original start. | Was `anchorOccurrenceNumber = nextOccurrenceNumber` on every update. **Fixed:** preserve anchor, next sequence, and next dates when recurrence fields are unchanged; re-anchor only on recurrence edits. Regression: `save-scheduled-transaction-remediation.test.cjs`. |
 | ST-F02 | P1 | **Fix:** One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Was a loop over all pending plus swallowed errors in Mark Paid. **Fixed:** link oldest pending only, idempotent by `transactionId`, schedule sync fails the payment transaction. Regression: `resolve-schedule-paid-remediation.test.cjs`. |
 | ST-F03 | P1 | **Fix:** Subscription history errors are ignored after the ledger post. | Was empty `catch` around `handleSubscriptionScheduleExecutedInContext`. **Fixed:** subscription sync errors roll back the post transaction; missing subscription throws. Regression: `subscription-schedule-post-sync.test.cjs`. |
-| ST-F04 | P2 | Advance post does not tell other screens that a transaction was saved. | Service ends after `db.transaction`. Manual Post emits the mutation event. Advance post does not. |
+| ST-F04 | P2 | **Fix:** Advance post does not tell other screens that a transaction was saved. | Manual Post emitted `FINANCE_APP_TRANSACTION_MUTATED`; advance post did not. **Fixed:** emit after commit with `sourceId: schedule-advance-post`. Regression: `advance-post-schedule-remediation.test.cjs`. |
 | ST-F05 | P2 | Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | `getCalendarScheduleOccurrences` calls `listScheduledTransactions` and `listScheduleOccurrences()` with no date predicate. Projection stops at 100 steps per schedule. |
 | ST-F06 | P2 | Focus and catch-up do more work than the visible page. | The hook passes `hasCachedResult: false`, so each refresh clears due rows. Catch-up serializes the database once per batch of eight. The template query has no limit. |
 | ST-F07 | P2 | Restore can turn an archived schedule back on without a next date. | Archive clears `nextNominalAt`. Restore of a completed row forces `active` and keeps that null. |
@@ -154,8 +154,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 - **Smallest fix:** Let that error leave the database transaction. The ledger insert, posting, occurrence status, and subscription history commit together or not at all.
 - **Regression proof:** Force the subscription update to throw. Assert no new transaction, no posting, and the occurrence still `due` or `failed`. A successful post asserts one payment row and one renewal step.
 
-### ST-F04 — Advance post does not refresh the ledger screens
+### ST-F04 — Advance post does not refresh the ledger screens (**Fix**)
 
+- **Status:** **Fixed** in `advance-post-schedule.service.ts` (tests in `advance-post-schedule-remediation.test.cjs`).
 - **Problem:** Advance post writes a real transaction. Transactions and Dashboard listen for `FINANCE_APP_TRANSACTION_MUTATED`. This path does not emit it, so those screens can keep the old list until the user opens them again.
 - **Cause:** [advance-post-schedule.service.ts](../../src/modules/scheduled-transactions/services/advance-post-schedule.service.ts) commits and returns. [postScheduledOccurrence](../../src/modules/scheduled-transactions/services/process-due-schedules.service.ts) emits after its commit. The hook reloads schedules only.
 - **Smallest fix:** Emit `FINANCE_APP_TRANSACTION_MUTATED` with a schedule source id after a committed advance post, matching manual post.
@@ -298,7 +299,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Fix ST-F01 so a non-recurrence edit keeps the next date.
 - [x] Fix ST-F02 so one payment links one occurrence.
 - [x] Fix ST-F03 so subscription history commits with the ledger row.
-- [ ] Fix ST-F04 so advance post refreshes open ledger screens.
+- [x] Fix ST-F04 so advance post refreshes open ledger screens.
 - [ ] Bound calendar occurrence reads (ST-F05).
 - [ ] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).
 - [ ] Restore a next date or keep the schedule completed (ST-F07).

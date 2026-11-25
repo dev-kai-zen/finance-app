@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db } from "@/infrastructure/database/client";
 import {
   findScheduledTransaction,
@@ -107,6 +108,9 @@ export function advancePostScheduledTransaction(
     }
 
     advanceSchedule(schedule, occurrence.sequenceNumber + 1, now, tx);
+  });
+  DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED", {
+    sourceId: "schedule-advance-post",
   });
 }
 
