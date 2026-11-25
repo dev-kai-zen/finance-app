@@ -6,12 +6,17 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { Account } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 import type {
   ScheduleOccurrence,
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
-import { formatScheduleRecurrence } from "../utils/recurrence";
+import {
+  scheduleAccountLine,
+  scheduleCardTitle,
+} from "../utils/schedule-card-copy";
+import { formatScheduleRecurrence } from "../utils/format-schedule-recurrence";
 
 export interface ScheduledOccurrenceCardProps {
   occurrence: ScheduleOccurrence;
@@ -43,6 +48,7 @@ export function ScheduledOccurrenceCard({
   postRef,
 }: ScheduledOccurrenceCardProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const isTransfer = schedule.transactionType === "transfer";
@@ -63,11 +69,7 @@ export function ScheduledOccurrenceCard({
         <View style={styles.cardMain}>
           <View style={styles.titleRow}>
             <Text numberOfLines={1} style={styles.cardTitle}>
-              {schedule.name?.trim() ||
-                category?.name ||
-                (schedule.transactionType === "transfer"
-                  ? "Scheduled transfer"
-                  : "Scheduled " + schedule.transactionType)}
+              {scheduleCardTitle(schedule, category, t)}
             </Text>
             <View
               style={[
@@ -81,28 +83,34 @@ export function ScheduledOccurrenceCard({
                   isFailed ? styles.statusFailedText : styles.statusDueText,
                 ]}
               >
-                {isFailed ? "Failed" : "Due"}
+                {isFailed
+                  ? t("scheduledTransactions.occurrence.failed")
+                  : t("scheduledTransactions.occurrence.due")}
               </Text>
             </View>
           </View>
 
           <Text style={styles.cardMeta}>
-            {schedule.transactionType === "transfer"
-              ? (sourceAccount?.name ?? "Unknown") +
-                " → " +
-                (destinationAccount?.name ?? "Unknown")
-              : (sourceAccount?.name ?? "Unknown") +
-                " · " +
-                (category?.name ?? "No category")}
+            {scheduleAccountLine(
+              schedule,
+              sourceAccount,
+              destinationAccount,
+              category,
+              t,
+            )}
           </Text>
 
           <Text style={styles.cardMeta}>
-            {formatScheduleRecurrence(schedule)} ·{" "}
-            {schedule.autoPost ? "Auto-post" : "Confirm each"}
+            {formatScheduleRecurrence(schedule, t)} ·{" "}
+            {schedule.autoPost
+              ? t("scheduledTransactions.postingMode.autoPost")
+              : t("scheduledTransactions.postingMode.confirmEach")}
           </Text>
 
           <Text style={[styles.dueText, isFailed && styles.dueTextFailed]}>
-            Due: {dueDateTime.toLocaleString()}
+            {t("scheduledTransactions.occurrence.dueOn", {
+              date: dueDateTime.toLocaleString(),
+            })}
           </Text>
 
           {occurrence.errorMessage ? (
@@ -131,23 +139,29 @@ export function ScheduledOccurrenceCard({
       <View style={styles.cardActions}>
         {onEdit ? (
           <Pressable
-            accessibilityLabel="Edit schedule"
+            accessibilityLabel={t(
+              "scheduledTransactions.occurrence.editAccessibility",
+            )}
             accessibilityRole="button"
             disabled={pending}
             onPress={() => onEdit(schedule)}
             style={styles.iconAction}
           >
             <SquarePen color={theme.colors.textSecondary} size={16} />
-            <Text style={styles.actionText}>Edit</Text>
+            <Text style={styles.actionText}>
+              {t("scheduledTransactions.occurrence.edit")}
+            </Text>
           </Pressable>
         ) : null}
 
         <View style={styles.rightActions}>
           <AppButton
-            accessibilityLabel="Skip occurrence"
+            accessibilityLabel={t(
+              "scheduledTransactions.occurrence.skipAccessibility",
+            )}
             buttonRef={skipRef}
             disabled={pending}
-            label="Skip"
+            label={t("scheduledTransactions.occurrence.skip")}
             leading={
               <FastForward color={theme.colors.textSecondary} size={15} />
             }
@@ -156,10 +170,18 @@ export function ScheduledOccurrenceCard({
             variant="secondary"
           />
           <AppButton
-            accessibilityLabel={isFailed ? "Retry action" : "Post action"}
+            accessibilityLabel={
+              isFailed
+                ? t("scheduledTransactions.occurrence.retryAccessibility")
+                : t("scheduledTransactions.occurrence.postAccessibility")
+            }
             buttonRef={postRef}
             disabled={pending}
-            label={isFailed ? "Retry Action" : "Post Action"}
+            label={
+              isFailed
+                ? t("scheduledTransactions.occurrence.retryAction")
+                : t("scheduledTransactions.occurrence.postAction")
+            }
             leading={
               isFailed ? (
                 <RotateCcw color={theme.colors.onPrimary} size={15} />

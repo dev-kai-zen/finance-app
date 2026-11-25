@@ -55,8 +55,13 @@ import type {
 } from "../types/scheduled-transaction.types";
 import {
   calculateScheduleOccurrence,
-  formatScheduleRecurrence,
 } from "../utils/recurrence";
+import { formatScheduleRecurrence } from "../utils/format-schedule-recurrence";
+import {
+  scheduleAccountLine,
+  scheduleCardTitle,
+  scheduleStatusLabel,
+} from "../utils/schedule-card-copy";
 import {
   DEFAULT_SCHEDULE_LIST_FILTERS,
   filterSchedulesBySearch,
@@ -66,15 +71,6 @@ import {
   type ScheduleListFilter,
   type ScheduleListSearchContext,
 } from "../utils/schedule-list-filter";
-
-const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: ScheduleListFilter;
-}> = [
-  { label: "Active", value: "active" },
-  { label: "Completed", value: "completed" },
-  { label: "Archived", value: "archived" },
-];
 
 export function ScheduledTransactionsScreen(props?: {
   initialAction?: "new";
@@ -256,39 +252,53 @@ function ScheduledTransactionsScreenContent({
     ],
   );
 
+  const scheduleFilterOptions = useMemo(
+    () =>
+      [
+        {
+          label: t("scheduledTransactions.statusFilter.active"),
+          value: "active" as ScheduleListFilter,
+        },
+        {
+          label: t("scheduledTransactions.statusFilter.completed"),
+          value: "completed" as ScheduleListFilter,
+        },
+        {
+          label: t("scheduledTransactions.statusFilter.archived"),
+          value: "archived" as ScheduleListFilter,
+        },
+      ] as const,
+    [t],
+  );
+
   const emptyStateContent = useMemo(() => {
     if (schedules.length === 0) {
       return {
-        title: "No scheduled transactions",
-        description:
-          "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
+        title: t("scheduledTransactions.emptyTitle"),
+        description: t("scheduledTransactions.emptyDesc"),
       };
     }
     if (sourceFilter === "subscription" && sourceFilteredSchedules.length === 0) {
       return {
-        title: "No subscription schedules",
-        description:
-          "You do not have any schedules created by subscriptions. Subscriptions with auto-post enabled will appear here.",
+        title: t("scheduledTransactions.noSubscriptionSchedulesTitle"),
+        description: t("scheduledTransactions.noSubscriptionSchedulesDesc"),
       };
     }
     if (statusFilteredSchedules.length === 0 || sourceFilteredSchedules.length === 0) {
       return {
-        title: "No matching schedules",
-        description:
-          "No schedules match the selected filters. Select another filter to view them.",
+        title: t("scheduledTransactions.noMatchingTitle"),
+        description: t("scheduledTransactions.noMatchingDesc"),
       };
     }
     if (normalizedSearchQuery) {
       return {
-        title: "No matching schedules",
-        description:
-          "No schedules match your search. Try a different name, account, or category.",
+        title: t("scheduledTransactions.noMatchingTitle"),
+        description: t("scheduledTransactions.noSearchMatchDesc"),
       };
     }
     return {
-      title: "No matching schedules",
-      description:
-        "No schedules match the selected filters. Select another filter to view them.",
+      title: t("scheduledTransactions.noMatchingTitle"),
+      description: t("scheduledTransactions.noMatchingDesc"),
     };
   }, [
     schedules.length,
@@ -296,6 +306,7 @@ function ScheduledTransactionsScreenContent({
     sourceFilteredSchedules.length,
     statusFilteredSchedules.length,
     normalizedSearchQuery,
+    t,
   ]);
   const pendingDeleteHasHistory = Boolean(
     pendingDelete && scheduleIdsWithPostings.has(pendingDelete.id),
@@ -509,10 +520,10 @@ function ScheduledTransactionsScreenContent({
         ) : null}
 
         <AccountSearchBox
-          accessibilityLabel="Search scheduled transactions"
+          accessibilityLabel={t("scheduledTransactions.searchAccessibility")}
           clearAccessibilityLabel="Clear scheduled transaction search"
           onChangeText={setSearchQuery}
-          placeholder="Search name, account, category..."
+          placeholder={t("scheduledTransactions.searchPlaceholder")}
           style={styles.searchBox}
           targetRef={searchRef}
           value={searchQuery}
@@ -520,7 +531,9 @@ function ScheduledTransactionsScreenContent({
 
         {showDueSection ? (
           <View style={styles.dueSection}>
-            <Text style={styles.sectionHeading}>Needs attention</Text>
+            <Text style={styles.sectionHeading}>
+              {t("scheduledTransactions.needsAttention")}
+            </Text>
             {actionableOccurrences.map((occurrence, index) => {
               const schedule = scheduleById.get(occurrence.scheduleId);
               if (!schedule) return null;
@@ -682,14 +695,16 @@ function ScheduledTransactionsScreenContent({
         </View>
 
         <View style={styles.scheduleHeadingRow}>
-          <Text style={styles.sectionHeading}>Schedules</Text>
+          <Text style={styles.sectionHeading}>
+            {t("scheduledTransactions.schedulesHeading")}
+          </Text>
           <View
-            accessibilityLabel="Schedule status filters"
+            accessibilityLabel={t("scheduledTransactions.statusFilterAccessibility")}
             collapsable={false}
             ref={filterRef}
             style={styles.filterOptions}
           >
-            {SCHEDULE_FILTER_OPTIONS.map((option) => (
+            {scheduleFilterOptions.map((option) => (
               <Host key={option.value} matchContents style={styles.filterCheckbox}>
                 <Checkbox
                   disabled={pending}
@@ -704,7 +719,7 @@ function ScheduledTransactionsScreenContent({
           </View>
         </View>
         {loading && schedules.length === 0 ? (
-          <PageLoadingState message="Loading schedules..." />
+          <PageLoadingState message={t("scheduledTransactions.loading")} />
         ) : visibleSchedules.length === 0 ? (
           <PageEmptyState
             description={emptyStateContent.description}
@@ -748,11 +763,7 @@ function ScheduledTransactionsScreenContent({
                   <View style={styles.cardMain}>
                     <View style={styles.titleRow}>
                       <Text numberOfLines={1} style={styles.cardTitle}>
-                        {schedule.name?.trim() ||
-                          category?.name ||
-                          (schedule.transactionType === "transfer"
-                            ? "Scheduled transfer"
-                            : "Scheduled " + schedule.transactionType)}
+                        {scheduleCardTitle(schedule, category, t)}
                       </Text>
                       {isSubscription ? (
                         <View style={styles.subscriptionBadge}>
@@ -776,29 +787,26 @@ function ScheduledTransactionsScreenContent({
                         ]}
                       >
                         <Text style={styles.statusText}>
-                          {schedule.archivedAt ? "archived" : schedule.status}
+                          {scheduleStatusLabel(schedule, t)}
                         </Text>
                       </View>
                     </View>
                     <Text style={styles.cardMeta}>
-                      {schedule.transactionType === "transfer"
-                        ? (source?.name ?? "Unknown") +
-                          " → " +
-                          (destination?.name ?? "Unknown")
-                        : (source?.name ?? "Unknown") +
-                          " · " +
-                          (category?.name ?? "No category")}
+                      {scheduleAccountLine(schedule, source, destination, category, t)}
                     </Text>
                     <Text style={styles.cardMeta}>
-                      {formatScheduleRecurrence(schedule)} ·{" "}
-                      {schedule.autoPost ? "Auto-post" : "Confirm each"}
+                      {formatScheduleRecurrence(schedule, t)} ·{" "}
+                      {schedule.autoPost
+                        ? t("scheduledTransactions.postingMode.autoPost")
+                        : t("scheduledTransactions.postingMode.confirmEach")}
                     </Text>
                     <View style={styles.nextRow}>
                       <Text style={styles.nextText}>
                         {schedule.nextEffectiveAt
-                          ? "Next: " +
-                            schedule.nextEffectiveAt.toLocaleString()
-                          : "No future occurrences"}
+                          ? t("scheduledTransactions.nextDate", {
+                              date: schedule.nextEffectiveAt.toLocaleString(),
+                            })
+                          : t("scheduledTransactions.noFutureOccurrences")}
                       </Text>
                       {canAdvancePost ? (
                         <Pressable
@@ -1027,11 +1035,19 @@ function ScheduledTransactionsScreenContent({
               setPendingRestore(null);
               setToastState({
                 visible: true,
-                message: "Schedule restored",
+                message: t("scheduledTransactions.restoreToastTitle"),
                 description:
                   restoreResult === "completed"
-                    ? `"${toRestore.name || "Schedule"}" has no future occurrences and was marked completed.`
-                    : `"${toRestore.name || "Schedule"}" was restored to active schedules.`,
+                    ? t("scheduledTransactions.restoreToastCompleted", {
+                        name:
+                          toRestore.name ||
+                          t("scheduledTransactions.defaultScheduleName"),
+                      })
+                    : t("scheduledTransactions.restoreToastActive", {
+                        name:
+                          toRestore.name ||
+                          t("scheduledTransactions.defaultScheduleName"),
+                      }),
               });
             }
           }

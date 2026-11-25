@@ -217,30 +217,3 @@ export function getCurrentTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-export function formatScheduleRecurrence(
-  schedule: Pick<
-    ScheduledTransaction,
-    "frequency" | "intervalCount" | "endMode" | "maxOccurrences" | "endsOn"
-  >,
-): string {
-  const unit =
-    schedule.frequency === "once"
-      ? "Once"
-      : schedule.intervalCount === 1
-        ? schedule.frequency === "daily"
-          ? "Daily"
-          : schedule.frequency === "weekly"
-            ? "Weekly"
-            : schedule.frequency === "monthly"
-              ? "Monthly"
-              : "Yearly"
-        : `Every ${schedule.intervalCount} ${schedule.frequency === "daily" ? "days" : schedule.frequency === "weekly" ? "weeks" : schedule.frequency === "monthly" ? "months" : "years"}`;
-
-  if (schedule.endMode === "after_count") {
-    return `${unit} · ${schedule.maxOccurrences} occurrences`;
-  }
-  if (schedule.endMode === "on_date") {
-    return `${unit} · through ${schedule.endsOn}`;
-  }
-  return unit;
-}
