@@ -123,7 +123,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | --- | --- | --- | --- |
 | ST-F01 | P1 | **Fix:** Editing an existing schedule rebuilds the next date from the original start. | Was `anchorOccurrenceNumber = nextOccurrenceNumber` on every update. **Fixed:** preserve anchor, next sequence, and next dates when recurrence fields are unchanged; re-anchor only on recurrence edits. Regression: `save-scheduled-transaction-remediation.test.cjs`. |
 | ST-F02 | P1 | **Fix:** One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Was a loop over all pending plus swallowed errors in Mark Paid. **Fixed:** link oldest pending only, idempotent by `transactionId`, schedule sync fails the payment transaction. Regression: `resolve-schedule-paid-remediation.test.cjs`. |
-| ST-F03 | P1 | Subscription history errors are ignored after the ledger post. | Empty `catch` around `handleSubscriptionScheduleExecutedInContext` in both automatic and manual post. |
+| ST-F03 | P1 | **Fix:** Subscription history errors are ignored after the ledger post. | Was empty `catch` around `handleSubscriptionScheduleExecutedInContext`. **Fixed:** subscription sync errors roll back the post transaction; missing subscription throws. Regression: `subscription-schedule-post-sync.test.cjs`. |
 | ST-F04 | P2 | Advance post does not tell other screens that a transaction was saved. | Service ends after `db.transaction`. Manual Post emits the mutation event. Advance post does not. |
 | ST-F05 | P2 | Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | `getCalendarScheduleOccurrences` calls `listScheduledTransactions` and `listScheduleOccurrences()` with no date predicate. Projection stops at 100 steps per schedule. |
 | ST-F06 | P2 | Focus and catch-up do more work than the visible page. | The hook passes `hasCachedResult: false`, so each refresh clears due rows. Catch-up serializes the database once per batch of eight. The template query has no limit. |
@@ -146,8 +146,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 - **Smallest fix:** Choose the single oldest unprocessed occurrence, link that one row, and advance one step. If none is waiting, advance only when the product rules say this payment is the next period, and insert one occurrence for that period. Do not catch a constraint failure inside the money transaction.
 - **Regression proof:** Zero, one, and two due occurrences. Assert one ledger row, one posting, one posted occurrence, and a cursor exactly one step ahead. A repeated call with the same transaction id must not add a second posting.
 
-### ST-F03 — Subscription history can diverge from the ledger post
+### ST-F03 — Subscription history can diverge from the ledger post (**Fix**)
 
+- **Status:** **Fixed** in `process-due-schedules.service.ts` and `handleSubscriptionScheduleExecutedInContext` (tests in `subscription-schedule-post-sync.test.cjs`).
 - **Problem:** Automatic or manual post can leave a rent expense in the ledger and on the occurrence, with no subscription payment row and no moved renewal date.
 - **Cause:** `processNextOccurrence` and `postScheduledOccurrence` catch errors from `handleSubscriptionScheduleExecutedInContext` and continue. The comment says auto-post should keep working if the subscription record cannot be updated.
 - **Smallest fix:** Let that error leave the database transaction. The ledger insert, posting, occurrence status, and subscription history commit together or not at all.
@@ -296,7 +297,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [ ] Add service-level regressions for save, post, skip, retry, Mark Paid, and advance post.
 - [x] Fix ST-F01 so a non-recurrence edit keeps the next date.
 - [x] Fix ST-F02 so one payment links one occurrence.
-- [ ] Fix ST-F03 so subscription history commits with the ledger row.
+- [x] Fix ST-F03 so subscription history commits with the ledger row.
 - [ ] Fix ST-F04 so advance post refreshes open ledger screens.
 - [ ] Bound calendar occurrence reads (ST-F05).
 - [ ] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).

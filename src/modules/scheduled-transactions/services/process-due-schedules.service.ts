@@ -223,17 +223,13 @@ function processNextOccurrence(
       reconcileBilling,
     );
     if (schedule.subscriptionId && postedResult && "id" in postedResult) {
-      try {
-        handleSubscriptionScheduleExecutedInContext(
-          schedule.subscriptionId,
-          postedResult.id,
-          occurrence.effectiveAt ?? occurrence.nominalAt,
-          Math.abs(schedule.amountMinorUnits),
-          context,
-        );
-      } catch {
-        // Keep auto-post working even if sub record sync fails
-      }
+      handleSubscriptionScheduleExecutedInContext(
+        schedule.subscriptionId,
+        postedResult.id,
+        occurrence.effectiveAt ?? occurrence.nominalAt,
+        Math.abs(schedule.amountMinorUnits),
+        context,
+      );
     }
   }
 
@@ -306,17 +302,13 @@ export function postScheduledOccurrence(
     );
     const sched = findScheduledTransaction(occurrence.scheduleId, tx);
     if (sched?.subscriptionId && postedResult && "id" in postedResult) {
-      try {
-        handleSubscriptionScheduleExecutedInContext(
-          sched.subscriptionId,
-          postedResult.id,
-          occurrence.effectiveDueAt ?? occurrence.nominalDueAt,
-          Math.abs(sched.amountMinorUnits),
-          tx,
-        );
-      } catch {
-        // ignore
-      }
+      handleSubscriptionScheduleExecutedInContext(
+        sched.subscriptionId,
+        postedResult.id,
+        occurrence.effectiveDueAt ?? occurrence.nominalDueAt,
+        Math.abs(sched.amountMinorUnits),
+        tx,
+      );
     }
     updateScheduleOccurrenceRecord(
       occurrence.id,

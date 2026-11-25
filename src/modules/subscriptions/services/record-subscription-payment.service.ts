@@ -147,7 +147,9 @@ export function handleSubscriptionScheduleExecutedInContext(
   context: DbContext,
 ): void {
   const subscription = findSubscriptionById(subscriptionId, context);
-  if (!subscription) return;
+  if (!subscription) {
+    throw new Error(`Subscription not found: ${subscriptionId}`);
+  }
 
   const paymentRecordId = generateSubscriptionId(context);
   insertSubscriptionPaymentRecord(
