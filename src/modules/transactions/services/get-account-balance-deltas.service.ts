@@ -89,7 +89,7 @@ export function getAccountBalanceDeltasAtDate(
 export function getAccountTransactionDelta(
   accountId: string,
   context: DbContext = db,
-  options?: { excludeTransactionId?: string | null },
+  options?: { excludeTransactionId?: string | null; asOf?: Date },
 ): number {
   return findAccountTransactionDelta(accountId, context, options);
 }

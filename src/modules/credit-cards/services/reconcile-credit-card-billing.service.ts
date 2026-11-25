@@ -744,10 +744,7 @@ function* reconcileAccount(
 let lastReconciledCalendarDate: string | null = null;
 let lastReconciledDb: unknown = null;
 
-subscribeToDatabaseReplacement(() => {
-  lastReconciledCalendarDate = null;
-  lastReconciledDb = null;
-});
+subscribeToDatabaseReplacement(invalidateCreditCardReconciliationCache);
 
 export function reconcileCreditCardBillingInContext(
   today: Date,
@@ -761,12 +758,21 @@ export function reconcileCreditCardBillingInContext(
     const work = reconcileAccount(card, today, context);
     while (!work.next().done) { /* Continue reconciliation. */ }
   }
+}
+
+export function publishCreditCardReconciliationCache(today = new Date()): void {
   lastReconciledCalendarDate = toCalendarDate(today);
   lastReconciledDb = db;
 }
 
+export function invalidateCreditCardReconciliationCache(): void {
+  lastReconciledCalendarDate = null;
+  lastReconciledDb = null;
+}
+
 export function reconcileCreditCardBilling(today = new Date()): void {
   db.transaction((tx) => reconcileCreditCardBillingInContext(today, tx));
+  publishCreditCardReconciliationCache(today);
 }
 
 export function ensureCreditCardBillingReconciled(today = new Date()): void {

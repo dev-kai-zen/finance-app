@@ -2908,6 +2908,10 @@ export const fil = {
     },
     summary: {
       dueThisMonth: "DUE NGAYONG BUWAN",
+      dueByMonthEnd: "DUE BAGO MATAPOS ANG BUWAN",
+      dueByMonthEndHint:
+        "Kabuuang hindi pa nabayaran na due on o bago ang %{monthEnd}, kasama ang mga naunang statement.",
+      dueInCalendarMonth: "Due sa kalendaryong buwang ito",
       pastDue: "LAMPAS NA SA DUE",
     },
     card: {

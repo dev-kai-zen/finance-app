@@ -2892,6 +2892,10 @@ export const es = {
     },
     summary: {
       dueThisMonth: "VENCE ESTE MES",
+      dueByMonthEnd: "VENCE ANTES DE FIN DE MES",
+      dueByMonthEndHint:
+        "Total pendiente con vencimiento en o antes del %{monthEnd}, incluidos estados anteriores.",
+      dueInCalendarMonth: "Vence en este mes calendario",
       pastDue: "VENCIDO",
     },
     card: {

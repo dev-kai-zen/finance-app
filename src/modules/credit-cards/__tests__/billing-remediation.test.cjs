@@ -197,7 +197,12 @@ function setupTestDb() {
   return database;
 }
 
-const { reconcileCreditCardBilling, reconcileCreditCardBillingInContext } = require("../services/reconcile-credit-card-billing.service");
+const {
+  reconcileCreditCardBilling,
+  reconcileCreditCardBillingInContext,
+  ensureCreditCardBillingReconciled,
+  invalidateCreditCardReconciliationCache,
+} = require("../services/reconcile-credit-card-billing.service");
 const { getCreditCardMonitoring } = require("../services/get-credit-card-monitoring.service");
 const { checkCreditLimitExceeded } = require("../services/check-credit-limit-exceeded.service");
 const { createCreditCardInstallmentPlan } = require("../services/create-installment-plan.service");
@@ -1499,6 +1504,84 @@ test("CC-F10: completed plans stay complete across repeat reconciliation", (t) =
       assert.equal(installmentPlanStatus(), "completed");
       assert.equal(installmentFinancialSnapshot().activePlans, 0);
     }
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("Q-CC02: due-by-month-end catch-up exceeds calendar-month due when older statements remain", () => {
+  const f = fixture();
+  try {
+    f.charge("old", -100000);
+    f.reconcile();
+    sqlite.exec(
+      "UPDATE credit_card_statements SET due_on = '2026-10-25' WHERE account_id = 'card'",
+    );
+    f.reconcile();
+    f.charge("new", -50000);
+    f.reconcile();
+    const snapshot = f.monitor();
+    assert.ok(snapshot);
+    assert.ok(
+      snapshot.dueThisMonthMinorUnits > snapshot.dueInCalendarMonthMinorUnits,
+    );
+    assert.equal(snapshot.dueInCalendarMonthMinorUnits, 50000);
+    assert.ok(snapshot.nextDueOn >= "2026-11-21");
+    assert.ok(snapshot.overdueMinorUnits > 0);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("Q-CC04: future-dated purchases do not affect monitoring debt as of today", () => {
+  const f = fixture();
+  try {
+    const future = new Date(2026, 11, 5, 12).getTime();
+    f.charge("today", -80000);
+    sqlite
+      .prepare(
+        "INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES ('future', 'card', 'cat_dining', 'expense', -200000, 'future', ?, ?, ?)",
+      )
+      .run(future, future, future);
+    f.reconcile();
+    const snapshot = f.monitor();
+    assert.ok(snapshot);
+    assert.equal(snapshot.unbilledMinorUnits, 80000);
+    assert.equal(snapshot.outstandingMinorUnits, 80000);
+    const limit = checkCreditLimitExceeded({
+      accountId: "card",
+      expenseAmountMinorUnits: 50000,
+      occurredAt: f.today,
+    });
+    assert.equal(limit.currentOutstandingMinorUnits, 80000);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("Q-CC07: rolled-back reconcile does not publish reconciliation cache", () => {
+  const f = fixture();
+  try {
+    invalidateCreditCardReconciliationCache();
+    f.charge("pending", -25000);
+    assert.throws(() => {
+      f.db.transaction((context) => {
+        reconcileCreditCardBillingInContext(f.today, context);
+        throw new Error("rollback");
+      });
+    }, /rollback/);
+    assert.equal(
+      sqlite
+        .prepare("SELECT count(*) AS n FROM credit_card_statement_entries")
+        .get().n,
+      0,
+    );
+    ensureCreditCardBillingReconciled(f.today);
+    assert.ok(
+      sqlite
+        .prepare("SELECT count(*) AS n FROM credit_card_statement_entries")
+        .get().n > 0,
+    );
   } finally {
     sqlite.close();
   }

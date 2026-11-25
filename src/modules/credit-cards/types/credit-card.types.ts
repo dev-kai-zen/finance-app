@@ -52,7 +52,10 @@ export interface CreditCardMonitoringItem {
   outstandingMinorUnits: number;
   availableCreditMinorUnits: number;
   utilizationPercent: number;
+  /** Unpaid statement balances with dueOn on or before month-end (catch-up total). */
   dueThisMonthMinorUnits: number;
+  /** Unpaid statement balances whose dueOn falls in the current calendar month. */
+  dueInCalendarMonthMinorUnits: number;
   overdueMinorUnits: number;
   nextDueOn: string | null;
   activeInstallmentCount: number;
@@ -64,6 +67,7 @@ export interface CreditCardMonitoringItem {
 export interface CreditCardMonitoringSummary {
   cards: CreditCardMonitoringItem[];
   dueThisMonthMinorUnits: number;
+  dueInCalendarMonthMinorUnits: number;
   overdueMinorUnits: number;
   /** Local calendar date used for due/overdue totals; matches monitoring reads. */
   evaluatedCalendarDate: string;

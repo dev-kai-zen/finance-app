@@ -103,3 +103,20 @@ export function dueDateForStatement(
 export function endOfMonth(value: Date): string {
   return toCalendarDate(new Date(value.getFullYear(), value.getMonth() + 1, 0));
 }
+
+export function startOfMonth(value: Date): string {
+  return toCalendarDate(new Date(value.getFullYear(), value.getMonth(), 1));
+}
+
+/** Inclusive end of a local calendar day for SQLite `occurredAt` cutoffs. */
+export function endOfCalendarDay(calendarOn: string): Date {
+  const [year, month, day] = calendarOn.split("-").map(Number);
+  return new Date(year, month - 1, day, 23, 59, 59, 999);
+}
+
+export function isCalendarDateOnOrBefore(
+  occurredAt: Date,
+  calendarOn: string,
+): boolean {
+  return toCalendarDate(occurredAt) <= calendarOn;
+}

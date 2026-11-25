@@ -2866,6 +2866,10 @@ export const en = {
     },
     summary: {
       dueThisMonth: "DUE THIS MONTH",
+      dueByMonthEnd: "DUE BY MONTH END",
+      dueByMonthEndHint:
+        "Total unpaid due on or before %{monthEnd}, including earlier statements.",
+      dueInCalendarMonth: "Due this calendar month",
       pastDue: "PAST DUE",
     },
     card: {

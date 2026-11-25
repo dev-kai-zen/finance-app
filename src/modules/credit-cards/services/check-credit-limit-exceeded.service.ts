@@ -1,6 +1,10 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { findAccountById, getCreditCardDetails } from "@/modules/accounts";
 import { getAccountTransactionDelta } from "@/modules/transactions";
+import {
+  endOfCalendarDay,
+  toCalendarDate,
+} from "../utils/billing-dates";
 
 export interface CheckCreditLimitInput {
   accountId: string;
@@ -31,6 +35,7 @@ export function checkCreditLimitExceeded(
     accountId,
     expenseAmountMinorUnits,
     excludeTransactionId,
+    occurredAt,
     context = db,
   } = input;
 
@@ -66,8 +71,14 @@ export function checkCreditLimitExceeded(
     };
   }
 
-  const balance = account.openingBalanceMinorUnits +
-    getAccountTransactionDelta(accountId, context, { excludeTransactionId });
+  const asOfOn = toCalendarDate(occurredAt ?? new Date());
+  const asOf = endOfCalendarDay(asOfOn);
+  const balance =
+    account.openingBalanceMinorUnits +
+    getAccountTransactionDelta(accountId, context, {
+      excludeTransactionId,
+      asOf,
+    });
   const currentOutstanding = Math.max(0, -balance);
   const creditLimit = details.creditLimitMinorUnits;
   const additional = Math.abs(expenseAmountMinorUnits);

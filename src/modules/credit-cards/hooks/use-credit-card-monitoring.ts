@@ -13,6 +13,7 @@ export const CREDIT_CARD_MONITORING_LOAD_FAILED =
 const EMPTY_SUMMARY: CreditCardMonitoringSummary = {
   cards: [],
   dueThisMonthMinorUnits: 0,
+  dueInCalendarMonthMinorUnits: 0,
   overdueMinorUnits: 0,
   evaluatedCalendarDate: toCalendarDate(new Date()),
 };

@@ -33,6 +33,7 @@ import {
   CREDIT_CARD_MONITORING_LOAD_FAILED,
   useCreditCardMonitoring,
 } from "../hooks/use-credit-card-monitoring";
+import { endOfMonth } from "../utils/billing-dates";
 
 export function CreditCardMonitoringScreen() {
   return (
@@ -122,6 +123,21 @@ function CreditCardMonitoringScreenContent() {
       ? t(CREDIT_CARD_MONITORING_LOAD_FAILED)
       : data.error;
 
+  const monthEndOn = useMemo(
+    () => endOfMonth(new Date(data.evaluatedCalendarDate)),
+    [data.evaluatedCalendarDate],
+  );
+  const monthEndDisplay = useMemo(() => {
+    const [year, month, day] = monthEndOn.split("-").map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  }, [monthEndOn]);
+  const showCalendarMonthDue =
+    data.dueInCalendarMonthMinorUnits > 0 &&
+    data.dueInCalendarMonthMinorUnits < data.dueThisMonthMinorUnits;
+
   const walkthrough = useCreditCardsWalkthrough({
     hasCards,
     hasUnbilledActivity,
@@ -186,9 +202,9 @@ function CreditCardMonitoringScreenContent() {
       ) : (
         <>
           <View collapsable={false} ref={dueSummaryRef} style={styles.summary}>
-            <View>
+            <View style={styles.summaryPrimaryColumn}>
               <Text style={styles.summaryLabel}>
-                {t("creditCardMonitoring.summary.dueThisMonth")}
+                {t("creditCardMonitoring.summary.dueByMonthEnd")}
               </Text>
               <Text
                 style={[
@@ -204,6 +220,27 @@ function CreditCardMonitoringScreenContent() {
                   isPrivate,
                 )}
               </Text>
+              <Text style={styles.summaryHint}>
+                {t("creditCardMonitoring.summary.dueByMonthEndHint", {
+                  monthEnd: monthEndDisplay,
+                })}
+              </Text>
+              {showCalendarMonthDue ? (
+                <View style={styles.calendarMonthDueRow}>
+                  <Text style={styles.calendarMonthDueLabel}>
+                    {t("creditCardMonitoring.summary.dueInCalendarMonth")}
+                  </Text>
+                  <Text style={styles.calendarMonthDueAmount}>
+                    {formatPrivacyAmount(
+                      formatCurrency(
+                        data.dueInCalendarMonthMinorUnits,
+                        preferences.defaultCurrency,
+                      ),
+                      isPrivate,
+                    )}
+                  </Text>
+                </View>
+              ) : null}
             </View>
             {data.overdueMinorUnits > 0 ? (
               <View style={styles.overdue}>
@@ -355,11 +392,38 @@ function createStyles(theme: AppTheme) {
       padding: theme.spacing.lg,
       ...theme.shadows.card,
     },
+    summaryPrimaryColumn: {
+      flex: 1,
+      marginRight: theme.spacing.md,
+    },
     summaryLabel: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.6,
+    },
+    summaryHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 16,
+      marginTop: theme.spacing.xs,
+      maxWidth: 260,
+    },
+    calendarMonthDueRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.sm,
+    },
+    calendarMonthDueLabel: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    calendarMonthDueAmount: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     summaryAmount: {
       color: theme.colors.primary,

@@ -1870,7 +1870,7 @@ export function hasTransactionsForAccount(
 export function findAccountTransactionDelta(
   accountId: string,
   context: DbContext = db,
-  options?: { excludeTransactionId?: string | null },
+  options?: { excludeTransactionId?: string | null; asOf?: Date },
 ): number {
   const conditions = [
     eq(transactions.accountId, accountId),
@@ -1878,6 +1878,9 @@ export function findAccountTransactionDelta(
   ];
   if (options?.excludeTransactionId) {
     conditions.push(ne(transactions.id, options.excludeTransactionId));
+  }
+  if (options?.asOf) {
+    conditions.push(lte(transactions.occurredAt, options.asOf));
   }
 
   const row = context

@@ -20,7 +20,12 @@ import type {
   CreditCardMonitoringItem,
   CreditCardMonitoringSummary,
 } from "../types/credit-card.types";
-import { endOfMonth, toCalendarDate } from "../utils/billing-dates";
+import {
+  endOfMonth,
+  isCalendarDateOnOrBefore,
+  startOfMonth,
+  toCalendarDate,
+} from "../utils/billing-dates";
 import {
   calculateCreditCardAvailableLimit,
   calculateCreditCardBilled,
@@ -66,6 +71,7 @@ export function computeCreditCardAccountMonitoring(
   }
   const details = account.creditCardDetails;
   const todayOn = toCalendarDate(today);
+  const currentMonthStart = startOfMonth(today);
   const currentMonthEnd = endOfMonth(today);
 
   const statements = listStatementsForAccount(account.id);
@@ -136,6 +142,17 @@ export function computeCreditCardAccountMonitoring(
       (sum, statement) => sum + statement.remainingAmountMinorUnits,
       0,
     );
+  const dueInCalendarMonth = statementSummaries
+    .filter(
+      (statement) =>
+        statement.dueOn >= currentMonthStart &&
+        statement.dueOn <= currentMonthEnd &&
+        statement.remainingAmountMinorUnits > 0,
+    )
+    .reduce(
+      (sum, statement) => sum + statement.remainingAmountMinorUnits,
+      0,
+    );
   const overdue = statementSummaries
     .filter(
       (statement) =>
@@ -146,13 +163,20 @@ export function computeCreditCardAccountMonitoring(
       (sum, statement) => sum + statement.remainingAmountMinorUnits,
       0,
     );
+  const unpaidStatements = statementSummaries
+    .filter((statement) => statement.remainingAmountMinorUnits > 0)
+    .sort((left, right) => left.dueOn.localeCompare(right.dueOn));
+  const nextUpcoming = unpaidStatements.find(
+    (statement) => statement.dueOn >= todayOn,
+  );
   const nextDue =
-    statementSummaries.find(
-      (statement) => statement.remainingAmountMinorUnits > 0,
-    )?.dueOn ?? null;
+    nextUpcoming?.dueOn ?? unpaidStatements[0]?.dueOn ?? null;
   const rawLedger = getAccountLedgerTransactions(account.id);
-  const ledger = rawLedger.filter((transaction) =>
-    !transaction.deletedAt && transaction.id !== excludeTransactionId,
+  const ledger = rawLedger.filter(
+    (transaction) =>
+      !transaction.deletedAt &&
+      transaction.id !== excludeTransactionId &&
+      isCalendarDateOnOrBefore(transaction.occurredAt, todayOn),
   );
   const ledgerById = new Map(ledger.map((transaction) => [transaction.id, transaction]));
   const plans = listInstallmentPlansForAccount(account.id);
@@ -272,6 +296,7 @@ export function computeCreditCardAccountMonitoring(
     availableCreditMinorUnits: availableCredit,
     utilizationPercent,
     dueThisMonthMinorUnits: Math.min(dueThisMonth, billed),
+    dueInCalendarMonthMinorUnits: Math.min(dueInCalendarMonth, billed),
     overdueMinorUnits: Math.min(overdue, billed),
     nextDueOn: nextDue,
     activeInstallmentCount: plans.filter((plan) => {
@@ -326,6 +351,18 @@ export function getCreditCardMonitoring(
         sum +
         convertCurrencyMinorUnits(
           card.overdueMinorUnits,
+          card.currencyCode,
+          homeCurrency,
+          ratesMap,
+          DEFAULT_BASE_CURRENCY,
+        ),
+      0,
+    ),
+    dueInCalendarMonthMinorUnits: cards.reduce(
+      (sum, card) =>
+        sum +
+        convertCurrencyMinorUnits(
+          card.dueInCalendarMonthMinorUnits,
           card.currencyCode,
           homeCurrency,
           ratesMap,

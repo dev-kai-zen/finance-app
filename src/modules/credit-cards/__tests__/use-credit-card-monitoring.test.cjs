@@ -120,6 +120,7 @@ function createHarness({ initialDate = new Date(2026, 10, 24, 12) } = {}) {
               availableCreditMinorUnits: 5000000 - simulatedDebt,
               utilizationPercent: (simulatedDebt / 5000000) * 100,
               dueThisMonthMinorUnits: 0,
+          dueInCalendarMonthMinorUnits: 0,
               overdueMinorUnits: 0,
               nextDueOn: "2026-11-25",
               activeInstallmentCount: 0,
@@ -129,6 +130,7 @@ function createHarness({ initialDate = new Date(2026, 10, 24, 12) } = {}) {
             },
           ],
           dueThisMonthMinorUnits: 0,
+          dueInCalendarMonthMinorUnits: 0,
           overdueMinorUnits: 0,
           evaluatedCalendarDate: "2026-11-24",
         };

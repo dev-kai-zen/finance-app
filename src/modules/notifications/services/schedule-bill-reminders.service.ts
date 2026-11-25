@@ -66,7 +66,7 @@ export async function scheduleBillReminders(
             continue;
           }
 
-          const identifier = `${NOTIFICATION_IDENTIFIERS.CC_PREFIX}${card.accountId}_${statement.dueOn}_${offset}`;
+          const identifier = `${NOTIFICATION_IDENTIFIERS.CC_PREFIX}${card.accountId}_${statement.id}_${offset}`;
           const dueText =
             offset === 0
               ? "due today"

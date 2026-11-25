@@ -131,7 +131,6 @@ export async function checkAndNotifyCreditLimit(
       if (util >= 100) {
         const alertKey = `${NOTIFICATION_IDENTIFIERS.CC_LIMIT_PREFIX}100-${card.accountId}`;
         if (deliveredAlertKeys.has(alertKey)) continue;
-        deliveredAlertKeys.add(alertKey);
 
         await Notifications.scheduleNotificationAsync({
           identifier: alertKey,
@@ -144,10 +143,10 @@ export async function checkAndNotifyCreditLimit(
           },
           trigger: null,
         });
+        deliveredAlertKeys.add(alertKey);
       } else if (util >= 80) {
         const alertKey = `${NOTIFICATION_IDENTIFIERS.CC_LIMIT_PREFIX}80-${card.accountId}`;
         if (deliveredAlertKeys.has(alertKey)) continue;
-        deliveredAlertKeys.add(alertKey);
 
         await Notifications.scheduleNotificationAsync({
           identifier: alertKey,
@@ -160,6 +159,7 @@ export async function checkAndNotifyCreditLimit(
           },
           trigger: null,
         });
+        deliveredAlertKeys.add(alertKey);
       }
     }
   } catch (error) {
