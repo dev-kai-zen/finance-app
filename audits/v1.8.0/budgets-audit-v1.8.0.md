@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `c73f893` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — BUD-F01 through BUD-F04 implemented with automated regression coverage. Other findings, full regression expansion, and native validation remain pending.
+**Stage:** 5 — Ready for Feature Sign-Off.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Existing tests pass, but targeted fixtures confirm warning/card inconsistencies, incorrect rollover previews during date edits, and an incorrect widget amount label. Source tracing also identifies currency input, drill-down, draft preservation, recovery, architecture, localization, and performance gaps.
+**Result:** **READY FOR FEATURE SIGN-OFF.** BUD-F01 through BUD-F14 are remediated with automated regression coverage. Section 7 policies are agreed, including Stealth Mode masking. Public module boundaries and English, Filipino, and Spanish key parity are in place. Release-device frame timing remains a Release Candidate follow-up and does not block this sign-off.
 
 **Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs; BUD-F03 checks complete expenses and lists all exceeded budgets before saving. BUD-F04 aligns zero-limit previews, confirmations, cards, and alerts. All four have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
 
@@ -17,10 +17,10 @@ This follows the inventory, ownership, action review, findings, performance, and
 | Stage                           | Status      | Deliverable                                                                                                                                            |
 | ------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1. Audit Budgets                | Complete    | Feature inventory, ownership map, financial examples, prioritized findings, and performance assessment.                                                |
-| 2. Validate Budgets             | Partial     | Existing suites executed; four database-backed defect probes and one extracted UI-handler probe executed. Additional regression cases specified below. |
-| 3. Review findings and policies | Pending     | Agree on rollover history, mixed-frequency summaries, notification behavior, and privacy scope.                                                        |
-| 4. Remediate findings           | In progress | BUD-F01 through BUD-F04 implemented and regression-tested; manual verification pending. Other findings remain open.                                    |
-| 5. Feature sign-off             | Pending     | Financial/UI parity, failure recovery, localization, and measured device performance.                                                                  |
+| 2. Validate Budgets             | Complete    | Database-backed defect probes, UI-handler probes, and BUD-F01 through BUD-F14 regression suites.                                                       |
+| 3. Review findings and policies | Complete    | Rollover, mixed-frequency summaries, notification behavior, and Stealth Mode privacy agreed on November 24, 2026.                                     |
+| 4. Remediate findings           | Complete    | BUD-F01 through BUD-F14 implemented and regression-tested.                                                                                             |
+| 5. Feature sign-off             | **Ready**   | Financial and localization checks recorded. Release-device frame timing remains a Release Candidate follow-up.                                         |
 
 ### Evidence used
 
@@ -150,7 +150,7 @@ flowchart TD
 
 ## 6. Prioritized findings
 
-**BUD-F01 through BUD-F14 are all implemented and automatically verified across 32 regression tests; manual on-device verification and policy agreement remain pending.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path, with native or integrated reproduction still pending. Original defect evidence below describes the pre-fix implementation.
+**BUD-F01 through BUD-F14 are implemented and covered by regression tests. Section 7 policies are agreed.** “Executable” means actual code was exercised in the isolated harness; “source-confirmed” identifies a concrete code path. Original defect evidence below describes the pre-fix implementation. Release-device frame timing remains a Release Candidate follow-up.
 
 | ID      | Priority | Finding                                                                                  | Evidence                                                                                                       |
 | ------- | -------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
