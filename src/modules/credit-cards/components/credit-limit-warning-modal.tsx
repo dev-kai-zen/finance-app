@@ -1,5 +1,6 @@
 import { memo } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -12,6 +13,7 @@ import { AppButton } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 import type { CreditLimitCheckResult } from "../services/check-credit-limit-exceeded.service";
 
@@ -30,14 +32,41 @@ export const CreditLimitWarningModal = memo(function CreditLimitWarningModal({
   onCancel,
   pending = false,
 }: CreditLimitWarningModalProps) {
+  if (!visible || !result || !result.exceeds) {
+    return null;
+  }
+
+  return (
+    <CreditLimitWarningModalContent
+      onCancel={onCancel}
+      onProceed={onProceed}
+      pending={pending}
+      result={result}
+    />
+  );
+});
+
+const CreditLimitWarningModalContent = memo(function CreditLimitWarningModalContent({
+  result,
+  onProceed,
+  onCancel,
+  pending = false,
+}: {
+  result: CreditLimitCheckResult;
+  onProceed: () => void;
+  onCancel: () => void;
+  pending?: boolean;
+}) {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
-  if (!result || !result.exceeds) {
-    return null;
-  }
+  const handleCancel = () => {
+    Keyboard.dismiss();
+    onCancel();
+  };
 
   const {
     accountName,
@@ -57,15 +86,17 @@ export const CreditLimitWarningModal = memo(function CreditLimitWarningModal({
   return (
     <Modal
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={handleCancel}
       transparent
-      visible={visible}
+      visible
     >
       <View style={styles.overlay}>
         <Pressable
-          accessibilityLabel="Dismiss credit limit warning"
+          accessibilityLabel={t(
+            "creditCardMonitoring.limitWarning.dismissAccessibility",
+          )}
           accessibilityRole="button"
-          onPress={onCancel}
+          onPress={handleCancel}
           style={styles.backdrop}
         />
 
@@ -81,30 +112,37 @@ export const CreditLimitWarningModal = memo(function CreditLimitWarningModal({
           </View>
 
           {/* Title & Info */}
-          <Text style={styles.title}>Credit Limit Exceeded</Text>
+          <Text style={styles.title}>
+            {t("creditCardMonitoring.limitWarning.title")}
+          </Text>
           <Text style={styles.description}>
-            This expense will exceed the credit limit for{" "}
-            <Text style={styles.boldText}>{accountName}</Text>.
+            {t("creditCardMonitoring.limitWarning.description", { accountName })}
           </Text>
 
           {/* Breakdown Box */}
           <View style={styles.breakdownBox}>
             <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Credit Limit</Text>
+              <Text style={styles.breakdownLabel}>
+                {t("creditCardMonitoring.limitWarning.creditLimit")}
+              </Text>
               <Text style={styles.breakdownValue}>
                 {formatCurrency(creditLimitMinorUnits, currencyCode, false)}
               </Text>
             </View>
 
             <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Current Outstanding</Text>
+              <Text style={styles.breakdownLabel}>
+                {t("creditCardMonitoring.limitWarning.currentOutstanding")}
+              </Text>
               <Text style={styles.breakdownValue}>
                 {formatCurrency(currentOutstandingMinorUnits, currencyCode, false)}
               </Text>
             </View>
 
             <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>This Expense</Text>
+              <Text style={styles.breakdownLabel}>
+                {t("creditCardMonitoring.limitWarning.thisExpense")}
+              </Text>
               <Text style={[styles.breakdownValue, styles.expenseAmount]}>
                 +{formatCurrency(additionalExpenseMinorUnits, currencyCode, false)}
               </Text>
@@ -113,16 +151,27 @@ export const CreditLimitWarningModal = memo(function CreditLimitWarningModal({
             <View style={styles.divider} />
 
             <View style={styles.breakdownRow}>
-              <Text style={styles.totalLabel}>New Total Debt</Text>
+              <Text style={styles.totalLabel}>
+                {t("creditCardMonitoring.limitWarning.newTotalDebt")}
+              </Text>
               <Text style={styles.totalValue}>
                 {formatCurrency(newOutstandingMinorUnits, currencyCode, false)}
               </Text>
             </View>
 
             <View style={styles.exceededRow}>
-              <Text style={styles.exceededLabel}>Exceeded by</Text>
+              <Text style={styles.exceededLabel}>
+                {t("creditCardMonitoring.limitWarning.exceededBy")}
+              </Text>
               <Text style={styles.exceededValue}>
-                {formatCurrency(exceededByMinorUnits, currencyCode, false)} ({percentage}%)
+                {t("creditCardMonitoring.limitWarning.exceededByAmount", {
+                  amount: formatCurrency(
+                    exceededByMinorUnits,
+                    currencyCode,
+                    false,
+                  ),
+                  percent: percentage,
+                })}
               </Text>
             </View>
           </View>
@@ -130,15 +179,15 @@ export const CreditLimitWarningModal = memo(function CreditLimitWarningModal({
           {/* Action Buttons */}
           <View style={styles.buttonStack}>
             <AppButton
-              label="Proceed Anyway"
+              label={t("creditCardMonitoring.limitWarning.proceed")}
               loading={pending}
               onPress={onProceed}
               variant="destructive"
             />
             <AppButton
               disabled={pending}
-              label="Cancel & Edit"
-              onPress={onCancel}
+              label={t("creditCardMonitoring.limitWarning.cancelEdit")}
+              onPress={handleCancel}
               variant="secondary"
             />
           </View>

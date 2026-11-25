@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/infrastructure/localization/translations";
 import type {
   CreditCardActivityItem,
   CreditCardStatementSummary,
@@ -26,8 +27,21 @@ export type StatementPaymentBadgeKind = "paid" | "partial" | "overdue" | "none";
 
 export interface StatementPaymentPresentation {
   status: StatementPaymentStatus;
-  label: string;
+  labelKey: TranslationKey;
   badgeKind: StatementPaymentBadgeKind;
+}
+
+export interface StatementActivityLabels {
+  installment: string;
+  openingBalance: string;
+  payment: string;
+  refund: string;
+  adjustment: string;
+  cardPurchase: string;
+  cardPayment: string;
+  cardCharge: string;
+  openingBill: string;
+  billWithDate: (formattedDate: string) => string;
 }
 
 export function formatBillPillDate(statementOn: string | null): string {
@@ -41,11 +55,12 @@ export function formatBillPillDate(statementOn: string | null): string {
 
 export function formatBillPillLabel(
   statement: Pick<CreditCardStatementSummary, "kind" | "statementOn">,
+  labels: Pick<StatementActivityLabels, "openingBill" | "billWithDate">,
 ): string {
   if (statement.kind === "opening") {
-    return "Opening Bill";
+    return labels.openingBill;
   }
-  return `${formatBillPillDate(statement.statementOn)} Bill`;
+  return labels.billWithDate(formatBillPillDate(statement.statementOn));
 }
 
 export function getStatementPaymentStatus(
@@ -80,24 +95,41 @@ export function getStatementPaymentPresentation(
   const status = getStatementPaymentStatus(statement, todayOn);
   switch (status) {
     case "paid":
-      return { status, label: "Paid in full", badgeKind: "paid" };
+      return {
+        status,
+        labelKey: "creditCardMonitoring.status.paidInFull",
+        badgeKind: "paid",
+      };
     case "partial":
-      return { status, label: "Partially paid", badgeKind: "partial" };
+      return {
+        status,
+        labelKey: "creditCardMonitoring.status.partiallyPaid",
+        badgeKind: "partial",
+      };
     case "overdue":
-      return { status, label: "Past due", badgeKind: "overdue" };
+      return {
+        status,
+        labelKey: "creditCardMonitoring.status.pastDue",
+        badgeKind: "overdue",
+      };
     case "overdue_partial":
       return {
         status,
-        label: "Past due · partially paid",
+        labelKey: "creditCardMonitoring.status.pastDuePartial",
         badgeKind: "overdue",
       };
     default:
-      return { status, label: "Remaining balance", badgeKind: "none" };
+      return {
+        status,
+        labelKey: "creditCardMonitoring.status.remainingBalance",
+        badgeKind: "none",
+      };
   }
 }
 
 export function getStatementDisplayItems(
   statement: CreditCardStatementSummary,
+  labels: StatementActivityLabels,
 ): StatementDisplayItem[] {
   return statement.entries
     .map((entry) => {
@@ -108,24 +140,26 @@ export function getStatementDisplayItems(
 
       let detail: string | null = null;
       if (entry.entryType === "installment") {
-        detail = "Installment";
+        detail = labels.installment;
       } else if (entry.entryType === "opening_balance") {
-        detail = "Opening balance";
+        detail = labels.openingBalance;
       } else if (entry.entryType === "payment") {
-        detail = "Payment";
+        detail = labels.payment;
       } else if (entry.entryType === "refund") {
-        detail = "Refund";
+        detail = labels.refund;
       } else if (entry.entryType === "adjustment") {
-        detail = "Adjustment";
+        detail = labels.adjustment;
       } else {
-        detail = "Card purchase";
+        detail = labels.cardPurchase;
       }
+
+      const description =
+        entry.descriptionSnapshot ??
+        (isCredit ? labels.cardPayment : labels.cardCharge);
 
       return {
         id: entry.id,
-        description:
-          entry.descriptionSnapshot ??
-          (isCredit ? "Card payment" : "Card charge"),
+        description,
         amountMinorUnits: Math.abs(entry.amountMinorUnits),
         occurredOn: entry.occurredOnSnapshot,
         detail,

@@ -74,8 +74,9 @@ import {
 import {
   checkCreditLimitExceeded,
   CreditLimitWarningModal,
-  getInstallmentScheduleSupportError,
+  getInstallmentScheduleSupportIssue,
   previewInstallmentPlan,
+  translateInstallmentScheduleSupportIssue,
   useInstallmentPlanEditState,
   type CreditLimitCheckResult,
 } from "@/modules/credit-cards";
@@ -1774,12 +1775,14 @@ function TransactionFormModalInner({
             return;
           }
         }
-        const scheduleError = getInstallmentScheduleSupportError(
+        const scheduleIssue = getInstallmentScheduleSupportIssue(
           postedExpenseMinorUnitsAbs,
           resolvedTermMonths,
         );
-        if (scheduleError) {
-          setLocalError(scheduleError);
+        if (scheduleIssue) {
+          setLocalError(
+            translateInstallmentScheduleSupportIssue(scheduleIssue, t),
+          );
           return;
         }
       }
@@ -3069,9 +3072,12 @@ function TransactionFormModalInner({
                           ) : null}
                         </View>
                         {!installmentPreview.scheduleSupported &&
-                        installmentPreview.supportError ? (
+                        installmentPreview.supportIssue ? (
                           <Text style={styles.installmentPreviewError}>
-                            {installmentPreview.supportError}
+                            {translateInstallmentScheduleSupportIssue(
+                              installmentPreview.supportIssue,
+                              t,
+                            )}
                           </Text>
                         ) : null}
                         {installmentPreview.scheduleSupported ? (

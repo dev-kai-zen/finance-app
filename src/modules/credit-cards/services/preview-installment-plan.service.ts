@@ -4,8 +4,9 @@ import {
   statementDateForTransaction,
 } from "../utils/billing-dates";
 import {
-  getInstallmentScheduleSupportError,
+  getInstallmentScheduleSupportIssue,
   isInstallmentScheduleSupported,
+  type InstallmentScheduleSupportIssue,
 } from "../utils/validate-installment-schedule";
 
 export interface PreviewInstallmentPlanInput {
@@ -22,7 +23,7 @@ export interface InstallmentPlanPreview {
   smallestMonthlyMinorUnits: number;
   paymentsVaryByMinorUnit: boolean;
   scheduleSupported: boolean;
-  supportError: string | null;
+  supportIssue: InstallmentScheduleSupportIssue | null;
   firstStatementOn: string;
   firstDueOn: string;
   deferredMonths: number;
@@ -60,7 +61,7 @@ export function previewInstallmentPlan(
     smallestMonthlyMinorUnits,
     paymentsVaryByMinorUnit: monthlyAmountMinorUnits !== smallestMonthlyMinorUnits,
     scheduleSupported,
-    supportError: getInstallmentScheduleSupportError(principal, termMonths),
+    supportIssue: getInstallmentScheduleSupportIssue(principal, termMonths),
     firstStatementOn,
     firstDueOn,
     deferredMonths,

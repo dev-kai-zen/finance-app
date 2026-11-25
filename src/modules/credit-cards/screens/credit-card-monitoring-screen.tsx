@@ -29,7 +29,10 @@ import {
 } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
-import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
+import {
+  CREDIT_CARD_MONITORING_LOAD_FAILED,
+  useCreditCardMonitoring,
+} from "../hooks/use-credit-card-monitoring";
 
 export function CreditCardMonitoringScreen() {
   return (
@@ -114,6 +117,11 @@ function CreditCardMonitoringScreenContent() {
   const hasCards = data.cards.length > 0;
   const hasUnbilledActivity = (selectedCard?.unbilledItems.length ?? 0) > 0;
 
+  const errorMessage =
+    data.error === CREDIT_CARD_MONITORING_LOAD_FAILED
+      ? t(CREDIT_CARD_MONITORING_LOAD_FAILED)
+      : data.error;
+
   const walkthrough = useCreditCardsWalkthrough({
     hasCards,
     hasUnbilledActivity,
@@ -161,25 +169,27 @@ function CreditCardMonitoringScreenContent() {
     >
       {data.loading ? (
         <PageLoadingState
-          message="Preparing credit-card billing..."
+          message={t("creditCardMonitoring.loading")}
           variant="cards"
         />
       ) : data.error ? (
-        <PageErrorState message={data.error} onRetry={data.refresh} />
+        <PageErrorState message={errorMessage ?? data.error} onRetry={data.refresh} />
       ) : data.cards.length === 0 ? (
         <PageEmptyState
-          actionLabel="+ Add Credit Card Account"
+          actionLabel={t("creditCardMonitoring.empty.action")}
           actionRef={emptyAddRef}
           onAction={() => router.push("/accounts")}
-          description="Create a Credit Card account to monitor billing cycles, installments, and utilization."
+          description={t("creditCardMonitoring.empty.description")}
           icon={<CreditCard color={theme.colors.primary} size={32} />}
-          title="No credit cards to monitor"
+          title={t("creditCardMonitoring.empty.title")}
         />
       ) : (
         <>
           <View collapsable={false} ref={dueSummaryRef} style={styles.summary}>
             <View>
-              <Text style={styles.summaryLabel}>DUE THIS MONTH</Text>
+              <Text style={styles.summaryLabel}>
+                {t("creditCardMonitoring.summary.dueThisMonth")}
+              </Text>
               <Text
                 style={[
                   styles.summaryAmount,
@@ -197,7 +207,9 @@ function CreditCardMonitoringScreenContent() {
             </View>
             {data.overdueMinorUnits > 0 ? (
               <View style={styles.overdue}>
-                <Text style={styles.overdueLabel}>PAST DUE</Text>
+                <Text style={styles.overdueLabel}>
+                  {t("creditCardMonitoring.summary.pastDue")}
+                </Text>
                 <Text
                   style={[
                     styles.overdueAmount,

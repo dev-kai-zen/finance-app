@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   FlatList,
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -19,7 +20,9 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
+import { localizeCreditCardActivityDescription } from "../utils/localize-credit-card-activity";
 import { getStatementPaymentPresentation } from "../utils/statement-activity";
 
 export interface CreditCardActivityModalItem {
@@ -51,8 +54,10 @@ export interface CreditCardActivityModalProps {
   evaluatedCalendarDate: string;
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return "No date";
+function formatLocalizedDate(value: string | null, noDateLabel: string): string {
+  if (!value) {
+    return noDateLabel;
+  }
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString(undefined, {
     month: "short",
@@ -81,9 +86,14 @@ function CreditCardActivityModalContent({
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [search, setSearch] = useState("");
+  const noDateLabel = t("creditCardMonitoring.dates.noDate");
+  const formatDisplayDate = (value: string | null) =>
+    formatLocalizedDate(value, noDateLabel);
 
   const handleClose = () => {
+    Keyboard.dismiss();
     setSearch("");
     onClose();
   };
@@ -110,13 +120,13 @@ function CreditCardActivityModalContent({
       evaluatedCalendarDate,
     );
     if (presentation.badgeKind === "none") {
-      return { label: presentation.label, kind: "unpaid" as const };
+      return { label: t(presentation.labelKey), kind: "unpaid" as const };
     }
     return {
-      label: presentation.label,
+      label: t(presentation.labelKey),
       kind: presentation.badgeKind,
     };
-  }, [evaluatedCalendarDate, statementSummary]);
+  }, [evaluatedCalendarDate, statementSummary, t]);
 
   return (
     <Modal
@@ -146,9 +156,9 @@ function CreditCardActivityModalContent({
             ) : null}
           </View>
           <Pressable
-            accessibilityLabel="Close activity"
+            accessibilityLabel={t("creditCardMonitoring.modal.closeAccessibility")}
             accessibilityRole="button"
-            hitSlop={8}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={handleClose}
             style={({ pressed }) => [
               styles.closeButton,
@@ -165,13 +175,17 @@ function CreditCardActivityModalContent({
               <View>
                 <Text style={styles.summaryCardLabel}>
                   {statementSummary.kind === "opening"
-                    ? "Opening Balance Statement"
-                    : `Billed Statement · ${formatDate(statementSummary.statementOn ?? null)}`}
+                    ? t("creditCardMonitoring.statement.openingBalanceStatement")
+                    : t("creditCardMonitoring.statement.billedStatementTitle", {
+                        date: formatDisplayDate(statementSummary.statementOn ?? null),
+                      })}
                 </Text>
                 <Text style={styles.summaryCardDue}>
                   {statementSummary.dueOn
-                    ? `Payment Due: ${formatDate(statementSummary.dueOn)}`
-                    : "No payment due date"}
+                    ? t("creditCardMonitoring.statement.paymentDue", {
+                        date: formatDisplayDate(statementSummary.dueOn),
+                      })
+                    : t("creditCardMonitoring.statement.noPaymentDueDate")}
                 </Text>
               </View>
               {status ? (
@@ -199,7 +213,9 @@ function CreditCardActivityModalContent({
 
             <View style={styles.summaryMetricsRow}>
               <View style={styles.summaryMetricItem}>
-                <Text style={styles.summaryMetricLabel}>Total Billed</Text>
+                <Text style={styles.summaryMetricLabel}>
+                  {t("creditCardMonitoring.statement.totalBilled")}
+                </Text>
                 <Text style={styles.summaryMetricValue}>
                   {formatCurrency(
                     statementSummary.issuedAmountMinorUnits,
@@ -208,7 +224,9 @@ function CreditCardActivityModalContent({
                 </Text>
               </View>
               <View style={styles.summaryMetricItem}>
-                <Text style={styles.summaryMetricLabel}>Remaining Balance</Text>
+                <Text style={styles.summaryMetricLabel}>
+                  {t("creditCardMonitoring.statement.remainingBalance")}
+                </Text>
                 <Text
                   style={[
                     styles.summaryMetricValue,
@@ -230,11 +248,13 @@ function CreditCardActivityModalContent({
         <View style={styles.searchBar}>
           <Search color={theme.colors.textMuted} size={18} />
           <TextInput
-            accessibilityLabel="Search transactions"
+            accessibilityLabel={t(
+              "creditCardMonitoring.modal.searchAccessibility",
+            )}
             autoCapitalize="none"
             autoCorrect={false}
             onChangeText={setSearch}
-            placeholder="Search items by description or date..."
+            placeholder={t("creditCardMonitoring.modal.searchPlaceholder")}
             placeholderTextColor={theme.colors.textMuted}
             returnKeyType="search"
             style={styles.searchInput}
@@ -242,7 +262,7 @@ function CreditCardActivityModalContent({
           />
           {search.length > 0 ? (
             <Pressable
-              accessibilityLabel="Clear search"
+              accessibilityLabel={t("creditCardMonitoring.modal.clearSearch")}
               accessibilityRole="button"
               hitSlop={8}
               onPress={() => setSearch("")}
@@ -256,8 +276,13 @@ function CreditCardActivityModalContent({
         <View style={styles.counterRow}>
           <Text style={styles.counterText}>
             {search.trim().length > 0
-              ? `Showing ${filteredItems.length} of ${items.length} items`
-              : `${items.length} item${items.length === 1 ? "" : "s"}`}
+              ? t("creditCardMonitoring.modal.showingCount", {
+                  shown: filteredItems.length,
+                  total: items.length,
+                })
+              : t("creditCardMonitoring.modal.itemsCount", {
+                  count: items.length,
+                })}
           </Text>
         </View>
 
@@ -271,13 +296,13 @@ function CreditCardActivityModalContent({
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>
                 {search.trim().length > 0
-                  ? "No matching items found"
-                  : "No activity to show"}
+                  ? t("creditCardMonitoring.modal.emptyNoMatch")
+                  : t("creditCardMonitoring.modal.emptyNoActivity")}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {search.trim().length > 0
-                  ? "Try searching for a different keyword or date."
-                  : "No transactions recorded for this period."}
+                  ? t("creditCardMonitoring.modal.emptyNoMatchHint")
+                  : t("creditCardMonitoring.modal.emptyNoActivityHint")}
               </Text>
             </View>
           }
@@ -312,12 +337,12 @@ function CreditCardActivityModalContent({
                 </View>
                 <View style={styles.itemTextColumn}>
                   <Text numberOfLines={1} style={styles.itemDescription}>
-                    {item.description}
+                    {localizeCreditCardActivityDescription(item.description, t)}
                   </Text>
                   <Text numberOfLines={1} style={styles.itemDetail}>
                     {item.detail
-                      ? `${formatDate(item.occurredOn)} · ${item.detail}`
-                      : formatDate(item.occurredOn)}
+                      ? `${formatDisplayDate(item.occurredOn)} · ${item.detail}`
+                      : formatDisplayDate(item.occurredOn)}
                   </Text>
                 </View>
                 <Text

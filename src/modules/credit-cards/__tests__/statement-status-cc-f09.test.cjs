@@ -55,7 +55,10 @@ test("CC-F09: partial payment after due date is overdue_partial, not plain parti
     "2026-11-24",
   );
   assert.equal(presentation.badgeKind, "overdue");
-  assert.equal(presentation.label, "Past due · partially paid");
+  assert.equal(
+    presentation.labelKey,
+    "creditCardMonitoring.status.pastDuePartial",
+  );
 });
 
 test("CC-F09: statement due date uses same local calendar comparison as monitoring", () => {

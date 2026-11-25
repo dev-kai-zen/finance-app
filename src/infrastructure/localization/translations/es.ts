@@ -2879,6 +2879,141 @@ export const es = {
     stepUnbilledDesc:
       "Revisa los cargos realizados durante el ciclo de facturación actual antes de la fecha de corte.",
   },
+  creditCardMonitoring: {
+    loading: "Preparando la facturación de tarjetas...",
+    errors: {
+      loadFailed: "No se pudo cargar el seguimiento de tarjetas.",
+    },
+    empty: {
+      title: "No hay tarjetas para supervisar",
+      description:
+        "Crea una cuenta de tarjeta de crédito para supervisar ciclos de facturación, plazos y uso.",
+      action: "+ Añadir cuenta de tarjeta",
+    },
+    summary: {
+      dueThisMonth: "VENCE ESTE MES",
+      pastDue: "VENCIDO",
+    },
+    card: {
+      limitSuffix: "límite",
+      availableSuffix: "disponible",
+    },
+    metrics: {
+      billed: "Facturado",
+      unbilled: "Sin facturar",
+      outstanding: "Pendiente",
+    },
+    details: {
+      nextDue: "Próximo vencimiento",
+      activeInstallments: "Plazos activos",
+    },
+    dates: {
+      noPaymentDue: "Sin fecha de pago",
+      noDate: "Sin fecha",
+    },
+    sections: {
+      billedStatements: "Estados facturados",
+      unbilledActivity: "Actividad sin facturar",
+      statementHistory: "Historial de estados",
+    },
+    itemCount: "%{count} elemento",
+    itemCount_other: "%{count} elementos",
+    pills: {
+      latest: "Más reciente",
+      paid: "Pagado",
+    },
+    bill: {
+      opening: "Estado inicial",
+      dated: "Estado · %{date}",
+    },
+    statement: {
+      openingBilledBalance: "Saldo inicial facturado",
+      cutoff: "Corte: %{date}",
+      duePrefix: "Vence %{date}",
+      openingBalanceStatement: "Estado de saldo inicial",
+      billedStatementTitle: "Estado facturado · %{date}",
+      paymentDue: "Pago vence: %{date}",
+      noPaymentDueDate: "Sin fecha de pago",
+      totalBilled: "Total facturado",
+      remainingBalance: "Saldo pendiente",
+      historyTitle: "Estado · %{date}",
+    },
+    status: {
+      paidInFull: "Pagado por completo",
+      partiallyPaid: "Pagado parcialmente",
+      pastDue: "Vencido",
+      pastDuePartial: "Vencido · pagado parcialmente",
+      remainingBalance: "Saldo pendiente",
+    },
+    activity: {
+      unbilledTitle: "Actividad sin facturar",
+      unbilledSubtitle: "Cargos del ciclo de facturación actual",
+      noBilledItems: "No hay partidas facturadas en este estado.",
+      noStatementsYet:
+        "Aún no hay estados de facturación. Las compras recientes aparecerán en Actividad sin facturar hasta el corte.",
+      viewAllBilled: "Ver las %{count} partidas facturadas",
+      viewAllUnbilled: "Ver las %{count} partidas sin facturar",
+      viewAllBilledAccessibility: "Ver las %{count} partidas facturadas",
+      viewAllUnbilledAccessibility: "Ver las %{count} partidas sin facturar",
+      billedItem: "Partida facturada",
+      cardPurchase: "Compra con tarjeta",
+      installmentPurchase: "Compra a plazos",
+      dueOnDetail: "Vence %{date}",
+    },
+    unbilled: {
+      oneTimePurchase: "Compra única",
+      installmentRemaining:
+        "Plazo de %{months} meses · principal pendiente",
+      installmentBnpl:
+        "Plazo %{months} meses · BNPL: primera factura el %{date}",
+    },
+    entry: {
+      installment: "Plazo",
+      openingBalance: "Saldo inicial",
+      payment: "Pago",
+      refund: "Reembolso",
+      adjustment: "Ajuste",
+      cardPurchase: "Compra con tarjeta",
+      cardPayment: "Pago con tarjeta",
+      cardCharge: "Cargo con tarjeta",
+    },
+    modal: {
+      closeAccessibility: "Cerrar actividad",
+      searchAccessibility: "Buscar transacciones",
+      searchPlaceholder: "Buscar por descripción o fecha...",
+      clearSearch: "Borrar búsqueda",
+      showingCount: "Mostrando %{shown} de %{total} partidas",
+      itemsCount: "%{count} partida",
+      itemsCount_other: "%{count} partidas",
+      emptyNoMatch: "No hay partidas coincidentes",
+      emptyNoActivity: "No hay actividad para mostrar",
+      emptyNoMatchHint: "Prueba con otra palabra clave o fecha.",
+      emptyNoActivityHint: "No hay transacciones en este periodo.",
+    },
+    limitWarning: {
+      dismissAccessibility: "Cerrar aviso de límite",
+      title: "Límite de crédito superado",
+      description:
+        "Este gasto superará el límite de crédito de %{accountName}.",
+      creditLimit: "Límite de crédito",
+      currentOutstanding: "Deuda actual",
+      thisExpense: "Este gasto",
+      newTotalDebt: "Nueva deuda total",
+      exceededBy: "Superado en",
+      exceededByAmount: "%{amount} (%{percent}%)",
+      proceed: "Continuar de todos modos",
+      cancelEdit: "Cancelar y editar",
+    },
+    installment: {
+      tooSmallOneTime:
+        "El importe es demasiado bajo para plazos. Introduce un importe mayor o guárdalo como cargo único.",
+      tooSmallTerm:
+        "El importe es demasiado bajo para un plan de %{termMonths} meses. Usa como máximo %{maxTerm} meses o aumenta el importe.",
+      zeroPrincipalRow:
+        "El importe es demasiado bajo para un plan de %{termMonths} meses. Acorta el plazo o aumenta el importe.",
+      unsupported: "El plan de plazos no es compatible.",
+    },
+  },
   reportsWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Informes!",
     introSubtitle: "Perspectivas y análisis financiero",

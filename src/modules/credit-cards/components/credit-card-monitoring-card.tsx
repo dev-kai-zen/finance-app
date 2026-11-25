@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   ArrowDownLeft,
@@ -13,6 +13,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 import type {
@@ -25,8 +26,13 @@ import {
   getStatementDisplayItems,
   getStatementPaymentPresentation,
   getStatementPaymentStatus,
+  type StatementActivityLabels,
   type StatementDisplayItem,
 } from "../utils/statement-activity";
+import {
+  localizeCreditCardActivityDescription,
+  localizeCreditCardActivityDetail,
+} from "../utils/localize-credit-card-activity";
 import {
   CreditCardActivityModal,
   type CreditCardActivityModalItem,
@@ -35,8 +41,10 @@ import {
 
 const ACTIVITY_PREVIEW_COUNT = 4;
 
-function formatDate(value: string | null) {
-  if (!value) return "No payment due";
+function formatLocalizedDate(value: string | null, noDateLabel: string) {
+  if (!value) {
+    return noDateLabel;
+  }
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString(undefined, {
     month: "short",
@@ -54,8 +62,33 @@ export function CreditCardMonitoringCard({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+
+  const noPaymentDueLabel = t("creditCardMonitoring.dates.noPaymentDue");
+  const formatDisplayDate = useCallback(
+    (value: string | null) =>
+      formatLocalizedDate(value, noPaymentDueLabel),
+    [noPaymentDueLabel],
+  );
+
+  const statementLabels = useMemo<StatementActivityLabels>(
+    () => ({
+      installment: t("creditCardMonitoring.entry.installment"),
+      openingBalance: t("creditCardMonitoring.entry.openingBalance"),
+      payment: t("creditCardMonitoring.entry.payment"),
+      refund: t("creditCardMonitoring.entry.refund"),
+      adjustment: t("creditCardMonitoring.entry.adjustment"),
+      cardPurchase: t("creditCardMonitoring.entry.cardPurchase"),
+      cardPayment: t("creditCardMonitoring.entry.cardPayment"),
+      cardCharge: t("creditCardMonitoring.entry.cardCharge"),
+      openingBill: t("creditCardMonitoring.bill.opening"),
+      billWithDate: (formattedDate) =>
+        t("creditCardMonitoring.bill.dated", { date: formattedDate }),
+    }),
+    [t],
+  );
 
   const limitUtilizationRef = useWalkthroughTarget("creditCardLimitUtilization");
   const metricsRef = useWalkthroughTarget("creditCardMetrics");
@@ -86,18 +119,20 @@ export function CreditCardMonitoringCard({
 
   const activeStatementItems = useMemo(() => {
     if (!activeStatement) return [];
-    return getStatementDisplayItems(activeStatement);
-  }, [activeStatement]);
+    return getStatementDisplayItems(activeStatement, statementLabels);
+  }, [activeStatement, statementLabels]);
 
   const openStatementModal = (
     statement: CreditCardStatementSummary,
-    items = getStatementDisplayItems(statement),
+    items = getStatementDisplayItems(statement, statementLabels),
   ) => {
     setModalConfig({
       visible: true,
-      title: formatBillPillLabel(statement),
+      title: formatBillPillLabel(statement, statementLabels),
       subtitle: statement.dueOn
-        ? `Payment Due: ${formatDate(statement.dueOn)}`
+        ? t("creditCardMonitoring.statement.paymentDue", {
+            date: formatDisplayDate(statement.dueOn),
+          })
         : null,
       items,
       statementSummary: {
@@ -113,14 +148,15 @@ export function CreditCardMonitoringCard({
   const openUnbilledModal = () => {
     setModalConfig({
       visible: true,
-      title: "Unbilled Activity",
-      subtitle: "Current billing cycle charges",
+      title: t("creditCardMonitoring.activity.unbilledTitle"),
+      subtitle: t("creditCardMonitoring.activity.unbilledSubtitle"),
       items: card.unbilledItems.map((item) => ({
         id: item.id,
-        description: item.description,
+        description: localizeCreditCardActivityDescription(item.description, t),
         amountMinorUnits: item.amountMinorUnits,
         occurredOn: item.occurredOn,
-        detail: item.detail,
+        detail:
+          localizeCreditCardActivityDetail(item.detail, t) ?? item.detail,
         isCredit: false,
       })),
       statementSummary: null,
@@ -146,7 +182,7 @@ export function CreditCardMonitoringCard({
               formatCurrency(card.creditLimitMinorUnits, card.currencyCode),
               isPrivate,
             )}{" "}
-            limit
+            {t("creditCardMonitoring.card.limitSuffix")}
           </Text>
         </View>
         <CreditUtilizationRing
@@ -158,17 +194,17 @@ export function CreditCardMonitoringCard({
       <View collapsable={false} ref={metricsRef} style={styles.metrics}>
         <Metric
           isPrivate={isPrivate}
-          label="Billed"
+          label={t("creditCardMonitoring.metrics.billed")}
           value={formatCurrency(card.billedMinorUnits, card.currencyCode)}
         />
         <Metric
           isPrivate={isPrivate}
-          label="Unbilled"
+          label={t("creditCardMonitoring.metrics.unbilled")}
           value={formatCurrency(card.unbilledMinorUnits, card.currencyCode)}
         />
         <Metric
           isPrivate={isPrivate}
-          label="Outstanding"
+          label={t("creditCardMonitoring.metrics.outstanding")}
           value={formatCurrency(card.outstandingMinorUnits, card.currencyCode)}
         />
       </View>
@@ -177,8 +213,12 @@ export function CreditCardMonitoringCard({
         <View style={styles.detailRow}>
           <CalendarClock color={theme.colors.textSecondary} size={17} />
           <View style={styles.detailText}>
-            <Text style={styles.detailLabel}>Next due</Text>
-            <Text style={styles.detailValue}>{formatDate(card.nextDueOn)}</Text>
+            <Text style={styles.detailLabel}>
+              {t("creditCardMonitoring.details.nextDue")}
+            </Text>
+            <Text style={styles.detailValue}>
+              {formatDisplayDate(card.nextDueOn)}
+            </Text>
           </View>
           <Text
             style={[
@@ -196,7 +236,9 @@ export function CreditCardMonitoringCard({
         <View style={styles.detailRow}>
           <Layers3 color={theme.colors.textSecondary} size={17} />
           <View style={styles.detailText}>
-            <Text style={styles.detailLabel}>Active installments</Text>
+            <Text style={styles.detailLabel}>
+              {t("creditCardMonitoring.details.activeInstallments")}
+            </Text>
             <Text style={styles.detailValue}>
               {card.activeInstallmentCount}
             </Text>
@@ -211,7 +253,7 @@ export function CreditCardMonitoringCard({
               formatCurrency(card.availableCreditMinorUnits, card.currencyCode),
               isPrivate,
             )}{" "}
-            available
+            {t("creditCardMonitoring.card.availableSuffix")}
           </Text>
         </View>
       </View>
@@ -219,11 +261,14 @@ export function CreditCardMonitoringCard({
       {/* Billed Statements Filter & Items Section */}
       <View collapsable={false} ref={statementsRef} style={styles.activitySection}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.activityTitle}>Billed statements</Text>
+          <Text style={styles.activityTitle}>
+            {t("creditCardMonitoring.sections.billedStatements")}
+          </Text>
           {activeStatement && activeStatementItems.length > 0 ? (
             <Text style={styles.activityItemCount}>
-              {activeStatementItems.length} item
-              {activeStatementItems.length === 1 ? "" : "s"}
+              {t("creditCardMonitoring.itemCount", {
+                count: activeStatementItems.length,
+              })}
             </Text>
           ) : null}
         </View>
@@ -242,7 +287,7 @@ export function CreditCardMonitoringCard({
                   statement,
                   evaluatedCalendarDate,
                 );
-                const pillLabel = formatBillPillLabel(statement);
+                const pillLabel = formatBillPillLabel(statement, statementLabels);
 
                 return (
                   <Pressable
@@ -282,7 +327,7 @@ export function CreditCardMonitoringCard({
                               : styles.pillTagTextInactive,
                           ]}
                         >
-                          Latest
+                          {t("creditCardMonitoring.pills.latest")}
                         </Text>
                       </View>
                     ) : status === "paid" ? (
@@ -302,7 +347,7 @@ export function CreditCardMonitoringCard({
                               : styles.pillTagPaidText,
                           ]}
                         >
-                          Paid
+                          {t("creditCardMonitoring.pills.paid")}
                         </Text>
                       </View>
                     ) : null}
@@ -321,11 +366,15 @@ export function CreditCardMonitoringCard({
                       style={styles.selectedStatementTitle}
                     >
                       {activeStatement.kind === "opening"
-                        ? "Opening billed balance"
-                        : `Cutoff: ${formatDate(activeStatement.statementOn)}`}
+                        ? t("creditCardMonitoring.statement.openingBilledBalance")
+                        : t("creditCardMonitoring.statement.cutoff", {
+                            date: formatDisplayDate(activeStatement.statementOn),
+                          })}
                     </Text>
                     <Text style={styles.selectedStatementDue}>
-                      Due {formatDate(activeStatement.dueOn)}
+                      {t("creditCardMonitoring.statement.duePrefix", {
+                        date: formatDisplayDate(activeStatement.dueOn),
+                      })}
                     </Text>
                   </View>
                   <View style={styles.selectedStatementAmountColumn}>
@@ -349,7 +398,7 @@ export function CreditCardMonitoringCard({
                         return (
                           <View style={styles.statusBadgePaid}>
                             <Text style={styles.statusBadgePaidText}>
-                              {presentation.label}
+                              {t(presentation.labelKey)}
                             </Text>
                           </View>
                         );
@@ -358,7 +407,7 @@ export function CreditCardMonitoringCard({
                         return (
                           <View style={styles.statusBadgePartial}>
                             <Text style={styles.statusBadgePartialText}>
-                              {presentation.label}
+                              {t(presentation.labelKey)}
                             </Text>
                           </View>
                         );
@@ -367,14 +416,14 @@ export function CreditCardMonitoringCard({
                         return (
                           <View style={styles.statusBadgeOverdue}>
                             <Text style={styles.statusBadgeOverdueText}>
-                              {presentation.label}
+                              {t(presentation.labelKey)}
                             </Text>
                           </View>
                         );
                       }
                       return (
                         <Text style={styles.statementUnpaidNote}>
-                          {presentation.label}
+                          {t(presentation.labelKey)}
                         </Text>
                       );
                     })()}
@@ -388,14 +437,18 @@ export function CreditCardMonitoringCard({
               <ActivityRow
                 currencyCode={card.currencyCode}
                 isPrivate={isPrivate}
-                item={item}
+                formatDisplayDate={formatDisplayDate}
+              item={item}
                 key={item.id}
               />
             ))}
 
             {activeStatementItems.length > ACTIVITY_PREVIEW_COUNT ? (
               <Pressable
-                accessibilityLabel={`View all ${activeStatementItems.length} billed items`}
+                accessibilityLabel={t(
+                  "creditCardMonitoring.activity.viewAllBilledAccessibility",
+                  { count: activeStatementItems.length },
+                )}
                 accessibilityRole="button"
                 onPress={() =>
                   activeStatement && openStatementModal(activeStatement)
@@ -406,20 +459,21 @@ export function CreditCardMonitoringCard({
                 ]}
               >
                 <Text style={styles.viewAllButtonText}>
-                  {`View all ${activeStatementItems.length} billed items`}
+                  {t("creditCardMonitoring.activity.viewAllBilled", {
+                    count: activeStatementItems.length,
+                  })}
                 </Text>
                 <ChevronRight color={theme.colors.primary} size={16} />
               </Pressable>
             ) : activeStatementItems.length === 0 ? (
               <Text style={styles.emptyActivityText}>
-                No billed items recorded in this statement.
+                {t("creditCardMonitoring.activity.noBilledItems")}
               </Text>
             ) : null}
           </>
         ) : (
           <Text style={styles.emptyActivityText}>
-            No billing statements generated yet. Recent card purchases will
-            appear under Unbilled activity until your billing cutoff.
+            {t("creditCardMonitoring.activity.noStatementsYet")}
           </Text>
         )}
       </View>
@@ -428,16 +482,20 @@ export function CreditCardMonitoringCard({
       {card.unbilledItems.length > 0 ? (
         <View collapsable={false} ref={unbilledRef} style={styles.activitySection}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.activityTitle}>Unbilled activity</Text>
+            <Text style={styles.activityTitle}>
+              {t("creditCardMonitoring.sections.unbilledActivity")}
+            </Text>
             <Text style={styles.activityItemCount}>
-              {card.unbilledItems.length} item
-              {card.unbilledItems.length === 1 ? "" : "s"}
+              {t("creditCardMonitoring.itemCount", {
+                count: card.unbilledItems.length,
+              })}
             </Text>
           </View>
 
           {previewUnbilledItems.map((item) => (
             <ActivityRow
               currencyCode={card.currencyCode}
+              formatDisplayDate={formatDisplayDate}
               isPrivate={isPrivate}
               item={item}
               key={item.id}
@@ -447,7 +505,10 @@ export function CreditCardMonitoringCard({
 
           {card.unbilledItems.length > ACTIVITY_PREVIEW_COUNT ? (
             <Pressable
-              accessibilityLabel={`View all ${card.unbilledItems.length} unbilled items`}
+              accessibilityLabel={t(
+                "creditCardMonitoring.activity.viewAllUnbilledAccessibility",
+                { count: card.unbilledItems.length },
+              )}
               accessibilityRole="button"
               onPress={openUnbilledModal}
               style={({ pressed }) => [
@@ -456,7 +517,9 @@ export function CreditCardMonitoringCard({
               ]}
             >
               <Text style={styles.viewAllButtonText}>
-                {`View all ${card.unbilledItems.length} unbilled items`}
+                {t("creditCardMonitoring.activity.viewAllUnbilled", {
+                  count: card.unbilledItems.length,
+                })}
               </Text>
               <ChevronRight color={theme.colors.primary} size={16} />
             </Pressable>
@@ -467,7 +530,9 @@ export function CreditCardMonitoringCard({
       {/* Statement History List */}
       {card.statements.length > 0 ? (
         <View style={styles.historySection}>
-          <Text style={styles.historyTitle}>Statement history</Text>
+          <Text style={styles.historyTitle}>
+            {t("creditCardMonitoring.sections.statementHistory")}
+          </Text>
           {card.statements.slice(0, 3).map((statement) => (
             <Pressable
               accessibilityRole="button"
@@ -484,11 +549,15 @@ export function CreditCardMonitoringCard({
               <View style={styles.statementTextColumn}>
                 <Text style={styles.statementTitle}>
                   {statement.kind === "opening"
-                    ? "Opening billed balance"
-                    : `Statement · ${formatDate(statement.statementOn)}`}
+                    ? t("creditCardMonitoring.statement.openingBilledBalance")
+                    : t("creditCardMonitoring.statement.historyTitle", {
+                        date: formatDisplayDate(statement.statementOn),
+                      })}
                 </Text>
                 <Text style={styles.statementDue}>
-                  Due {formatDate(statement.dueOn)}
+                  {t("creditCardMonitoring.statement.duePrefix", {
+                    date: formatDisplayDate(statement.dueOn),
+                  })}
                 </Text>
               </View>
               <View style={styles.statementAmountColumn}>
@@ -527,11 +596,13 @@ export function CreditCardMonitoringCard({
 
 function ActivityRow({
   currencyCode,
+  formatDisplayDate,
   isPrivate,
   item,
   showDateBelowAmount = false,
 }: {
   currencyCode: string;
+  formatDisplayDate: (value: string | null) => string;
   isPrivate: boolean;
   item:
     | CreditCardActivityItem
@@ -539,20 +610,26 @@ function ActivityRow({
   showDateBelowAmount?: boolean;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const isCredit = "isCredit" in item ? Boolean(item.isCredit) : false;
   const formatted = formatCurrency(item.amountMinorUnits, currencyCode);
   const displayAmount = isCredit ? `- ${formatted}` : formatted;
+  const description = localizeCreditCardActivityDescription(
+    item.description,
+    t,
+  );
+  const detailText = showDateBelowAmount
+    ? localizeCreditCardActivityDetail(item.detail, t) ?? item.detail
+    : item.detail ?? formatDisplayDate(item.occurredOn);
 
   return (
     <View style={styles.activityRow}>
       <View style={styles.activityText}>
         <Text numberOfLines={1} style={styles.activityDescription}>
-          {item.description}
+          {description}
         </Text>
         <Text numberOfLines={1} style={styles.activityDetail}>
-          {showDateBelowAmount
-            ? item.detail
-            : (item.detail ?? formatDate(item.occurredOn))}
+          {detailText}
         </Text>
       </View>
       <View style={styles.activityAmountColumn}>
@@ -566,7 +643,7 @@ function ActivityRow({
         </Text>
         {showDateBelowAmount ? (
           <Text style={styles.activityDate}>
-            {formatDate(item.occurredOn)}
+            {formatDisplayDate(item.occurredOn)}
           </Text>
         ) : null}
       </View>

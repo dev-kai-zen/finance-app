@@ -2895,6 +2895,143 @@ export const fil = {
     stepUnbilledDesc:
       "Suriin ang mga pagbili sa kasalukuyang billing cycle bago dumating ang iyong susunod na cutoff date.",
   },
+  creditCardMonitoring: {
+    loading: "Inihahanda ang credit-card billing...",
+    errors: {
+      loadFailed: "Hindi ma-load ang credit-card monitoring.",
+    },
+    empty: {
+      title: "Walang credit card na susubaybayan",
+      description:
+        "Gumawa ng Credit Card account para subaybayan ang billing cycles, installments, at utilization.",
+      action: "+ Magdagdag ng Credit Card Account",
+    },
+    summary: {
+      dueThisMonth: "DUE NGAYONG BUWAN",
+      pastDue: "LAMPAS NA SA DUE",
+    },
+    card: {
+      limitSuffix: "limit",
+      availableSuffix: "available",
+    },
+    metrics: {
+      billed: "Na-bill",
+      unbilled: "Hindi pa na-bill",
+      outstanding: "Outstanding",
+    },
+    details: {
+      nextDue: "Susunod na due",
+      activeInstallments: "Aktibong installments",
+    },
+    dates: {
+      noPaymentDue: "Walang due na bayad",
+      noDate: "Walang petsa",
+    },
+    sections: {
+      billedStatements: "Mga na-bill na statement",
+      unbilledActivity: "Hindi pa na-bill na aktibidad",
+      statementHistory: "Kasaysayan ng statement",
+    },
+    itemCount: "%{count} item",
+    itemCount_other: "%{count} na item",
+    pills: {
+      latest: "Pinakabago",
+      paid: "Bayad na",
+    },
+    bill: {
+      opening: "Opening Bill",
+      dated: "Bill · %{date}",
+    },
+    statement: {
+      openingBilledBalance: "Opening billed balance",
+      cutoff: "Cutoff: %{date}",
+      duePrefix: "Due %{date}",
+      openingBalanceStatement: "Opening Balance Statement",
+      billedStatementTitle: "Na-bill na Statement · %{date}",
+      paymentDue: "Due na bayad: %{date}",
+      noPaymentDueDate: "Walang due na petsa ng bayad",
+      totalBilled: "Kabuuang Na-bill",
+      remainingBalance: "Natitirang Balanse",
+      historyTitle: "Statement · %{date}",
+    },
+    status: {
+      paidInFull: "Bayad nang buo",
+      partiallyPaid: "Bahagyang nabayaran",
+      pastDue: "Lampas na sa due",
+      pastDuePartial: "Lampas na sa due · bahagyang nabayaran",
+      remainingBalance: "Natitirang balanse",
+    },
+    activity: {
+      unbilledTitle: "Hindi Pa Na-bill na Aktibidad",
+      unbilledSubtitle: "Mga singil sa kasalukuyang billing cycle",
+      noBilledItems: "Walang na-bill na item sa statement na ito.",
+      noStatementsYet:
+        "Wala pang billing statement. Lalabas ang mga pagbili sa Unbilled activity hanggang sa cutoff.",
+      viewAllBilled: "Tingnan ang lahat ng %{count} na-bill na item",
+      viewAllUnbilled: "Tingnan ang lahat ng %{count} hindi pa na-bill na item",
+      viewAllBilledAccessibility: "Tingnan ang lahat ng %{count} na-bill na item",
+      viewAllUnbilledAccessibility:
+        "Tingnan ang lahat ng %{count} hindi pa na-bill na item",
+      billedItem: "Na-bill na item",
+      cardPurchase: "Pagbili sa card",
+      installmentPurchase: "Pagbili sa installment",
+      dueOnDetail: "Due %{date}",
+    },
+    unbilled: {
+      oneTimePurchase: "One-time na pagbili",
+      installmentRemaining:
+        "%{months}-buwang installment · natitirang principal",
+      installmentBnpl:
+        "%{months}-buwang installment · BNPL: Unang bill sa %{date}",
+    },
+    entry: {
+      installment: "Installment",
+      openingBalance: "Opening balance",
+      payment: "Bayad",
+      refund: "Refund",
+      adjustment: "Adjustment",
+      cardPurchase: "Pagbili sa card",
+      cardPayment: "Bayad sa card",
+      cardCharge: "Singil sa card",
+    },
+    modal: {
+      closeAccessibility: "Isara ang aktibidad",
+      searchAccessibility: "Maghanap ng transaksyon",
+      searchPlaceholder:
+        "Maghanap ayon sa paglalarawan o petsa...",
+      clearSearch: "Burahin ang paghahanap",
+      showingCount: "Ipinapakita ang %{shown} sa %{total} na item",
+      itemsCount: "%{count} item",
+      itemsCount_other: "%{count} na item",
+      emptyNoMatch: "Walang tumutugmang item",
+      emptyNoActivity: "Walang ipapakitang aktibidad",
+      emptyNoMatchHint: "Subukan ang ibang keyword o petsa.",
+      emptyNoActivityHint: "Walang transaksyon sa panahong ito.",
+    },
+    limitWarning: {
+      dismissAccessibility: "Isara ang babala sa credit limit",
+      title: "Lampas sa Credit Limit",
+      description:
+        "Lalampas ang gastos na ito sa credit limit ng %{accountName}.",
+      creditLimit: "Credit Limit",
+      currentOutstanding: "Kasalukuyang Outstanding",
+      thisExpense: "Gastos na Ito",
+      newTotalDebt: "Bagong Kabuuang Utang",
+      exceededBy: "Lampas ng",
+      exceededByAmount: "%{amount} (%{percent}%)",
+      proceed: "Magpatuloy Pa Rin",
+      cancelEdit: "Kanselahin at I-edit",
+    },
+    installment: {
+      tooSmallOneTime:
+        "Masyadong maliit ang halaga para sa installments. Maglagay ng mas malaking halaga o i-save bilang one-time charge.",
+      tooSmallTerm:
+        "Masyadong maliit ang halaga para sa %{termMonths}-buwang plano. Gamitin ang hanggang %{maxTerm} buwan o dagdagan ang halaga.",
+      zeroPrincipalRow:
+        "Masyadong maliit ang halaga para sa %{termMonths}-buwang plano. Paikliin ang termino o dagdagan ang halaga.",
+      unsupported: "Hindi suportado ang installment schedule.",
+    },
+  },
   reportsWalkthrough: {
     introTitle: "Maligayang pagdating sa Reports!",
     introSubtitle: "Mga pananaw at pagsusuri sa pananalapi",

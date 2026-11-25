@@ -2853,6 +2853,140 @@ export const en = {
     stepUnbilledDesc:
       "Review card charges made in the current billing cycle before your next statement cutoff.",
   },
+  creditCardMonitoring: {
+    loading: "Preparing credit-card billing...",
+    errors: {
+      loadFailed: "Unable to load credit-card monitoring.",
+    },
+    empty: {
+      title: "No credit cards to monitor",
+      description:
+        "Create a Credit Card account to monitor billing cycles, installments, and utilization.",
+      action: "+ Add Credit Card Account",
+    },
+    summary: {
+      dueThisMonth: "DUE THIS MONTH",
+      pastDue: "PAST DUE",
+    },
+    card: {
+      limitSuffix: "limit",
+      availableSuffix: "available",
+    },
+    metrics: {
+      billed: "Billed",
+      unbilled: "Unbilled",
+      outstanding: "Outstanding",
+    },
+    details: {
+      nextDue: "Next due",
+      activeInstallments: "Active installments",
+    },
+    dates: {
+      noPaymentDue: "No payment due",
+      noDate: "No date",
+    },
+    sections: {
+      billedStatements: "Billed statements",
+      unbilledActivity: "Unbilled activity",
+      statementHistory: "Statement history",
+    },
+    itemCount: "%{count} item",
+    itemCount_other: "%{count} items",
+    pills: {
+      latest: "Latest",
+      paid: "Paid",
+    },
+    bill: {
+      opening: "Opening Bill",
+      dated: "%{date} Bill",
+    },
+    statement: {
+      openingBilledBalance: "Opening billed balance",
+      cutoff: "Cutoff: %{date}",
+      duePrefix: "Due %{date}",
+      openingBalanceStatement: "Opening Balance Statement",
+      billedStatementTitle: "Billed Statement · %{date}",
+      paymentDue: "Payment Due: %{date}",
+      noPaymentDueDate: "No payment due date",
+      totalBilled: "Total Billed",
+      remainingBalance: "Remaining Balance",
+      historyTitle: "Statement · %{date}",
+    },
+    status: {
+      paidInFull: "Paid in full",
+      partiallyPaid: "Partially paid",
+      pastDue: "Past due",
+      pastDuePartial: "Past due · partially paid",
+      remainingBalance: "Remaining balance",
+    },
+    activity: {
+      unbilledTitle: "Unbilled Activity",
+      unbilledSubtitle: "Current billing cycle charges",
+      noBilledItems: "No billed items recorded in this statement.",
+      noStatementsYet:
+        "No billing statements generated yet. Recent card purchases will appear under Unbilled activity until your billing cutoff.",
+      viewAllBilled: "View all %{count} billed items",
+      viewAllUnbilled: "View all %{count} unbilled items",
+      viewAllBilledAccessibility: "View all %{count} billed items",
+      viewAllUnbilledAccessibility: "View all %{count} unbilled items",
+      billedItem: "Billed item",
+      cardPurchase: "Card purchase",
+      installmentPurchase: "Installment purchase",
+      dueOnDetail: "Due %{date}",
+    },
+    unbilled: {
+      oneTimePurchase: "One-time purchase",
+      installmentRemaining: "%{months}-month installment · remaining principal",
+      installmentBnpl:
+        "%{months}-mo installment · BNPL: First bill on %{date}",
+    },
+    entry: {
+      installment: "Installment",
+      openingBalance: "Opening balance",
+      payment: "Payment",
+      refund: "Refund",
+      adjustment: "Adjustment",
+      cardPurchase: "Card purchase",
+      cardPayment: "Card payment",
+      cardCharge: "Card charge",
+    },
+    modal: {
+      closeAccessibility: "Close activity",
+      searchAccessibility: "Search transactions",
+      searchPlaceholder: "Search items by description or date...",
+      clearSearch: "Clear search",
+      showingCount: "Showing %{shown} of %{total} items",
+      itemsCount: "%{count} item",
+      itemsCount_other: "%{count} items",
+      emptyNoMatch: "No matching items found",
+      emptyNoActivity: "No activity to show",
+      emptyNoMatchHint: "Try searching for a different keyword or date.",
+      emptyNoActivityHint: "No transactions recorded for this period.",
+    },
+    limitWarning: {
+      dismissAccessibility: "Dismiss credit limit warning",
+      title: "Credit Limit Exceeded",
+      description:
+        "This expense will exceed the credit limit for %{accountName}.",
+      creditLimit: "Credit Limit",
+      currentOutstanding: "Current Outstanding",
+      thisExpense: "This Expense",
+      newTotalDebt: "New Total Debt",
+      exceededBy: "Exceeded by",
+      exceededByAmount: "%{amount} (%{percent}%)",
+      proceed: "Proceed Anyway",
+      cancelEdit: "Cancel & Edit",
+    },
+    installment: {
+      tooSmallOneTime:
+        "Purchase amount is too small for installments. Enter a larger amount or save as a one-time charge.",
+      tooSmallTerm:
+        "Purchase amount is too small for a %{termMonths}-month plan. Use at most %{maxTerm} months or increase the purchase amount.",
+      zeroPrincipalRow:
+        "Purchase amount is too small for a %{termMonths}-month plan. Shorten the term or increase the purchase amount.",
+      unsupported: "Installment schedule is not supported.",
+    },
+  },
   reportsWalkthrough: {
     introTitle: "Welcome to Reports!",
     introSubtitle: "Financial insights and analytics",

@@ -124,12 +124,16 @@ export {
   getStatementPaymentStatus,
   type StatementDisplayItem,
   type StatementPaymentBadgeKind,
+  type StatementActivityLabels,
   type StatementPaymentPresentation,
   type StatementPaymentStatus,
 } from "./utils/statement-activity";
 export {
   assertInstallmentScheduleSupported,
   getInstallmentScheduleSupportError,
+  getInstallmentScheduleSupportIssue,
   isInstallmentScheduleSupported,
   maxSupportedInstallmentTermMonths,
+  translateInstallmentScheduleSupportIssue,
+  type InstallmentScheduleSupportIssue,
 } from "./utils/validate-installment-schedule";

@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 fixed with automated regression coverage; CC-F08 closed as designed. CC-F12 remains open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F07, CC-F09, CC-F10, CC-F11, and CC-F12 fixed with automated regression coverage where applicable; CC-F08 closed as designed. Native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, statement due-badge date/status parity, installment-plan completion counting, and installment schedule validation are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09–CC-F11 regressions. CC-F12 remains pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, statement due-badge date/status parity, installment-plan completion counting, installment schedule validation, and credit-card monitoring localization/keyboard close are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09–CC-F12 regressions. Native UI and frame timing remain unverified.
 
 **Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. CC-F07 batches billed installment checks (reducing 120-month plan edit inspection from 123 queries to 3), eliminates per-installment existence loops in reconciliation, chunks `planIds` at $\le 500$ in `listInstallmentsForPlans` and `listBilledInstallmentIdsForPlans`, omits unused account management flags, and optimizes activity string comparison. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, 5 query-performance regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
@@ -19,7 +19,7 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Credit Cards | Partial | CC-F01 through CC-F07 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 fixed; CC-F08 closed by design; CC-F12 remains open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F07, CC-F09, CC-F10, CC-F11, and CC-F12 fixed; CC-F08 closed by design. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -179,7 +179,7 @@ These original probes characterize the initial defects. CC-F01 through CC-F04 no
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 are fixed with automated coverage; CC-F12 remains open. Native verification remains pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07, CC-F09, CC-F10, CC-F11, and CC-F12 are fixed with automated coverage where applicable. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -194,7 +194,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F09 | P2 — FIXED | Statement badges use UTC/stale dates and hide overdue partial bills. | Four dedicated helper regressions pass; UI consumes `evaluatedCalendarDate` from monitoring reads. |
 | CC-F10 | P2 — FIXED | Completed/fully paid schedules remain counted as active installments. | Five actual-service/SQLite regressions; Q-CC03 settled as last issuance (remaining schedule principal). |
 | CC-F11 | P2 — FIXED | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Five helper/service regressions; form and preview block unsupported schedules. |
-| CC-F12 | P2 | Core feature strings are untranslated; activity close omits keyboard dismissal. | Source trace; native/localized checks pending. |
+| CC-F12 | P2 — FIXED | Core feature strings are untranslated; activity close omits keyboard dismissal. | `creditCardMonitoring.*` keys in en/fil/es; UI wired; activity modal dismisses keyboard; statement status uses label keys. |
 
 ### [CC-F01] Credit-limit preview does not model the replacement expense correctly — FIXED
 
@@ -549,7 +549,7 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** CC-F11 fixed and automated-test verified. Native form smoke recommended. Release notes skipped as requested.
 
-### [CC-F12] Core localization and modal-close behavior are incomplete
+### [CC-F12] Core localization and modal-close behavior are incomplete — FIXED
 
 **Problem / evidence:** The screen, monitoring card, activity modal, limit warning, status helper, and generated billing descriptions contain English literals such as “DUE THIS MONTH,” “Opening Bill,” “Partially paid,” and “Card purchase.” `useLocalization` in the screen serves Pro/walkthrough text, not those core labels. The activity modal's `handleClose` clears search and invokes `onClose` without `Keyboard.dismiss()`.
 
@@ -557,7 +557,17 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Smallest reasonable fix:** Add matching English/Filipino/Spanish keys through existing localization conventions; distinguish system-generated text from user descriptions when translating activity. Call `Keyboard.dismiss()` in the close path. No feature-wide component rewrite is needed.
 
-**Proof required:** Switch languages with populated/empty/error/over-limit/billed/unbilled states, verify plural/status/accessibility text and date locale, preserve user-entered descriptions, and close an activity modal on the first tap with search focused. Check Android back and iOS sheet dismissal too.
+**Implemented:** Added `creditCardMonitoring` translation blocks in [en.ts](../../src/infrastructure/localization/translations/en.ts), [fil.ts](../../src/infrastructure/localization/translations/fil.ts), and [es.ts](../../src/infrastructure/localization/translations/es.ts). Wired [credit-card-monitoring-screen.tsx](../../src/modules/credit-cards/screens/credit-card-monitoring-screen.tsx), [credit-card-monitoring-card.tsx](../../src/modules/credit-cards/components/credit-card-monitoring-card.tsx), [credit-card-activity-modal.tsx](../../src/modules/credit-cards/components/credit-card-activity-modal.tsx), and [credit-limit-warning-modal.tsx](../../src/modules/credit-cards/components/credit-limit-warning-modal.tsx) through `useLocalization`. [statement-activity.ts](../../src/modules/credit-cards/utils/statement-activity.ts) returns status `labelKey` values and localized statement display labels at the UI boundary; [localize-credit-card-activity.ts](../../src/modules/credit-cards/utils/localize-credit-card-activity.ts) maps known system activity copy without overwriting user descriptions. Installment schedule validation errors translate via [validate-installment-schedule.ts](../../src/modules/credit-cards/utils/validate-installment-schedule.ts) and [transaction-form-modal.tsx](../../src/modules/transactions/components/transaction-form-modal.tsx). Activity modal `handleClose` calls `Keyboard.dismiss()` before `onClose`; close hit slop expanded to 44×44 effective target.
+
+**Manual verification (release notes skipped as requested):**
+
+1. **Language switch:** Settings → Language → Filipino, then Spanish, then English. Open Credit Card Monitoring with at least one card; confirm summary labels, metrics, statement badges, pills, empty copy, and limit warning (if triggerable) match the active language.
+2. **User descriptions preserved:** Open a statement or unbilled activity modal; confirm custom transaction names/notes stay unchanged while system fallbacks (e.g. “Card purchase”) localize.
+3. **Keyboard one-tap close:** Open billed activity modal, focus search, tap ✕ once — modal closes without a second tap. Repeat with Android system back / sheet dismiss.
+4. **Installment validation message:** On an expense form with installments, enter amount `2` and term `3` — error shows in the active language (not hard-coded English).
+5. **Regression:** `npx tsc --noEmit` and CC-F09 statement-status test (labelKey assertion).
+
+**Status:** CC-F12 fixed in source; native localized smoke still recommended before feature sign-off.
 
 ## 7. Policy questions and unconfirmed risks
 
@@ -690,7 +700,7 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Fix CC-F09 with 4 new statement-status regressions; card/modal use `evaluatedCalendarDate` from monitoring reads.
 - [x] Fix CC-F10 with 5 installment completion regressions; Q-CC03 last-issuance policy.
 - [x] Fix CC-F11 with five installment-validation regressions; form/preview block unsupported schedules.
-- [ ] Implement and regression-test CC-F12; preserve exact monetary and historical parity.
+- [x] Fix CC-F12 with `creditCardMonitoring` localization and activity-modal keyboard dismissal.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.

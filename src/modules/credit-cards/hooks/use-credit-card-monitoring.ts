@@ -7,6 +7,9 @@ import { getCreditCardMonitoring } from "../services/get-credit-card-monitoring.
 import type { CreditCardMonitoringSummary } from "../types/credit-card.types";
 import { toCalendarDate } from "../utils/billing-dates";
 
+export const CREDIT_CARD_MONITORING_LOAD_FAILED =
+  "creditCardMonitoring.errors.loadFailed";
+
 const EMPTY_SUMMARY: CreditCardMonitoringSummary = {
   cards: [],
   dueThisMonthMinorUnits: 0,
@@ -41,9 +44,7 @@ export function useCreditCardMonitoring() {
       setError(null);
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Unable to load credit-card monitoring.",
+        cause instanceof Error ? cause.message : CREDIT_CARD_MONITORING_LOAD_FAILED,
       );
     } finally {
       hasLoadedOnceRef.current = true;
