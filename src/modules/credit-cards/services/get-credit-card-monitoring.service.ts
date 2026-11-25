@@ -27,6 +27,8 @@ import {
   calculateCreditCardOutstanding,
   calculateCreditCardUnbilled,
   calculateCreditCardUtilization,
+  isInstallmentPlanScheduleOngoing,
+  remainingInstallmentPrincipalMinorUnits,
 } from "../utils/credit-card-computations";
 import { ensureCreditCardBillingReconciled } from "./reconcile-credit-card-billing.service";
 
@@ -192,7 +194,7 @@ export function computeCreditCardAccountMonitoring(
       occurredOn: toCalendarDate(transaction.occurredAt),
       detail: "One-time purchase",
     }));
-  for (const plan of plans.filter((item) => item.status === "active")) {
+  for (const plan of plans) {
     if (
       excludeTransactionId &&
       plan.purchaseTransactionId === excludeTransactionId
@@ -203,11 +205,20 @@ export function computeCreditCardAccountMonitoring(
     if (!purchase) continue;
     const billedPrincipal =
       installmentBilledByTxId.get(plan.purchaseTransactionId) ?? 0;
-    const remainingPrincipal = Math.max(
-      0,
-      plan.principalMinorUnits - billedPrincipal,
+    if (
+      !isInstallmentPlanScheduleOngoing(
+        plan.status,
+        plan.principalMinorUnits,
+        billedPrincipal,
+        Boolean(purchase.deletedAt),
+      )
+    ) {
+      continue;
+    }
+    const remainingPrincipal = remainingInstallmentPrincipalMinorUnits(
+      plan.principalMinorUnits,
+      billedPrincipal,
     );
-    if (remainingPrincipal <= 0) continue;
     const isDeferred =
       (plan.deferredMonths ?? 0) > 0 && plan.firstStatementOn > todayOn;
     const detail = isDeferred
@@ -263,9 +274,17 @@ export function computeCreditCardAccountMonitoring(
     dueThisMonthMinorUnits: Math.min(dueThisMonth, billed),
     overdueMinorUnits: Math.min(overdue, billed),
     nextDueOn: nextDue,
-    activeInstallmentCount: plans.filter(
-      (plan) => plan.status === "active",
-    ).length,
+    activeInstallmentCount: plans.filter((plan) => {
+      const purchase = ledgerById.get(plan.purchaseTransactionId);
+      const billedPrincipal =
+        installmentBilledByTxId.get(plan.purchaseTransactionId) ?? 0;
+      return isInstallmentPlanScheduleOngoing(
+        plan.status,
+        plan.principalMinorUnits,
+        billedPrincipal,
+        !purchase || Boolean(purchase.deletedAt),
+      );
+    }).length,
     billedItems: sortedBilledItems,
     unbilledItems: sortedUnbilledItems,
     statements: statementSummaries.reverse(),

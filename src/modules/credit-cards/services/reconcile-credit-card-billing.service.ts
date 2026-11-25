@@ -259,6 +259,52 @@ function* reconcileAccount(
     billedInstallmentIds.add(installment.id);
   }
 
+  const completionPlanIds = plans
+    .filter((plan) => {
+      const purchase = transactionById.get(plan.purchaseTransactionId);
+      return (
+        plan.status !== "cancelled" && purchase && !purchase.deletedAt
+      );
+    })
+    .map((plan) => plan.id);
+  const installmentsForCompletion = listInstallmentsForPlans(
+    completionPlanIds,
+    context,
+  );
+  const billedInstallmentIdsForCompletion = listBilledInstallmentIdsForPlans(
+    completionPlanIds,
+    context,
+  );
+  for (const plan of plans) {
+    yield;
+    const purchase = transactionById.get(plan.purchaseTransactionId);
+    if (!purchase || purchase.deletedAt || plan.status === "cancelled") {
+      continue;
+    }
+    const billedPrincipal = installmentsForCompletion
+      .filter(
+        (installment) =>
+          installment.planId === plan.id &&
+          billedInstallmentIdsForCompletion.has(installment.id),
+      )
+      .reduce(
+        (sum, installment) =>
+          sum +
+          installment.principalMinorUnits +
+          installment.interestMinorUnits +
+          installment.feeMinorUnits,
+        0,
+      );
+    const remainingPrincipal = Math.max(0, plan.principalMinorUnits - billedPrincipal);
+    if (remainingPrincipal === 0 && plan.status === "active") {
+      updateInstallmentPlanStatus(plan.id, "completed", context);
+      plan.status = "completed";
+    } else if (remainingPrincipal > 0 && plan.status === "completed") {
+      updateInstallmentPlanStatus(plan.id, "active", context);
+      plan.status = "active";
+    }
+  }
+
   let statements = listStatementsForAccount(account.id, context);
   let entries = listEntriesForStatements(
     statements.map((statement) => statement.id),

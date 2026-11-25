@@ -73,6 +73,34 @@ export function calculateCreditCardUtilization(
   return (outstandingMinorUnits / creditLimitMinorUnits) * 100;
 }
 
+/**
+ * Remaining installment principal not yet billed on statements (Q-CC03: last issuance).
+ */
+export function remainingInstallmentPrincipalMinorUnits(
+  planPrincipalMinorUnits: number,
+  billedInstallmentAmountMinorUnits: number,
+): number {
+  return Math.max(0, planPrincipalMinorUnits - billedInstallmentAmountMinorUnits);
+}
+
+/** Plan still has installment principal to bill on future or current cutoffs. */
+export function isInstallmentPlanScheduleOngoing(
+  planStatus: string,
+  planPrincipalMinorUnits: number,
+  billedInstallmentAmountMinorUnits: number,
+  purchaseDeleted: boolean,
+): boolean {
+  if (purchaseDeleted || planStatus === "cancelled") {
+    return false;
+  }
+  return (
+    remainingInstallmentPrincipalMinorUnits(
+      planPrincipalMinorUnits,
+      billedInstallmentAmountMinorUnits,
+    ) > 0
+  );
+}
+
 // Aliases matching user naming preferences
 export const CreditCardBilledComputation = calculateCreditCardBilled;
 export const CreditCardUnbilledComputation = calculateCreditCardUnbilled;

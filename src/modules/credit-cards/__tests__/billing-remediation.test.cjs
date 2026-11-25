@@ -1368,6 +1368,93 @@ test("CC-F05: editing positive opening balance adjusts allocations and converges
   } finally { sqlite.close(); }
 });
 
+function installmentPlanStatus() {
+  return sqlite
+    .prepare(
+      "SELECT status FROM credit_card_installment_plans WHERE purchase_transaction_id = 'purchase'",
+    )
+    .get()?.status;
+}
+
+test("CC-F10: mid-schedule installment plan counts as active", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const snap = installmentFinancialSnapshot();
+    assert.equal(snap.activePlans, 1);
+    assert.equal(installmentPlanStatus(), "active");
+    assert.equal(snap.outstanding, 120000);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CC-F10: fully issued schedule completes when unpaid statement debt remains", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2027, 1, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const snap = installmentFinancialSnapshot();
+    assert.equal(snap.outstanding, 120000);
+    assert.equal(snap.activePlans, 0);
+    assert.equal(installmentPlanStatus(), "completed");
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CC-F10: fully issued and fully paid plan shows zero active installments", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2027, 1, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    f.charge("payment", 120000, "transfer");
+    reconcileCreditCardBilling();
+    const snap = installmentFinancialSnapshot();
+    assert.equal(snap.outstanding, 0);
+    assert.equal(snap.activePlans, 0);
+    assert.equal(installmentPlanStatus(), "completed");
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CC-F10: delete/restore reopens an incomplete schedule without changing paid totals", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2026, 10, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    const before = installmentFinancialSnapshot();
+    assert.equal(before.activePlans, 1);
+    removeTransaction("purchase");
+    assert.equal(installmentFinancialSnapshot().activePlans, 0);
+    restoreTransaction("purchase");
+    const restored = installmentFinancialSnapshot();
+    assert.equal(restored.activePlans, 1);
+    assert.equal(installmentPlanStatus(), "active");
+    assert.deepEqual(restored, before);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CC-F10: completed plans stay complete across repeat reconciliation", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(2027, 1, 21, 12).getTime() });
+  const f = installmentFixture();
+  try {
+    reconcileCreditCardBilling();
+    assert.equal(installmentPlanStatus(), "completed");
+    for (let run = 0; run < 3; run += 1) {
+      reconcileCreditCardBilling();
+      assert.equal(installmentPlanStatus(), "completed");
+      assert.equal(installmentFinancialSnapshot().activePlans, 0);
+    }
+  } finally {
+    sqlite.close();
+  }
+});
+
 
 
 

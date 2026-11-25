@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F07 and CC-F09 fixed with automated regression coverage; CC-F08 closed as designed. CC-F10 through CC-F12 remain open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F07, CC-F09, and CC-F10 fixed with automated regression coverage; CC-F08 closed as designed. CC-F11 through CC-F12 remain open, and native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, and statement due-badge date/status parity are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09 status regressions. CC-F10 through CC-F12 remain pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, statement due-badge date/status parity, and installment-plan completion counting are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09/CC-F10 regressions. CC-F11 through CC-F12 remain pending. Native UI and frame timing remain unverified.
 
 **Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. CC-F07 batches billed installment checks (reducing 120-month plan edit inspection from 123 queries to 3), eliminates per-installment existence loops in reconciliation, chunks `planIds` at $\le 500$ in `listInstallmentsForPlans` and `listBilledInstallmentIdsForPlans`, omits unused account management flags, and optimizes activity string comparison. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, 5 query-performance regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
@@ -19,7 +19,7 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Credit Cards | Partial | CC-F01 through CC-F07 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F07 and CC-F09 fixed; CC-F08 closed by design; CC-F10 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F07, CC-F09, and CC-F10 fixed; CC-F08 closed by design; CC-F11 through CC-F12 remain open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -179,7 +179,7 @@ These original probes characterize the initial defects. CC-F01 through CC-F04 no
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07 and CC-F09 are fixed with automated coverage; CC-F10 through CC-F12 remain open. Native verification remains pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07, CC-F09, and CC-F10 are fixed with automated coverage; CC-F11 through CC-F12 remain open. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -192,7 +192,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F07 | P2 — FIXED | All-card synchronous history reads, per-installment probes, and incomplete chunking violate performance requirements. | Fixed; 5 dedicated query-performance and chunking regressions pass. 120-month plan edit inspection reduced from 123 to 3 queries. |
 | CC-F08 | P2 — BY DESIGN | Activity modal displays itemized amounts regardless of privacy mode. | Closed per product design: Overview cards mask amounts under Privacy Mode; modal opening is an explicit inspection action where itemized amounts are intentionally visible. |
 | CC-F09 | P2 — FIXED | Statement badges use UTC/stale dates and hide overdue partial bills. | Four dedicated helper regressions pass; UI consumes `evaluatedCalendarDate` from monitoring reads. |
-| CC-F10 | P2 | Completed/fully paid schedules remain counted as active installments. | Actual-service/SQLite probe; completion policy requires agreement. |
+| CC-F10 | P2 — FIXED | Completed/fully paid schedules remain counted as active installments. | Five actual-service/SQLite regressions; Q-CC03 settled as last issuance (remaining schedule principal). |
 | CC-F11 | P2 | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Actual-service/SQLite probe. |
 | CC-F12 | P2 | Core feature strings are untranslated; activity close omits keyboard dismissal. | Source trace; native/localized checks pending. |
 
@@ -501,15 +501,30 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** CC-F09 is fixed and automated-test verified. Native timezone smoke remains recommended. Release notes skipped as requested.
 
-### [CC-F10] Active installment count never completes a schedule
+### [CC-F10] Active installment count never completes a schedule — FIXED
 
-**Problem / evidence:** A fully issued and fully paid three-month plan has zero debt but still shows one active installment plan. Reconciliation only writes `active`/`cancelled`; no reviewed path transitions a finished plan to `completed`.
+**Problem / evidence:** A fully issued and fully paid three-month plan has zero debt but still shows one active installment plan. Reconciliation only wrote `active`/`cancelled`; no path transitioned a finished plan to `completed`.
 
-**Cause / path:** Monitoring counts stored `status === "active"` rows regardless of remaining scheduled principal. The schema supports `completed`, but the lifecycle does not use it.
+**Policy (Q-CC03):** **Last issuance** — a plan is ongoing only while installment principal remains to bill on future/current cutoffs. Unpaid statement balances stay visible independently of the counter.
 
-**Smallest reasonable fix:** Confirm Q-CC03, then either derive ongoing-plan count from remaining schedule work or explicitly maintain completion/reopening status in reconciliation. Keep unpaid final statements visible independently of whether future installments remain.
+**Implemented:**
+1. Shared helpers in [credit-card-computations.ts](../../src/modules/credit-cards/utils/credit-card-computations.ts): `remainingInstallmentPrincipalMinorUnits` and `isInstallmentPlanScheduleOngoing`.
+2. [get-credit-card-monitoring.service.ts](../../src/modules/credit-cards/services/get-credit-card-monitoring.service.ts) counts plans with remaining billed-vs-plan principal (same basis as unbilled installment preview).
+3. [reconcile-credit-card-billing.service.ts](../../src/modules/credit-cards/services/reconcile-credit-card-billing.service.ts) sets `completed` when remaining schedule principal is zero and reopens `active` when billed work reappears.
 
-**Proof required:** Last issuance, final payment, overpayment, payment deletion, purchase delete/restore, BNPL before first bill, and future schedules. Assert status/count changes do not change principal or hide unpaid statements.
+**Regression evidence:** Five cases in [billing-remediation.test.cjs](../../src/modules/credit-cards/__tests__/billing-remediation.test.cjs): mid-schedule active count, fully issued/unpaid (count 0, debt unchanged), fully issued/paid (count 0), delete/restore reopen, idempotent completion across repeat reconciliation.
+
+**Performance:** Reuses installment rows already loaded for billing; completion is $O(P)$ per card inside existing reconciliation; monitoring adds only in-memory filters on the same maps—no extra SQL.
+
+#### Manual verification guide — CC-F10
+
+1. **Mid-schedule:** PHP 1,200 purchase, **3 installments**, statement 10 / due 25. After first cutoff, **Active installments = 1**, unbilled shows remaining principal.
+2. **All bills issued, still unpaid:** Advance until all three installments appear on statements (or wait three cycles). **Active installments = 0**; **Outstanding** still shows what you owe on statements.
+3. **All bills paid:** Pay total card debt (e.g. transfer PHP 1,200). **Outstanding = 0** and **Active installments = 0**.
+4. **Delete purchase mid-plan:** Delete in Transactions → count **0**; restore from Trash → count returns to **1** if bills remain to issue.
+5. **Repeat open:** Leave/reopen Credit Cards; counts stable; money totals unchanged.
+
+**Status:** CC-F10 fixed and automated-test verified. Native UI smoke recommended. Release notes skipped as requested.
 
 ### [CC-F11] Tiny installment purchases pass validation and fail at persistence
 
@@ -537,7 +552,7 @@ Use an isolated test account so other transactions do not affect the expected to
 | --- | --- | --- |
 | Q-CC01 | Once a one-time charge is billed, changing its transaction date leaves it on its original statement. Changing account billing days does not rewrite existing statement due dates. | Confirm historical-statement preservation versus retroactive rebilling. Do not label immutable issued history a defect without settling this policy. Test both future cycles and existing opening statements. |
 | Q-CC02 | “Due this month” includes every unpaid statement with `dueOn <= endOfMonth`, including past months. “Next due” can therefore be the oldest overdue date. | Confirm the intended catch-up total or rename/separate current-month and past-due obligations. This is not double-counting in the ledger; the separate past-due badge is a subset. |
-| Q-CC03 | When does an installment plan complete: last issuance or final repayment? | Either choice must stop showing a fully billed/fully paid plan as ongoing. Preserve outstanding statement debt separately. |
+| Q-CC03 | When does an installment plan complete: last issuance or final repayment? | **Settled for CC-F10: last issuance** (remaining schedule principal $> 0$). Unpaid statement balances stay on statements. Revisit if product later wants final-repayment completion. |
 | Q-CC04 | Should positive surplus credit increase available credit above the configured limit, and should future-dated transactions count as current debt? | Current available-limit helper caps at the configured limit; ledger hydration includes future-dated active rows. Agree on display/as-of policy and apply it consistently across Accounts, monitoring, warnings, and notifications. |
 | Q-CC05 | Does privacy mode mask the pending-expense warning too? | Historical inspection leakage is CC-F08 regardless. Agree whether the form's own proposed amount and the warning's account totals should follow the same mask policy. |
 | Q-CC06 | Reminder identifiers use account + due date + lead offset, without statement ID. Opening and regular statements can share a due date. Utilization alert keys are marked delivered before scheduling completes and remain in memory. | Test identifier collision/coalescing, scheduling failure/retry, threshold re-entry, restart, payment rescheduling, Pro gating, and OS permission changes before claiming reminder sign-off. These are source risks; no native delivery defect was reproduced here. |
@@ -660,7 +675,8 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Measure representative SQL counts, sorting plan, and desktop scaling; state the device-performance limits.
 - [x] Settle CC-F08 privacy policy: activity inspection modal intentionally displays itemized amounts by design.
 - [x] Fix CC-F09 with 4 new statement-status regressions; card/modal use `evaluatedCalendarDate` from monitoring reads.
-- [ ] Implement and regression-test CC-F10 through CC-F12; preserve exact monetary and historical parity.
+- [x] Fix CC-F10 with 5 installment completion regressions; Q-CC03 last-issuance policy.
+- [ ] Implement and regression-test CC-F11 through CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.
