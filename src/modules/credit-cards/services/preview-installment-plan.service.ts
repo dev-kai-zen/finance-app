@@ -3,6 +3,10 @@ import {
   dueDateForStatement,
   statementDateForTransaction,
 } from "../utils/billing-dates";
+import {
+  getInstallmentScheduleSupportError,
+  isInstallmentScheduleSupported,
+} from "../utils/validate-installment-schedule";
 
 export interface PreviewInstallmentPlanInput {
   amountMinorUnits: number;
@@ -15,6 +19,10 @@ export interface PreviewInstallmentPlanInput {
 
 export interface InstallmentPlanPreview {
   monthlyAmountMinorUnits: number;
+  smallestMonthlyMinorUnits: number;
+  paymentsVaryByMinorUnit: boolean;
+  scheduleSupported: boolean;
+  supportError: string | null;
   firstStatementOn: string;
   firstDueOn: string;
   deferredMonths: number;
@@ -39,11 +47,20 @@ export function previewInstallmentPlan(
       : baseStatementOn;
 
   const firstDueOn = dueDateForStatement(firstStatementOn, input.paymentDueDay);
-  const monthlyAmountMinorUnits =
+  const baseMonthly =
     termMonths > 0 ? Math.floor(principal / termMonths) : principal;
+  const remainder = termMonths > 0 ? principal % termMonths : 0;
+  const smallestMonthlyMinorUnits = baseMonthly;
+  const monthlyAmountMinorUnits =
+    remainder > 0 ? baseMonthly + 1 : baseMonthly;
+  const scheduleSupported = isInstallmentScheduleSupported(principal, termMonths);
 
   return {
     monthlyAmountMinorUnits,
+    smallestMonthlyMinorUnits,
+    paymentsVaryByMinorUnit: monthlyAmountMinorUnits !== smallestMonthlyMinorUnits,
+    scheduleSupported,
+    supportError: getInstallmentScheduleSupportError(principal, termMonths),
     firstStatementOn,
     firstDueOn,
     deferredMonths,

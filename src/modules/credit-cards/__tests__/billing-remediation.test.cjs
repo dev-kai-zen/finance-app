@@ -1439,6 +1439,55 @@ test("CC-F10: delete/restore reopens an incomplete schedule without changing pai
   }
 });
 
+test("CC-F11: createCreditCardInstallmentPlan rejects tiny principal before SQLite", (t) => {
+  const f = fixture();
+  try {
+    f.charge("tiny", -2);
+    assert.throws(
+      () => {
+        f.db.transaction((context) => {
+          createCreditCardInstallmentPlan(
+            getTransactionsByIds(["tiny"], context)[0],
+            { termMonths: 3 },
+            context,
+          );
+        });
+      },
+      /too small/,
+    );
+    assert.equal(
+      sqlite.prepare("SELECT count(*) AS n FROM credit_card_installment_plans").get().n,
+      0,
+    );
+    assert.equal(
+      sqlite.prepare("SELECT count(*) AS n FROM credit_card_installments").get().n,
+      0,
+    );
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CC-F11: three-month plan on two minor units succeeds only at term two", (t) => {
+  const f = fixture();
+  try {
+    f.charge("edge", -2);
+    f.db.transaction((context) => {
+      createCreditCardInstallmentPlan(
+        getTransactionsByIds(["edge"], context)[0],
+        { termMonths: 2 },
+        context,
+      );
+    });
+    assert.equal(
+      sqlite.prepare("SELECT count(*) AS n FROM credit_card_installments").get().n,
+      2,
+    );
+  } finally {
+    sqlite.close();
+  }
+});
+
 test("CC-F10: completed plans stay complete across repeat reconciliation", (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: new Date(2027, 1, 21, 12).getTime() });
   const f = installmentFixture();

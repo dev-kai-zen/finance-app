@@ -74,6 +74,7 @@ import {
 import {
   checkCreditLimitExceeded,
   CreditLimitWarningModal,
+  getInstallmentScheduleSupportError,
   previewInstallmentPlan,
   useInstallmentPlanEditState,
   type CreditLimitCheckResult,
@@ -1773,6 +1774,14 @@ function TransactionFormModalInner({
             return;
           }
         }
+        const scheduleError = getInstallmentScheduleSupportError(
+          postedExpenseMinorUnitsAbs,
+          resolvedTermMonths,
+        );
+        if (scheduleError) {
+          setLocalError(scheduleError);
+          return;
+        }
       }
 
       if (mode === "expense" && amountSign === "-" && amountMinorUnits > 0) {
@@ -3039,16 +3048,34 @@ function TransactionFormModalInner({
                           <Text style={styles.installmentPreviewTitle}>
                             Payment Schedule
                           </Text>
-                          <Text style={styles.installmentMonthlyAmount}>
-                            {formatCurrency(
-                              installmentPreview.monthlyAmountMinorUnits,
-                              accountCurrencyCode,
-                            )}{" "}
-                            <Text style={styles.installmentMonthlySub}>
-                              / month
+                          {installmentPreview.scheduleSupported ? (
+                            <Text style={styles.installmentMonthlyAmount}>
+                              {installmentPreview.paymentsVaryByMinorUnit
+                                ? `${formatCurrency(
+                                    installmentPreview.smallestMonthlyMinorUnits,
+                                    accountCurrencyCode,
+                                  )}–${formatCurrency(
+                                    installmentPreview.monthlyAmountMinorUnits,
+                                    accountCurrencyCode,
+                                  )}`
+                                : formatCurrency(
+                                    installmentPreview.monthlyAmountMinorUnits,
+                                    accountCurrencyCode,
+                                  )}{" "}
+                              <Text style={styles.installmentMonthlySub}>
+                                / month
+                              </Text>
                             </Text>
-                          </Text>
+                          ) : null}
                         </View>
+                        {!installmentPreview.scheduleSupported &&
+                        installmentPreview.supportError ? (
+                          <Text style={styles.installmentPreviewError}>
+                            {installmentPreview.supportError}
+                          </Text>
+                        ) : null}
+                        {installmentPreview.scheduleSupported ? (
+                          <>
                         <View style={styles.installmentPreviewDetails}>
                           <View style={styles.installmentPreviewDetailItem}>
                             <Text style={styles.installmentDetailLabel}>
@@ -3081,6 +3108,8 @@ function TransactionFormModalInner({
                               .
                             </Text>
                           </View>
+                        ) : null}
+                          </>
                         ) : null}
                       </View>
                     ) : null}
@@ -4187,6 +4216,12 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       marginTop: 14,
       padding: 12,
+    },
+    installmentPreviewError: {
+      color: theme.colors.danger,
+      fontSize: 13,
+      lineHeight: 18,
+      marginTop: 8,
     },
     installmentPreviewTopRow: {
       alignItems: "center",

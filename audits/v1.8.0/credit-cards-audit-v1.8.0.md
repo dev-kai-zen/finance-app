@@ -4,9 +4,9 @@
 
 **Reviewed commit:** `be395a3` (clean working tree before this audit).
 
-**Stage:** Remediation in progress — CC-F01 through CC-F07, CC-F09, and CC-F10 fixed with automated regression coverage; CC-F08 closed as designed. CC-F11 through CC-F12 remain open, and native sign-off remains pending.
+**Stage:** Remediation in progress — CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 fixed with automated regression coverage; CC-F08 closed as designed. CC-F12 remains open, and native sign-off remains pending.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, statement due-badge date/status parity, and installment-plan completion counting are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09/CC-F10 regressions. CC-F11 through CC-F12 remain pending. Native UI and frame timing remain unverified.
+**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Incorrect limit warnings, missing installment debt after restore, stranded payment credit, opening-balance repair, positive opening credit handling, focused mutation refreshes, plan inspection query explosion, statement due-badge date/status parity, installment-plan completion counting, and installment schedule validation are fixed; CC-F08 confirmed by design; the combined selected regression run passes 174 tests plus CC-F09–CC-F11 regressions. CC-F12 remains pending. Native UI and frame timing remain unverified.
 
 **Changes made:** The initial pass added this audit only. CC-F01 calculates proposed debt from the signed ledger; CC-F02 restores issued installments with compensating adjustments. CC-F03 now releases/reapplies credit against deterministic oldest-first targets, and monitoring counts signed net allocations. CC-F04 restricts opening-principal reconciliation to opening entries and opening-owned adjustments so credit releases cannot rewrite opening principal. CC-F05 includes positive opening balances in the reconciliation credit allocation pool and monitoring unallocated credits. CC-F06 subscribes while focused to `FINANCE_APP_TRANSACTION_MUTATED`, database replacement, and app resume across day changes with frame-level coalescing. CC-F07 batches billed installment checks (reducing 120-month plan edit inspection from 123 queries to 3), eliminates per-installment existence loops in reconciliation, chunks `planIds` at $\le 500$ in `listInstallmentsForPlans` and `listBilledInstallmentIdsForPlans`, omits unused account management flags, and optimizes activity string comparison. Added 50 actual-service/SQLite regressions, 6 hook lifecycle regressions, 5 query-performance regressions, and two form-handler regressions across these fixes, retaining original records and schedules. No migrations or dependency changes. Release notes skipped as requested; application versions remain unchanged pending a version decision.
 
@@ -19,7 +19,7 @@ This follows the feature contracts, ownership map, action review, findings, perf
 | 1. Audit Credit Cards | Complete | Inventory, domain contracts, concrete financial examples, prioritized findings, and performance assessment. |
 | 2. Validate Credit Cards | Partial | CC-F01 through CC-F07 have permanent regressions. Native checks remain. |
 | 3. Review findings and policies | Pending | Confirm statement-history, completed-plan, credit-surplus, and due-summary policies. |
-| 4. Remediate findings | In progress | CC-F01 through CC-F07, CC-F09, and CC-F10 fixed; CC-F08 closed by design; CC-F11 through CC-F12 remain open. |
+| 4. Remediate findings | In progress | CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 fixed; CC-F08 closed by design; CC-F12 remains open. |
 | 5. Feature sign-off | Pending | Financial parity, visible refresh, localization/privacy, restore parity, and release-device profiling. |
 
 ### Evidence used
@@ -179,7 +179,7 @@ These original probes characterize the initial defects. CC-F01 through CC-F04 no
 
 ## 6. Prioritized findings
 
-P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07, CC-F09, and CC-F10 are fixed with automated coverage; CC-F11 through CC-F12 remain open. Native verification remains pending.
+P1 means financial correctness or misleading debt/limit decisions. P2 means material runtime, lifecycle, privacy, localization, or recovery gaps. CC-F01 through CC-F07, CC-F09, CC-F10, and CC-F11 are fixed with automated coverage; CC-F12 remains open. Native verification remains pending.
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
@@ -193,7 +193,7 @@ P1 means financial correctness or misleading debt/limit decisions. P2 means mate
 | CC-F08 | P2 — BY DESIGN | Activity modal displays itemized amounts regardless of privacy mode. | Closed per product design: Overview cards mask amounts under Privacy Mode; modal opening is an explicit inspection action where itemized amounts are intentionally visible. |
 | CC-F09 | P2 — FIXED | Statement badges use UTC/stale dates and hide overdue partial bills. | Four dedicated helper regressions pass; UI consumes `evaluatedCalendarDate` from monitoring reads. |
 | CC-F10 | P2 — FIXED | Completed/fully paid schedules remain counted as active installments. | Five actual-service/SQLite regressions; Q-CC03 settled as last issuance (remaining schedule principal). |
-| CC-F11 | P2 | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Actual-service/SQLite probe. |
+| CC-F11 | P2 — FIXED | Accepted installment inputs can generate zero-principal rows and fail with a database error. | Five helper/service regressions; form and preview block unsupported schedules. |
 | CC-F12 | P2 | Core feature strings are untranslated; activity close omits keyboard dismissal. | Source trace; native/localized checks pending. |
 
 ### [CC-F01] Credit-limit preview does not model the replacement expense correctly — FIXED
@@ -526,15 +526,28 @@ Use an isolated test account so other transactions do not affect the expected to
 
 **Status:** CC-F10 fixed and automated-test verified. Native UI smoke recommended. Release notes skipped as requested.
 
-### [CC-F11] Tiny installment purchases pass validation and fail at persistence
+### [CC-F11] Tiny installment purchases pass validation and fail at persistence — FIXED
 
-**Problem / evidence:** A purchase of two minor units over three months creates a zero-principal installment and fails the `credit_card_installments_amounts_check` constraint. Transaction rollback works, but the user receives a persistence error for an accepted form configuration.
+**Problem / evidence:** A purchase of two minor units over three months created a zero-principal installment and failed the `credit_card_installments_amounts_check` constraint. Transaction rollback worked, but users saw a database error after an accepted form configuration.
 
-**Cause / path:** Create/replace services validate a 2–120 month term without relating it to principal. `buildInstallmentScheduleRows` distributes the remainder correctly but emits all requested rows, including zero values. The schema requires every principal to be positive. Preview uses the base floor and can show zero monthly payment.
+**Implemented:**
+1. [validate-installment-schedule.ts](../../src/modules/credit-cards/utils/validate-installment-schedule.ts) ensures every generated row has positive principal (`principal >= termMonths` for the remainder split) via `buildInstallmentScheduleRows` probe.
+2. [create-installment-plan.service.ts](../../src/modules/credit-cards/services/create-installment-plan.service.ts) and [replace-installment-plan-for-transaction.service.ts](../../src/modules/credit-cards/services/replace-installment-plan-for-transaction.service.ts) call `assertInstallmentScheduleSupported` before inserts.
+3. [preview-installment-plan.service.ts](../../src/modules/credit-cards/services/preview-installment-plan.service.ts) exposes `scheduleSupported`, `supportError`, and a monthly range when installments differ by one minor unit.
+4. [transaction-form-modal.tsx](../../src/modules/transactions/components/transaction-form-modal.tsx) blocks save with the same helper and shows preview errors inline.
 
-**Smallest reasonable fix:** Validate principal versus term in the existing create/replace and form/preview paths, returning a clear localized message. Prefer rejecting unsupported schedules over changing schema constraints. Keep remainder distribution exact; clarify the preview when payments differ by one minor unit.
+**Regression evidence:** Three cases in [installment-schedule-validation.test.cjs](../../src/modules/credit-cards/__tests__/installment-schedule-validation.test.cjs) and two SQLite service cases in [billing-remediation.test.cjs](../../src/modules/credit-cards/__tests__/billing-remediation.test.cjs).
 
-**Proof required:** Principal below/equal/above term for JPY/PHP/KWD, uneven division, 2/120-month bounds, BNPL, replacement, rollback, and preview/save consistency. Add invalid/non-finite deferred-month inputs at the public service boundary; current normalization silently floors/clamps some values.
+**Performance:** $O(\text{term})$ in-memory probe only; no extra SQLite on typing beyond existing preview.
+
+#### Manual verification guide — CC-F11
+
+1. **Tiny amount / long term:** On a JPY (or any) credit card, expense **¥2** (or the smallest unit your currency allows), enable installments, choose **3 months**, save. **Expect:** inline form error and preview warning; **no** transaction saved.
+2. **Boundary success:** Same **¥2** with **2 months** → save succeeds.
+3. **Normal purchase:** **¥1,200 / 3 months** → preview shows monthly amounts; save succeeds; Credit Cards shows the plan.
+4. **Edit down:** Edit an unbilled installment purchase to lower amount below term → save blocked with the same message.
+
+**Status:** CC-F11 fixed and automated-test verified. Native form smoke recommended. Release notes skipped as requested.
 
 ### [CC-F12] Core localization and modal-close behavior are incomplete
 
@@ -676,7 +689,8 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Settle CC-F08 privacy policy: activity inspection modal intentionally displays itemized amounts by design.
 - [x] Fix CC-F09 with 4 new statement-status regressions; card/modal use `evaluatedCalendarDate` from monitoring reads.
 - [x] Fix CC-F10 with 5 installment completion regressions; Q-CC03 last-issuance policy.
-- [ ] Implement and regression-test CC-F11 through CC-F12; preserve exact monetary and historical parity.
+- [x] Fix CC-F11 with five installment-validation regressions; form/preview block unsupported schedules.
+- [ ] Implement and regression-test CC-F12; preserve exact monetary and historical parity.
 - [ ] Settle the history/completion/credit/due-summary/privacy policies and validate the unconfirmed risks.
 - [ ] Verify active-screen refresh, loading/retry behavior, privacy, language changes, and keyboard handling in the native app.
 - [ ] Validate notifications, backup restore, reset, archived cards, and account type changes end to end.

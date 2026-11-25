@@ -12,6 +12,7 @@ import {
   statementDateForTransaction,
 } from "../utils/billing-dates";
 import { buildInstallmentScheduleRows } from "../utils/build-installment-schedule";
+import { assertInstallmentScheduleSupported } from "../utils/validate-installment-schedule";
 
 export function createCreditCardInstallmentPlan(
   transaction: Transaction,
@@ -36,6 +37,7 @@ export function createCreditCardInstallmentPlan(
   }
 
   const principal = Math.abs(transaction.amountMinorUnits);
+  assertInstallmentScheduleSupported(principal, input.termMonths);
   const baseStatementOn = statementDateForTransaction(
     transaction.occurredAt,
     details.statementDay,

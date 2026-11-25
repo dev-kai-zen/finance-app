@@ -127,3 +127,9 @@ export {
   type StatementPaymentPresentation,
   type StatementPaymentStatus,
 } from "./utils/statement-activity";
+export {
+  assertInstallmentScheduleSupported,
+  getInstallmentScheduleSupportError,
+  isInstallmentScheduleSupported,
+  maxSupportedInstallmentTermMonths,
+} from "./utils/validate-installment-schedule";
