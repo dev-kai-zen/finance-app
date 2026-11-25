@@ -166,6 +166,7 @@ for (const [module, hook] of [["accounts", "useAccounts"], ["budgets", "useBudge
     const functionMock = name => (...args) => {
       calls.push(name);
       if (name === "processDueSchedulesAsync") return Promise.resolve();
+      if (name === "isScheduleCatchUpActive") return false;
       if (name === "getGoalsWithProgress") return { goals: [], summary: {} };
       return [];
     };

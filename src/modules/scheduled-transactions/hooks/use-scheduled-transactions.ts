@@ -18,6 +18,7 @@ import {
 } from "../services/manage-scheduled-transaction.service";
 import { advancePostScheduledTransaction } from "../services/advance-post-schedule.service";
 import {
+  isScheduleCatchUpActive,
   postScheduledOccurrence,
   processDueSchedulesAsync,
   skipScheduledOccurrence,
@@ -42,34 +43,65 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
-  const refresh = useCallback(() => {
+  const reloadScheduledData = useCallback(() => {
     cancelPendingRef.current?.();
     if (skipQuery) return;
-    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
-      try {
-        if (!readOnly) {
-          void processDueSchedulesAsync().catch((cause) => setError(scheduledTransactionErrorMessage(cause)));
+    cancelPendingRef.current = runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        cancelPendingRef.current = null;
+        try {
+          setSchedules(listScheduledTransactions({ includeArchived: true }));
+          if (!readOnly) {
+            const rows = listActionableScheduleOccurrences(101);
+            setOccurrences(rows.slice(0, 100));
+            setHasMoreOccurrences(rows.length > 100);
+            setScheduleIdsWithPostings(getScheduleIdsWithPostings());
+          }
+          setError(null);
+        } catch (cause) {
+          setError(scheduledTransactionErrorMessage(cause));
         }
-        setSchedules(listScheduledTransactions({ includeArchived: true }));
-        if (!readOnly) {
-          const rows = listActionableScheduleOccurrences(101);
-          setOccurrences(rows.slice(0, 100));
-          setHasMoreOccurrences(rows.length > 100);
-          setScheduleIdsWithPostings(getScheduleIdsWithPostings());
-        }
-        setError(null);
-      } catch (cause) {
-        setError(scheduledTransactionErrorMessage(cause));
-      }
-    });
+      },
+    );
   }, [readOnly, skipQuery]);
+
+  const requestCatchUpIfIdle = useCallback(() => {
+    if (readOnly || isScheduleCatchUpActive()) return;
+    void processDueSchedulesAsync().catch((cause) =>
+      setError(scheduledTransactionErrorMessage(cause)),
+    );
+  }, [readOnly]);
+
+  const refresh = useCallback(
+    (options?: { requestCatchUp?: boolean }) => {
+      reloadScheduledData();
+      if (options?.requestCatchUp) {
+        requestCatchUpIfIdle();
+      }
+    },
+    [reloadScheduledData, requestCatchUpIfIdle],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
-      const subscription = DeviceEventEmitter.addListener("FINANCE_APP_SCHEDULES_CHANGED", refresh);
-      return () => { cancelPendingRef.current?.(); subscription.remove(); };
+      refresh({ requestCatchUp: true });
+      const subscription = DeviceEventEmitter.addListener(
+        "FINANCE_APP_SCHEDULES_CHANGED",
+        () => refresh(),
+      );
+      return () => {
+        cancelPendingRef.current?.();
+        subscription.remove();
+      };
     }, [refresh]),
   );
 
@@ -153,7 +185,7 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
     if (loading || !hasMoreOccurrences || !occurrences.length) return;
     const last = occurrences[occurrences.length - 1];
     cancelPendingRef.current?.();
-    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
+    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: true, setLoading }, () => {
       try {
         const rows = listActionableScheduleOccurrences(101, undefined, { date: last.nominalDueAt, id: last.id });
         setOccurrences((previous) => [...previous, ...rows.slice(0, 100)]);
@@ -164,7 +196,7 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
 
   return {
     schedules,
-    occurrences: loading ? [] : occurrences,
+    occurrences,
     hasMoreOccurrences,
     loadMoreOccurrences,
     scheduleIdsWithPostings,

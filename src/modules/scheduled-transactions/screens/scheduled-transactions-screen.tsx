@@ -703,7 +703,7 @@ function ScheduledTransactionsScreenContent({
             ))}
           </View>
         </View>
-        {loading ? (
+        {loading && schedules.length === 0 ? (
           <PageLoadingState message="Loading schedules..." />
         ) : visibleSchedules.length === 0 ? (
           <PageEmptyState

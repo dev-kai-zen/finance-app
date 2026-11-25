@@ -126,7 +126,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | ST-F03 | P1 | **Fix:** Subscription history errors are ignored after the ledger post. | Was empty `catch` around `handleSubscriptionScheduleExecutedInContext`. **Fixed:** subscription sync errors roll back the post transaction; missing subscription throws. Regression: `subscription-schedule-post-sync.test.cjs`. |
 | ST-F04 | P2 | **Fix:** Advance post does not tell other screens that a transaction was saved. | Manual Post emitted `FINANCE_APP_TRANSACTION_MUTATED`; advance post did not. **Fixed:** emit after commit with `sourceId: schedule-advance-post`. Regression: `advance-post-schedule-remediation.test.cjs`. |
 | ST-F05 | P2 | **Fix:** Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | Was unbounded `listScheduleOccurrences()`. **Fixed:** `listScheduleOccurrencesInDateWindow` in SQL; projection unchanged. Regression: `get-calendar-schedules-remediation.test.cjs`. |
-| ST-F06 | P2 | Focus and catch-up do more work than the visible page. | The hook passes `hasCachedResult: false`, so each refresh clears due rows. Catch-up serializes the database once per batch of eight. The template query has no limit. |
+| ST-F06 | P2 | **Fix:** Focus and catch-up do more work than the visible page. | Was `hasCachedResult: false` and catch-up on every refresh. **Fixed:** stale-while-revalidate, catch-up on focus only, `isScheduleCatchUpActive` guard. Regression: `schedule-refresh-remediation.test.cjs`. |
 | ST-F07 | P2 | Restore can turn an archived schedule back on without a next date. | Archive clears `nextNominalAt`. Restore of a completed row forces `active` and keeps that null. |
 | ST-F08 | P2 | Amounts, status, and recurrence text stay in English, and amounts ignore privacy mode. | Cards render `active`, `Paused`, `Auto-post`, `Due:`, and `formatScheduleRecurrence`. No privacy-mode hook is used in this module. |
 
@@ -170,8 +170,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 - **Smallest fix:** Query occurrences whose effective or nominal time overlaps the requested window, and start projection at `nextOccurrenceNumber` only until the window ends. Keep the 100-step cap for a very short frequency.
 - **Regression proof:** Seed occurrences outside the month and assert they are not returned. Assert the SQL statement count stays flat when old posted rows grow. A daily schedule still stops at the cap instead of scanning years.
 
-### ST-F06 — Refresh and catch-up exceed the frame budget
+### ST-F06 — Refresh and catch-up exceed the frame budget (**Fix**)
 
+- **Status:** **Fixed** in `use-scheduled-transactions.ts` and `scheduled-transactions-screen.tsx` (tests in `schedule-refresh-remediation.test.cjs`).
 - **Problem:** Every focus and every `FINANCE_APP_SCHEDULES_CHANGED` event hides the due list and can copy the entire database.
 - **Cause:** [use-scheduled-transactions.ts](../../src/modules/scheduled-transactions/hooks/use-scheduled-transactions.ts) calls `runDeferredSyncQuery({ hasCachedResult: false })`, and the returned `occurrences` are `[]` while `loading` is true. The same refresh calls `processDueSchedulesAsync`. That worker uses [withStagedDatabaseTransaction](../../src/infrastructure/database/staged-transaction.ts), which serializes the database, runs at most eight occurrences, and replays the writes. `listScheduledTransactions({ includeArchived: true })` has no limit. `setTimeout(0)` yields between occurrences; it does not make the copy cheap.
 - **Smallest fix:** Keep the previous due page on screen while a refresh runs. Do not start a second catch-up from a refresh that the catch-up itself triggered. Leave the staged batch as the posting mechanism until a per-occurrence transaction is measured against the same failure and restart cases.
@@ -302,7 +303,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Fix ST-F03 so subscription history commits with the ledger row.
 - [x] Fix ST-F04 so advance post refreshes open ledger screens.
 - [x] Bound calendar occurrence reads (ST-F05).
-- [ ] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).
+- [x] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).
 - [ ] Restore a next date or keep the schedule completed (ST-F07).
 - [ ] Localize the remaining labels and mask amounts in privacy mode (ST-F08).
 - [ ] Agree the Section 7 policies.

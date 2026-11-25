@@ -55,6 +55,10 @@ let requestedAt = 0;
 let activeCatchUp: Promise<void> | null = null;
 const yieldToInput = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
+export function isScheduleCatchUpActive(): boolean {
+  return activeCatchUp !== null;
+}
+
 /** Coalesced, restartable catch-up. Only private staging work yields inside a transaction. */
 export function processDueSchedulesAsync(now = new Date(), options?: { isCancelled?: () => boolean }): Promise<void> {
   const { StagedDatabaseChangedError, withStagedDatabaseTransaction } = require("@/infrastructure/database/staged-transaction") as typeof import("@/infrastructure/database/staged-transaction");
