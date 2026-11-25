@@ -121,7 +121,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
-| ST-F01 | P1 | Editing an existing schedule rebuilds the next date from the original start. | `anchorOccurrenceNumber = nextOccurrenceNumber`, then ordinal 1 from `startsAt`. Subscription save always uses `firstBillingDate`. S02 reproduced the user-visible rewind. |
+| ST-F01 | P1 | **Fix:** Editing an existing schedule rebuilds the next date from the original start. | Was `anchorOccurrenceNumber = nextOccurrenceNumber` on every update. **Fixed:** preserve anchor, next sequence, and next dates when recurrence fields are unchanged; re-anchor only on recurrence edits. Regression: `save-scheduled-transaction-remediation.test.cjs`. |
 | ST-F02 | P1 | One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Resolver loop plus `transaction_schedule_postings_transaction_unique`. The payment service catches the failure after the renewal date has already moved. |
 | ST-F03 | P1 | Subscription history errors are ignored after the ledger post. | Empty `catch` around `handleSubscriptionScheduleExecutedInContext` in both automatic and manual post. |
 | ST-F04 | P2 | Advance post does not tell other screens that a transaction was saved. | Service ends after `db.transaction`. Manual Post emits the mutation event. Advance post does not. |
@@ -130,8 +130,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | ST-F07 | P2 | Restore can turn an archived schedule back on without a next date. | Archive clears `nextNominalAt`. Restore of a completed row forces `active` and keeps that null. |
 | ST-F08 | P2 | Amounts, status, and recurrence text stay in English, and amounts ignore privacy mode. | Cards render `active`, `Paused`, `Auto-post`, `Due:`, and `formatScheduleRecurrence`. No privacy-mode hook is used in this module. |
 
-### ST-F01 — Save rewinds the next occurrence
+### ST-F01 — Save rewinds the next occurrence (**Fix**)
 
+- **Status:** **Fixed** in `save-scheduled-transaction.service.ts` (metadata-only saves preserve recurrence cursor; service tests in `save-scheduled-transaction-remediation.test.cjs`).
 - **Problem:** A schedule whose next date is 1 May 2026 returns to 1 February 2026 when the user changes the note and leaves the start date alone. Catch-up can then walk already posted February, March, and April rows by nominal date and post the first date that does not already exist.
 - **Cause:** [save-scheduled-transaction.service.ts](../../src/modules/scheduled-transactions/services/save-scheduled-transaction.service.ts) replaces the stored anchor with `nextOccurrenceNumber` on every update. `calculateScheduleOccurrence` treats that sequence as ordinal 1, so the nominal date is `startsAt`. [save-subscription.service.ts](../../src/modules/subscriptions/services/save-subscription.service.ts) sends `firstBillingDate` as `startsAt` on every subscription save, including a notes-only edit.
 - **Smallest fix:** Keep the stored anchor and the stored next sequence when the recurrence fields did not change. Recalculate from the existing anchor only when start, frequency, interval, end, or weekend policy changes. Refresh unprocessed snapshots’ amounts and notes without moving their nominal dates.
@@ -292,7 +293,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Map routes, screen actions, services, schema, and subscription/calendar callers.
 - [x] Run the existing Scheduled Transactions tests: 18 passed.
 - [ ] Add service-level regressions for save, post, skip, retry, Mark Paid, and advance post.
-- [ ] Fix ST-F01 so a non-recurrence edit keeps the next date.
+- [x] Fix ST-F01 so a non-recurrence edit keeps the next date.
 - [ ] Fix ST-F02 so one payment links one occurrence.
 - [ ] Fix ST-F03 so subscription history commits with the ledger row.
 - [ ] Fix ST-F04 so advance post refreshes open ledger screens.

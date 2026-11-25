@@ -77,16 +77,33 @@ export function saveScheduledTransactionInContext(
     throw new Error("Scheduled transaction was not found.");
   }
 
-  const nextOccurrenceNumber = existing?.nextOccurrenceNumber ?? 1;
-  const anchorOccurrenceNumber = existing ? nextOccurrenceNumber : 1;
   const weekendPolicy =
     input.frequency === "once" ? "exact" : input.weekendPolicy;
-  const next = calculateScheduleOccurrence(
-    { ...input, weekendPolicy, anchorOccurrenceNumber },
-    nextOccurrenceNumber,
-  );
-  if (!next) {
-    throw new Error("The ending rule must include the schedule's start date.");
+  const nextOccurrenceNumber = existing?.nextOccurrenceNumber ?? 1;
+  const recurrenceChanged = existing
+    ? didScheduleRecurrenceChange(existing, input, weekendPolicy)
+    : false;
+  const anchorOccurrenceNumber = !existing
+    ? 1
+    : recurrenceChanged
+      ? nextOccurrenceNumber
+      : existing.anchorOccurrenceNumber;
+
+  let nextNominalAt: Date | null;
+  let nextEffectiveAt: Date | null;
+  if (existing && !recurrenceChanged) {
+    nextNominalAt = existing.nextNominalAt;
+    nextEffectiveAt = existing.nextEffectiveAt ?? existing.nextNominalAt;
+  } else {
+    const next = calculateScheduleOccurrence(
+      { ...input, weekendPolicy, anchorOccurrenceNumber },
+      nextOccurrenceNumber,
+    );
+    if (!next) {
+      throw new Error("The ending rule must include the schedule's start date.");
+    }
+    nextNominalAt = next.nominalAt;
+    nextEffectiveAt = next.effectiveAt ?? next.nominalAt;
   }
 
   const now = new Date();
@@ -117,8 +134,8 @@ export function saveScheduledTransactionInContext(
     autoPost: input.autoPost,
     anchorOccurrenceNumber,
     nextOccurrenceNumber,
-    nextNominalAt: next.nominalAt,
-    nextEffectiveAt: next.effectiveAt ?? next.nominalAt,
+    nextNominalAt,
+    nextEffectiveAt,
     subscriptionId: input.subscriptionId ?? existing?.subscriptionId ?? null,
     updatedAt: now,
   };
@@ -131,8 +148,9 @@ export function saveScheduledTransactionInContext(
       {
         ...input,
         weekendPolicy,
-        anchorOccurrenceNumber: existing.anchorOccurrenceNumber,
+        anchorOccurrenceNumber: saved.anchorOccurrenceNumber,
       },
+      recurrenceChanged,
       now,
       context,
     );
@@ -145,12 +163,43 @@ export function saveScheduledTransactionInContext(
   );
 }
 
+function didScheduleRecurrenceChange(
+  existing: ScheduledTransaction,
+  input: SaveScheduledTransactionInput,
+  weekendPolicy: SaveScheduledTransactionInput["weekendPolicy"],
+): boolean {
+  if (existing.frequency !== input.frequency) return true;
+  if (existing.intervalCount !== input.intervalCount) return true;
+  if (existing.startsAt.getTime() !== input.startsAt.getTime()) return true;
+  if (existing.timeZone !== input.timeZone) return true;
+  if (existing.endMode !== input.endMode) return true;
+
+  const maxOccurrences =
+    input.frequency !== "once" && input.endMode === "after_count"
+      ? input.maxOccurrences ?? null
+      : null;
+  if (existing.maxOccurrences !== maxOccurrences) return true;
+
+  const endsOn =
+    input.frequency !== "once" && input.endMode === "on_date"
+      ? input.endsOn ?? null
+      : null;
+  if (existing.endsOn !== endsOn) return true;
+
+  const existingWeekendPolicy =
+    existing.frequency === "once" ? "exact" : existing.weekendPolicy;
+  const inputWeekendPolicy =
+    input.frequency === "once" ? "exact" : weekendPolicy;
+  return existingWeekendPolicy !== inputWeekendPolicy;
+}
+
 function syncUnprocessedOccurrencesAfterSave(
   schedule: ScheduledTransaction,
   recurrenceRule: SaveScheduledTransactionInput & {
     weekendPolicy: NonNullable<SaveScheduledTransactionInput["weekendPolicy"]>;
     anchorOccurrenceNumber: number;
   },
+  recurrenceChanged: boolean,
   now: Date,
   context: DbContext,
 ): void {
@@ -159,21 +208,23 @@ function syncUnprocessedOccurrencesAfterSave(
     schedule.id,
     context,
   )) {
-    const recalculated = calculateScheduleOccurrence(
-      recurrenceRule,
-      occurrence.sequenceNumber,
-    );
     const updates: {
       templateSnapshot: string;
       updatedAt: Date;
       effectiveDueAt?: Date | null;
     } = { templateSnapshot, updatedAt: now };
 
-    if (
-      recalculated &&
-      recalculated.nominalAt.getTime() === occurrence.nominalDueAt.getTime()
-    ) {
-      updates.effectiveDueAt = recalculated.effectiveAt;
+    if (recurrenceChanged) {
+      const recalculated = calculateScheduleOccurrence(
+        recurrenceRule,
+        occurrence.sequenceNumber,
+      );
+      if (
+        recalculated &&
+        recalculated.nominalAt.getTime() === occurrence.nominalDueAt.getTime()
+      ) {
+        updates.effectiveDueAt = recalculated.effectiveAt;
+      }
     }
 
     updateScheduleOccurrenceRecord(occurrence.id, updates, context);
