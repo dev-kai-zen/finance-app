@@ -15,6 +15,7 @@ import {
   removeScheduledTransaction,
   restoreScheduledTransaction,
   setScheduledTransactionPaused,
+  type RestoreScheduledTransactionResult,
 } from "../services/manage-scheduled-transaction.service";
 import { advancePostScheduledTransaction } from "../services/advance-post-schedule.service";
 import {
@@ -158,9 +159,21 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
   );
 
   const restore = useCallback(
-    (id: string): boolean =>
-      runMutation(() => restoreScheduledTransaction(id)),
-    [runMutation],
+    (id: string): RestoreScheduledTransactionResult | false => {
+      try {
+        setPending(true);
+        setError(null);
+        const result = restoreScheduledTransaction(id);
+        refresh();
+        return result;
+      } catch (cause) {
+        setError(scheduledTransactionErrorMessage(cause));
+        return false;
+      } finally {
+        setPending(false);
+      }
+    },
+    [refresh],
   );
 
   const postOccurrence = useCallback(

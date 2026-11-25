@@ -1,6 +1,7 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import type { ScheduledTransaction } from "../types/scheduled-transaction.types";
-import { processDueSchedules } from "./process-due-schedules.service";
+import { calculateScheduleOccurrence } from "../utils/recurrence";
+import { processDueSchedules, resolveRecordedOccurrence } from "./process-due-schedules.service";
 import {
   deleteAllScheduledTransactionRecords,
   deleteScheduledTransactionRecord,
@@ -18,6 +19,50 @@ import {
 } from "../repositories/scheduled-transactions.repository";
 
 export type RemoveScheduledTransactionResult = "deleted" | "archived";
+export type RestoreScheduledTransactionResult = "active" | "paused" | "completed";
+
+const MAX_RESTORE_SEQUENCE_SCAN = 500;
+
+function resolveRestoredScheduleCursor(
+  schedule: ScheduledTransaction,
+  targetStatus: "active" | "paused",
+  context: DbContext,
+): {
+  status: RestoreScheduledTransactionResult;
+  nextOccurrenceNumber: number;
+  nextNominalAt: Date | null;
+  nextEffectiveAt: Date | null;
+} {
+  let sequence = schedule.nextOccurrenceNumber;
+  for (let step = 0; step < MAX_RESTORE_SEQUENCE_SCAN; step += 1) {
+    const occurrence = calculateScheduleOccurrence(schedule, sequence);
+    if (!occurrence) {
+      return {
+        status: "completed",
+        nextOccurrenceNumber: sequence,
+        nextNominalAt: null,
+        nextEffectiveAt: null,
+      };
+    }
+    const existing = resolveRecordedOccurrence(schedule.id, occurrence, context);
+    if (existing && (existing.status === "posted" || existing.status === "skipped")) {
+      sequence = occurrence.sequenceNumber + 1;
+      continue;
+    }
+    return {
+      status: targetStatus,
+      nextOccurrenceNumber: occurrence.sequenceNumber,
+      nextNominalAt: occurrence.nominalAt,
+      nextEffectiveAt: occurrence.effectiveAt ?? occurrence.nominalAt,
+    };
+  }
+  return {
+    status: "completed",
+    nextOccurrenceNumber: sequence,
+    nextNominalAt: null,
+    nextEffectiveAt: null,
+  };
+}
 
 export function hasScheduledTransactionPostings(id: string): boolean {
   return hasSchedulePostings(id);
@@ -141,28 +186,72 @@ export function restoreScheduledTransaction(
     nextEffectiveAt?: Date;
   },
   context?: DbContext,
-): void {
+): RestoreScheduledTransactionResult {
+  let result: RestoreScheduledTransactionResult = "active";
   const runner = (tx: DbContext) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
-    if (!schedule.archivedAt && !options?.status) return;
+    if (!schedule.archivedAt && !options?.status) {
+      result =
+        schedule.status === "paused"
+          ? "paused"
+          : schedule.status === "completed"
+            ? "completed"
+            : "active";
+      return;
+    }
     const now = new Date();
+    const targetStatus: "active" | "paused" =
+      options?.status ??
+      (schedule.status === "completed" ? "active" : schedule.status === "paused" ? "paused" : "active");
+    const needsReanchor =
+      options?.nextNominalAt === undefined &&
+      options?.nextEffectiveAt === undefined &&
+      (schedule.nextNominalAt === null || schedule.nextEffectiveAt === null) &&
+      (targetStatus === "active" || targetStatus === "paused");
+    let nextNominalAt = options?.nextNominalAt ?? schedule.nextNominalAt;
+    let nextEffectiveAt = options?.nextEffectiveAt ?? schedule.nextEffectiveAt;
+    let status: ScheduledTransaction["status"] = targetStatus;
+    let nextOccurrenceNumber = schedule.nextOccurrenceNumber;
+
+    if (needsReanchor) {
+      const resolved = resolveRestoredScheduleCursor(schedule, targetStatus, tx);
+      result = resolved.status;
+      nextOccurrenceNumber = resolved.nextOccurrenceNumber;
+      nextNominalAt = resolved.nextNominalAt;
+      nextEffectiveAt = resolved.nextEffectiveAt;
+      status = resolved.status === "completed" ? "completed" : targetStatus;
+    } else {
+      result = targetStatus;
+    }
+
     updateScheduledTransactionRecord(
       id,
       {
         archivedAt: null,
-        status:
-          options?.status ??
-          (schedule.status === "completed" ? "active" : schedule.status),
-        nextNominalAt: options?.nextNominalAt ?? schedule.nextNominalAt,
-        nextEffectiveAt: options?.nextEffectiveAt ?? schedule.nextEffectiveAt,
+        status,
+        nextOccurrenceNumber,
+        nextNominalAt,
+        nextEffectiveAt,
         updatedAt: now,
       },
       tx,
     );
   };
 
-  return context ? runner(context) : db.transaction(runner);
+  if (context) {
+    runner(context);
+  } else {
+    db.transaction(runner);
+    if (result === "active") {
+      try {
+        processDueSchedules(new Date(), 1);
+      } catch {
+        // Ignore background due processing errors.
+      }
+    }
+  }
+  return result;
 }
 
 export function clearScheduledTransactionWorkspace(context: DbContext): void {

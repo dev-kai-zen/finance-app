@@ -1022,12 +1022,16 @@ function ScheduledTransactionsScreenContent({
               return;
             }
             const toRestore = pendingRestore;
-            if (restore(toRestore.id)) {
+            const restoreResult = restore(toRestore.id);
+            if (restoreResult) {
               setPendingRestore(null);
               setToastState({
                 visible: true,
                 message: "Schedule restored",
-                description: `"${toRestore.name || "Schedule"}" was restored to active schedules.`,
+                description:
+                  restoreResult === "completed"
+                    ? `"${toRestore.name || "Schedule"}" has no future occurrences and was marked completed.`
+                    : `"${toRestore.name || "Schedule"}" was restored to active schedules.`,
               });
             }
           }
