@@ -1,5 +1,5 @@
 import {
-  listScheduleOccurrences,
+  listScheduleOccurrencesInDateWindow,
   listScheduledTransactions,
 } from "../repositories/scheduled-transactions.repository";
 import type {
@@ -36,12 +36,14 @@ export function getCalendarScheduleOccurrences(options: {
   const endMs = endDate.getTime();
 
   const schedules = listScheduledTransactions({ includeArchived: false });
-  const allOccurrences = listScheduleOccurrences();
+  const windowOccurrences = listScheduleOccurrencesInDateWindow(
+    startDate,
+    endDate,
+  );
 
-  const scheduleMap = new Map(schedules.map((s) => [s.id, s]));
-  const occurrencesBySchedule = new Map<string, typeof allOccurrences>();
+  const occurrencesBySchedule = new Map<string, typeof windowOccurrences>();
 
-  for (const occ of allOccurrences) {
+  for (const occ of windowOccurrences) {
     const list = occurrencesBySchedule.get(occ.scheduleId) ?? [];
     list.push(occ);
     occurrencesBySchedule.set(occ.scheduleId, list);
@@ -53,14 +55,12 @@ export function getCalendarScheduleOccurrences(options: {
     const recordedList = occurrencesBySchedule.get(schedule.id) ?? [];
     const handledSeqNumbers = new Set<number>();
 
-    // 1. Include already recorded occurrences within the date window
+    // 1. Include recorded occurrences loaded for this date window
     for (const occ of recordedList) {
       const occEffective = occ.effectiveDueAt ?? occ.nominalDueAt;
-      const occTime = occEffective.getTime();
       handledSeqNumbers.add(occ.sequenceNumber);
 
-      if (occTime >= startMs && occTime <= endMs) {
-        let snapshotData: {
+      let snapshotData: {
           name?: string | null;
           amountMinorUnits?: number;
           /** @deprecated Legacy snapshot key before amount_minor_units rename */
@@ -108,7 +108,6 @@ export function getCalendarScheduleOccurrences(options: {
           autoPost: schedule.autoPost,
           isProjected: false,
         });
-      }
     }
 
     // 2. Project future occurrences if schedule is active

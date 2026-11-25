@@ -3,6 +3,7 @@ import {
   asc,
   desc,
   eq,
+  gte,
   getTableColumns,
   inArray,
   isNotNull,
@@ -301,6 +302,24 @@ export function listScheduleOccurrences(
         .all()
     : query.all();
   return rows.map(mapOccurrence);
+}
+
+/** Calendar and reminders: bound reads to the visible due window (COALESCE effective, nominal). */
+export function listScheduleOccurrencesInDateWindow(
+  startDate: Date,
+  endDate: Date,
+  context: DbContext = db,
+): ScheduleOccurrence[] {
+  const startMs = startDate.getTime();
+  const endMs = endDate.getTime();
+  const calendarDueAt = sql`COALESCE(${transactionScheduleOccurrences.effectiveDueAt}, ${transactionScheduleOccurrences.nominalDueAt})`;
+  return context
+    .select()
+    .from(transactionScheduleOccurrences)
+    .where(and(gte(calendarDueAt, startMs), lte(calendarDueAt, endMs)))
+    .orderBy(asc(transactionScheduleOccurrences.nominalDueAt))
+    .all()
+    .map(mapOccurrence);
 }
 
 export function listDueManualOccurrences(

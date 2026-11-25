@@ -125,7 +125,7 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 | ST-F02 | P1 | **Fix:** One payment is applied to every pending occurrence, then the unique posting index stops the rest. | Was a loop over all pending plus swallowed errors in Mark Paid. **Fixed:** link oldest pending only, idempotent by `transactionId`, schedule sync fails the payment transaction. Regression: `resolve-schedule-paid-remediation.test.cjs`. |
 | ST-F03 | P1 | **Fix:** Subscription history errors are ignored after the ledger post. | Was empty `catch` around `handleSubscriptionScheduleExecutedInContext`. **Fixed:** subscription sync errors roll back the post transaction; missing subscription throws. Regression: `subscription-schedule-post-sync.test.cjs`. |
 | ST-F04 | P2 | **Fix:** Advance post does not tell other screens that a transaction was saved. | Manual Post emitted `FINANCE_APP_TRANSACTION_MUTATED`; advance post did not. **Fixed:** emit after commit with `sourceId: schedule-advance-post`. Regression: `advance-post-schedule-remediation.test.cjs`. |
-| ST-F05 | P2 | Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | `getCalendarScheduleOccurrences` calls `listScheduledTransactions` and `listScheduleOccurrences()` with no date predicate. Projection stops at 100 steps per schedule. |
+| ST-F05 | P2 | **Fix:** Calendar reads every schedule and every occurrence, then filters the month in JavaScript. | Was unbounded `listScheduleOccurrences()`. **Fixed:** `listScheduleOccurrencesInDateWindow` in SQL; projection unchanged. Regression: `get-calendar-schedules-remediation.test.cjs`. |
 | ST-F06 | P2 | Focus and catch-up do more work than the visible page. | The hook passes `hasCachedResult: false`, so each refresh clears due rows. Catch-up serializes the database once per batch of eight. The template query has no limit. |
 | ST-F07 | P2 | Restore can turn an archived schedule back on without a next date. | Archive clears `nextNominalAt`. Restore of a completed row forces `active` and keeps that null. |
 | ST-F08 | P2 | Amounts, status, and recurrence text stay in English, and amounts ignore privacy mode. | Cards render `active`, `Paused`, `Auto-post`, `Due:`, and `formatScheduleRecurrence`. No privacy-mode hook is used in this module. |
@@ -162,8 +162,9 @@ P1 means a posted amount, a missed period, or a duplicate period. P2 means refre
 - **Smallest fix:** Emit `FINANCE_APP_TRANSACTION_MUTATED` with a schedule source id after a committed advance post, matching manual post.
 - **Regression proof:** A hook or service test can assert the emit once. On device, leave Transactions open, advance-post from Scheduled Transactions, and return to find the new row without a manual reload.
 
-### ST-F05 — Calendar loads the full schedule history
+### ST-F05 — Calendar loads the full schedule history (**Fix**)
 
+- **Status:** **Fixed** in `get-calendar-schedules.service.ts` and `listScheduleOccurrencesInDateWindow` (tests in `get-calendar-schedules-remediation.test.cjs`).
 - **Problem:** A one-month calendar view reads every non-archived template and every occurrence ever stored, including posted months outside the window.
 - **Cause:** [get-calendar-schedules.service.ts](../../src/modules/scheduled-transactions/services/get-calendar-schedules.service.ts) calls `listScheduleOccurrences()` with no schedule id and no date bounds, then keeps rows whose effective time falls in the window. Each active schedule may calculate up to 100 following occurrences.
 - **Smallest fix:** Query occurrences whose effective or nominal time overlaps the requested window, and start projection at `nextOccurrenceNumber` only until the window ends. Keep the 100-step cap for a very short frequency.
@@ -300,7 +301,7 @@ When a fix changes what the user can see or recover, add the release-note line i
 - [x] Fix ST-F02 so one payment links one occurrence.
 - [x] Fix ST-F03 so subscription history commits with the ledger row.
 - [x] Fix ST-F04 so advance post refreshes open ledger screens.
-- [ ] Bound calendar occurrence reads (ST-F05).
+- [x] Bound calendar occurrence reads (ST-F05).
 - [ ] Stop clearing the due list on every refresh and record the catch-up copy cost (ST-F06).
 - [ ] Restore a next date or keep the schedule completed (ST-F07).
 - [ ] Localize the remaining labels and mask amounts in privacy mode (ST-F08).
