@@ -8,7 +8,7 @@
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Two confirmed financial-display defects affect the forecast and category spending. Read failures can look like valid empty/zero results, mutation failures are hidden, and measured synchronous reads exceed the 8.3–16.6 ms frame budget at scale. No ledger corruption or duplicate posting was demonstrated by this audit.
 
-**Changes made:** This audit document only. Production code, tests, migrations, application versions, and release notes are unchanged. No commit was created.
+**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
 
 ## 1. Prior audits and workflow
 
@@ -113,7 +113,7 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
-| CAL-F01 | P1 | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Actual hook execution and signed schedule-save path. |
+| CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite. |
 | CAL-F02 | P1 | Top Expense Categories adds refunds to spending | Actual helper execution; contradicts the signed refund contract. |
 | CAL-F03 | P2 | Read failures become empty/zero success with no recovery | Hook failure injection and screen source. |
 | CAL-F04 | P2 | Failed post/skip/edit/delete actions lack error feedback | Actual post/skip callback execution; error props omitted in screen. |
@@ -130,8 +130,8 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 1. **Actual problem:** Section 5's +120 actual net becomes a +140 forecast with no pending items. Adding a -50 bill produces +190 instead of +70.
 2. **Cause/path:** `useCalendarData` → `projectedMonthEndNet`, [lines 454 onward](../../src/modules/calendar/hooks/use-calendar-data.ts#L454). Two independent actual-row `if` statements both accept a positive expense refund or a negative income reversal. Pending expenses are accumulated with their stored signed amounts and then subtracted. Schedule saving preserves the submitted non-transfer sign; ordinary expense schedules are negative.
-3. **Smallest fix:** Sum each eligible recorded non-transfer signed amount once, and add each eligible pending non-transfer signed amount once. Reuse the scoped period/currency conversion. No new forecast engine or persistence is needed.
-4. **Regression proof:** Actual hook/service fixtures for ordinary income/expense, positive expense refunds, negative income reversals, mixed-currency schedules, due/upcoming versus posted/skipped/failed, and transfer/fee exclusions. With no eligible pending items, forecast must equal the same month's actual net.
+3. **Smallest fix:** Sum each eligible recorded non-transfer signed amount once, and add each eligible pending non-transfer signed amount once. Reuse the scoped period/currency conversion. Extracted pure calculation `calculateProjectedMonthEndNet` in [calendar-forecast.ts](../../src/modules/calendar/utils/calendar-forecast.ts) and consumed in [use-calendar-data.ts](../../src/modules/calendar/hooks/use-calendar-data.ts).
+4. **Regression proof:** Actual hook/service fixtures for ordinary income/expense, positive expense refunds, negative income reversals, mixed-currency schedules, due/upcoming versus posted/skipped/failed, and transfer/fee exclusions. With no eligible pending items, forecast strictly equals the same month's actual net. Permanent regressions implemented in [calendar-forecast.test.cjs](../../src/modules/calendar/__tests__/calendar-forecast.test.cjs).
 
 ### CAL-F02 — Category refund netting
 

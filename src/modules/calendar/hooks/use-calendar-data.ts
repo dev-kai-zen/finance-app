@@ -20,6 +20,7 @@ import {
   type TransactionListItem,
 } from "@/modules/transactions";
 import { buildCategoryExpenseBreakdown } from "../utils/category-expense-breakdown";
+import { calculateProjectedMonthEndNet } from "../utils/calendar-forecast";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   convertCurrencyMinorUnits,
@@ -452,39 +453,15 @@ export function useCalendarData() {
 
   // Projected Month-End Net (only recomputes when month transactions or schedules change, NOT on daily date taps)
   const projectedMonthEndNet = useMemo(() => {
-    let monthPendingInflows = 0;
-    let monthPendingOutflows = 0;
-
-    for (const occ of monthScheduleOccurrences) {
-      if (occ.status === "due" || occ.status === "upcoming") {
-        const convertedAmount = convertToDefaultCurrency(
-          occ.amountMinorUnits,
-          accountCurrencyMap.get(occ.accountId) ?? DEFAULT_BASE_CURRENCY,
-        );
-        if (occ.transactionType === "income") {
-          monthPendingInflows += convertedAmount;
-        } else if (occ.transactionType === "expense") {
-          monthPendingOutflows += convertedAmount;
-        }
-      }
-    }
-
-    let monthActualInflow = 0;
-    let monthActualOutflow = 0;
-    for (const tx of activeMonthTransactions) {
-      if (tx.type === "transfer") continue;
-      const convertedAmount = convertToDefaultCurrency(
-        tx.amountMinorUnits,
-        tx.accountCurrency,
-      );
-      if (tx.amountMinorUnits > 0 || tx.type === "income") monthActualInflow += convertedAmount;
-      if (tx.amountMinorUnits < 0 || tx.type === "expense") monthActualOutflow += convertedAmount;
-    }
-    const monthActualNet = monthActualInflow + monthActualOutflow;
-    return monthActualNet + monthPendingInflows - monthPendingOutflows;
+    return calculateProjectedMonthEndNet(
+      activeMonthTransactions,
+      monthScheduleOccurrences,
+      accountCurrencyMap,
+      convertToDefaultCurrency,
+    );
   }, [
-    monthScheduleOccurrences,
     activeMonthTransactions,
+    monthScheduleOccurrences,
     accountCurrencyMap,
     convertToDefaultCurrency,
   ]);
