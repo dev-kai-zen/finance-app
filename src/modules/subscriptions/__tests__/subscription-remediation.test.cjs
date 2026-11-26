@@ -628,3 +628,66 @@ test("SUB-F02: restoring an archived subscription reactivates its linked schedul
     assert.equal(new Date(restoredSched.next_nominal_at).toDateString(), expectedNext.toDateString());
   } finally { sqlite.close(); }
 });
+
+test("SUB-F03: trial subscription delays charging until trialEndsAt, reports correct countdown, and activates upon first billing", t => {
+  const fixedNow = new Date(2026, 10, 26, 12, 0, 0);
+  t.mock.timers.enable({ apis: ["Date"], now: fixedNow.getTime() });
+  const db = setupTestDb();
+  try {
+    const trialStartsAt = new Date(2026, 10, 26);
+    const trialEndsAt = new Date(2026, 11, 10);
+    const id = saveSubscriptionInContext(
+      input({
+        name: "Apple Music",
+        status: "trial",
+        amountMinorUnits: 14900,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        firstBillingDate: trialStartsAt,
+        trialEndsAt,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+        autoPost: true,
+      }),
+      undefined,
+      db,
+    );
+
+    const subRecord = sqlite.prepare("SELECT status, next_renewal_date, trial_ends_at, schedule_id FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(subRecord.status, "trial");
+    assert.equal(subRecord.next_renewal_date, trialEndsAt.getTime(), "Subscription renewal must be trialEndsAt");
+
+    const schedRecord = sqlite.prepare("SELECT starts_at, next_nominal_at FROM transaction_schedules WHERE id = ?").get(subRecord.schedule_id);
+    assert.equal(schedRecord.starts_at, trialEndsAt.getTime(), "Schedule starts_at must be trialEndsAt");
+    assert.equal(schedRecord.next_nominal_at, trialEndsAt.getTime(), "Schedule next_nominal_at must be trialEndsAt");
+
+    const { findSubscriptionById } = require("../repositories/subscriptions.repository");
+    const mapped = findSubscriptionById(id, db);
+    assert.equal(mapped.daysUntilRenewal, 14, "Countdown must show 14 days left until trial ends");
+    assert.equal(mapped.isOverdue, false);
+
+    const { processDueSchedules } = require("../../scheduled-transactions/services/process-due-schedules.service");
+    processDueSchedules(fixedNow);
+
+    const txCount = sqlite.prepare("SELECT count(*) as count FROM transactions").get().count;
+    assert.equal(txCount, 0, "No transactions should be created during the free trial");
+    const payCount = sqlite.prepare("SELECT count(*) as count FROM subscription_payments").get().count;
+    assert.equal(payCount, 0, "No subscription payments should be recorded during the free trial");
+
+    const trialEndNow = new Date(2026, 11, 10, 12, 0, 0);
+    t.mock.timers.tick(trialEndNow.getTime() - fixedNow.getTime());
+    processDueSchedules(trialEndNow);
+
+    const afterTxCount = sqlite.prepare("SELECT count(*) as count FROM transactions").get().count;
+    assert.equal(afterTxCount, 1, "Exactly one transaction created when trial expires");
+
+    const afterSub = sqlite.prepare("SELECT status, next_renewal_date FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(afterSub.status, "active", "Status must transition from trial to active after first billing");
+    const expectedNextRenewal = new Date(2027, 0, 10);
+    assert.equal(new Date(afterSub.next_renewal_date).toDateString(), expectedNextRenewal.toDateString());
+
+    const afterSched = sqlite.prepare("SELECT status, next_nominal_at FROM transaction_schedules WHERE id = ?").get(subRecord.schedule_id);
+    assert.equal(afterSched.status, "active");
+    assert.equal(new Date(afterSched.next_nominal_at).toDateString(), expectedNextRenewal.toDateString());
+  } finally { sqlite.close(); }
+});

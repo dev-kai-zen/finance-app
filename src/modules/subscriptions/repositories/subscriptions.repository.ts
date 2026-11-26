@@ -56,7 +56,11 @@ export function mapSubscriptionRow(
   now = new Date(),
 ): SubscriptionItem {
   const sub = row.subscription;
-  const daysUntil = getDaysUntilRenewal(sub.nextRenewalDate, now);
+  const targetDate =
+    sub.status === "trial" && sub.trialEndsAt
+      ? sub.trialEndsAt
+      : sub.nextRenewalDate;
+  const daysUntil = getDaysUntilRenewal(targetDate, now);
   const monthlyBurn = calculateMonthlyBurnRate(
     sub.amountMinorUnits,
     sub.billingCycle as any,

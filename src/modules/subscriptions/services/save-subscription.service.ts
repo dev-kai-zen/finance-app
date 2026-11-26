@@ -59,6 +59,13 @@ function didSubscriptionRecurrenceChange(
   if (existing.billingCycle !== input.billingCycle) return true;
   if ((existing.billingCycleInterval || 1) !== interval) return true;
   if (toDateKey(existing.firstBillingDate) !== toDateKey(input.firstBillingDate)) return true;
+  if (existing.status !== input.status) return true;
+  if (
+    Boolean(existing.trialEndsAt) !== Boolean(input.trialEndsAt) ||
+    (existing.trialEndsAt && input.trialEndsAt && toDateKey(existing.trialEndsAt) !== toDateKey(input.trialEndsAt))
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -101,6 +108,7 @@ export function syncSubscriptionScheduleInContext(
     billingCycle: BillingCycle;
     billingCycleInterval: number;
     firstBillingDate: Date;
+    trialEndsAt?: Date | null;
     accountId: string | null;
     pocketId: string | null;
     categoryId: string | null;
@@ -125,6 +133,11 @@ export function syncSubscriptionScheduleInContext(
       sub.billingCycle,
       interval,
     );
+    const scheduleStartsAt =
+      sub.status === "trial" && sub.trialEndsAt
+        ? sub.trialEndsAt
+        : sub.firstBillingDate;
+
     const schedInput: SaveScheduledTransactionInput = {
       transactionType: "expense",
       accountId: sub.accountId,
@@ -135,7 +148,7 @@ export function syncSubscriptionScheduleInContext(
       note: sub.notes?.trim() || null,
       frequency,
       intervalCount: schedInterval,
-      startsAt: sub.firstBillingDate,
+      startsAt: scheduleStartsAt,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       endMode: sub.endsOn ? "on_date" : "never",
       endsOn: sub.endsOn ? toDateKey(sub.endsOn) : null,
@@ -212,11 +225,13 @@ export function saveSubscriptionInContext(
       ? input.nextRenewalDate
       : existing && !didSubscriptionRecurrenceChange(existing, input, interval)
         ? existing.nextRenewalDate
-        : resolveUpcomingRenewal(
-            input.firstBillingDate,
-            input.billingCycle,
-            interval,
-          );
+        : input.status === "trial" && input.trialEndsAt
+          ? input.trialEndsAt
+          : resolveUpcomingRenewal(
+              input.firstBillingDate,
+              input.billingCycle,
+              interval,
+            );
   const nextRenewal =
     nextRenewalDateValue instanceof Date
       ? nextRenewalDateValue
@@ -237,6 +252,7 @@ export function saveSubscriptionInContext(
       billingCycle: input.billingCycle,
       billingCycleInterval: interval,
       firstBillingDate: input.firstBillingDate,
+      trialEndsAt: input.trialEndsAt || null,
       accountId: input.accountId || null,
       pocketId: input.pocketId || null,
       categoryId: input.categoryId || null,

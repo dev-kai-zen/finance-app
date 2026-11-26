@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | In progress | SUB-F01 and SUB-F02 fixed and verified with durable regressions. SUB-F03–F04 pending review/remediation. |
+| Remediate | In progress | SUB-F01, SUB-F02, and SUB-F03 fixed and verified with durable regressions. SUB-F04 pending review/remediation. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -95,7 +95,7 @@ All fixtures freeze local time to **November 26, 2026 at noon**. Costs are integ
 | --- | --- | --- |
 | SUB-F01 | Monthly PHP 149, first due **Dec 1**. Pay early on Nov 26, advancing renewal to **Jan 1, 2027**. Edit only note with the same first billing date and no explicit next renewal (as the form does). Expect Jan 1 retained. | **FIXED in v1.8.0:** Renewal date retained at Jan 1, 2027 on note/name/amount edit. Linked schedule cursor also retained. Covered by permanent regression tests `SUB-F01` in `subscription-remediation.test.cjs`. |
 | SUB-F02 | Create due subscription, process and Post one occurrence, archive the posted schedule and subscription, then call actual `restoreSubscriptionInContext`. Expect non-archived linked schedule with a valid next date, unless explicitly completed. | **FIXED in v1.8.0:** Restoring subscription reactivates linked schedule via `restoreScheduledTransaction`, clearing `archived_at` and setting next nominal date to the next valid unposted occurrence. Covered by permanent regression test `SUB-F02` in `subscription-remediation.test.cjs`. |
-| SUB-F03 | Trial starts Nov 26; trial ends **Dec 10**; PHP 149, auto-post on. Process Nov 26. Under a free-until-trial-end contract, expect no charge. | **One expense/payment before trial end.** Production mapping never receives trial end; card/reminder date source also differs from the stored trial date. Final billing policy still needs agreement. |
+| SUB-F03 | Trial starts Nov 26; trial ends **Dec 10**; PHP 149, auto-post on. Process Nov 26. Under a free-until-trial-end contract, expect no charge. | **FIXED in v1.8.0:** Trial subscriptions delay charging and schedule start date until `trialEndsAt`. Card countdown and reminders correctly reference `trialEndsAt`. First payment transitions status to `active`. Covered by permanent regression test `SUB-F03` in `subscription-remediation.test.cjs`. |
 | SUB-F04 / B02 | USD 15 (`1500`) subscription with PHP account; compare manual and automatic payment using the same saved cost and local rate book. Expect equal PHP ledger deltas or a validation rejection before either path. | Manual debit **-87750** (PHP 877.50), automatic debit **-1500** (PHP 15). Default quote in this fixture: PHP 58.50/USD. No network quote used. |
 
 The script's four assertions express these expected contracts and intentionally fail. They must not be reported as passing regressions or added to ordinary CI without a remediation plan. Promote them into focused permanent regression tests when implementing each fix.
@@ -128,12 +128,18 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - Clears `transaction_schedules.archived_at = NULL` and re-anchors the cursor to the next valid unposted occurrence, preserving paused/active intent without replaying posted history.
    - Verified via automated regression test `SUB-F02` in `subscription-remediation.test.cjs`. All 25 subscription tests and TypeScript typecheck pass.
 
-### SUB-F03 — P1, reproduced behavior / policy open: trial dates disagree with charging/countdown/reminders
+### SUB-F03 — P1, FIXED: trial dates disagree with charging/countdown/reminders
 
 1. **Problem/evidence:** Auto-post records a payment Nov 26 despite stored trial end Dec 10. Card says trial ends using `daysUntilRenewal`; reminders use `nextRenewalDate`, not trial end.
 2. **Cause/path:** Form stores `trialEndsAt`; schedule sync only maps `firstBillingDate` and cycle. `mapSubscriptionRow` computes days from renewal; `scheduleSubscriptionReminders` similarly schedules renewal offsets.
 3. **Smallest fix to review:** Agree trial-start/first-paid-date semantics, then align schedule, renewal, countdown and reminders in existing functions. Avoid adding a second trial processor.
 4. **Proof required:** 7/14/30/custom trials, first billing before/on/after trial end, exact expiry midnight, auto-post on/off, Mark Paid, expired/paused/cancelled trial, end-date conflicts, reminder payloads and rollback. If charging before trial end is explicitly intended, change misleading countdown/copy and document that policy rather than accepting hidden disagreement.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `save-subscription.service.ts`, `saveSubscriptionInContext` sets initial `nextRenewalDate` to `trialEndsAt` for trial subscriptions, and `syncSubscriptionScheduleInContext` sets `startsAt` to `trialEndsAt`.
+   - In `subscriptions.repository.ts` (`mapSubscriptionRow`), `daysUntilRenewal` measures against `trialEndsAt` while in trial status, ensuring cards show accurate countdowns (e.g. 14d left instead of ending today).
+   - In `schedule-sub-reminders.service.ts`, reminder alert dates are scheduled relative to `trialEndsAt`.
+   - In `record-subscription-payment.service.ts`, recording the first payment transitions status from `trial` to `active` and advances renewal from `trialEndsAt`.
+   - Verified via automated regression test `SUB-F03` in `subscription-remediation.test.cjs`. All 26 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F04 / existing B02 — P1, reproduced: manual and scheduled payments debit different currencies/magnitudes
 
@@ -219,7 +225,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 | --- | --- |
 | SUB-V01 | Promote F01 fixture; compare paid-through renewal/schedule/ledger before and after non-recurrence and recurrence edits. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. Verified in `subscription-remediation.test.cjs`. |
-| SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. |
+| SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. |
 | SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. |
 | SUB-V06 | SQL statement/row budgets, render/typing SQL zero, bounded archive/list and index plan at scale, cancellation and stable memoized rows. |

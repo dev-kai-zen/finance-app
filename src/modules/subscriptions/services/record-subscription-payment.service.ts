@@ -106,16 +106,22 @@ export function recordSubscriptionPaymentInContext(
   );
 
   // 3. Roll next renewal date forward
+  const anchorDate =
+    subscription.status === "trial" && subscription.trialEndsAt
+      ? subscription.trialEndsAt
+      : subscription.firstBillingDate;
+
   const nextRenewal = calculateNextRenewal(
     subscription.nextRenewalDate,
     subscription.billingCycle,
     subscription.billingCycleInterval,
-    subscription.firstBillingDate.getDate(),
+    anchorDate.getDate(),
   );
 
   updateSubscriptionRecord(
     subscription.id,
     {
+      status: subscription.status === "trial" ? "active" : subscription.status,
       nextRenewalDate: nextRenewal,
       categoryId,
       updatedAt: new Date(),
@@ -164,16 +170,22 @@ export function handleSubscriptionScheduleExecutedInContext(
     context,
   );
 
+  const anchorDate =
+    subscription.status === "trial" && subscription.trialEndsAt
+      ? subscription.trialEndsAt
+      : subscription.firstBillingDate;
+
   const nextRenewal = calculateNextRenewal(
     subscription.nextRenewalDate,
     subscription.billingCycle,
     subscription.billingCycleInterval,
-    subscription.firstBillingDate.getDate(),
+    anchorDate.getDate(),
   );
 
   updateSubscriptionRecord(
     subscription.id,
     {
+      status: subscription.status === "trial" ? "active" : subscription.status,
       nextRenewalDate: nextRenewal,
       updatedAt: new Date(),
     },

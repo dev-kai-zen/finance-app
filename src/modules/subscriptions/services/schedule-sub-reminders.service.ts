@@ -35,10 +35,13 @@ export async function scheduleSubscriptionReminders(
     const windowEndMs = now.getTime() + 30 * 24 * 60 * 60 * 1000; // 30 days ahead
 
     for (const sub of activeSubs) {
-      const renewalDate = sub.nextRenewalDate;
-      const dueYear = renewalDate.getFullYear();
-      const dueMonth = renewalDate.getMonth();
-      const dueDay = renewalDate.getDate();
+      const targetDate =
+        sub.status === "trial" && sub.trialEndsAt
+          ? sub.trialEndsAt
+          : sub.nextRenewalDate;
+      const dueYear = targetDate.getFullYear();
+      const dueMonth = targetDate.getMonth();
+      const dueDay = targetDate.getDate();
 
       const leadDays = sub.reminderLeadDays.length > 0 ? sub.reminderLeadDays : [1];
 
