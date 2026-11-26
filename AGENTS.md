@@ -175,6 +175,7 @@ export type { TransactionItem } from "./types/transaction.types";
 ### Cross-Module Communication via Services
 
 When a feature module (e.g. `accounts` or `dashboard`) requires data, calculations, or business logic belonging to another feature domain (e.g. `transactions`):
+
 - **Never** directly query another module's database tables or import another module's repositories.
 - The owning feature module must encapsulate that logic into a reusable **Service** (e.g. `getAccountBalanceDeltas`) and export it via its public API (`@/modules/<feature>`).
 - Consuming modules import and call that Service through the public boundary, preserving domain encapsulation and avoiding duplicate logic.
@@ -403,6 +404,7 @@ When modifying this project, AI agents must:
 15. **Mandatory Performance Assessment & 60–120fps Standard**: Every new feature, refactor, bug fix, or architectural/thought discussion ("asking for thoughts") must explicitly evaluate runtime performance impact and strictly follow the 60–120fps engineering rules in Section 19.
 16. **Mandatory Pre-Change 4-Question Gate**: Before changing any production code (especially during audits, bug fixes, or refactors), AI agents must explicitly answer the four mandatory pre-change questions in Section 20 to prevent unnecessary code sprawl and maintain full codebase clarity.
 17. **No Auto-Commits Without Explicit Instruction**: AI agents must never automatically create git commits (`git commit`) unless the user explicitly instructs them to do so. Always keep changes in the working tree, report what was modified, run validations, and wait for the user's explicit instruction before committing.
+18. **Unified Feature Audit Reports (No Separate Text Layout Files)**: Never create a separate standalone file for text layout review (e.g. do not create `text-layout-review-*.md`). Text collision, containment, truncation, reflow, responsive widths, large system text, and localized formatting must be evaluated and documented directly inside the feature's primary audit report (`audits/<version>/<feature>-audit-<version>.md`).
 
 ---
 
@@ -457,7 +459,7 @@ When adding or updating "Version History" release notes (`src/modules/version-hi
      ```
 5. **Concise Bullet Points**:
    - Limit items to 1 clear, punchy sentence (15–20 words max per bullet).
-   - Use active verbs: *Add*, *Fix*, *Improve*, *Update*.
+   - Use active verbs: _Add_, _Fix_, _Improve_, _Update_.
 6. **Localization Requirement Across All Supported Languages**:
    - All string keys must exist in `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts`.
    - Never add English release notes without the matching Filipino and Spanish translations.
@@ -538,17 +540,19 @@ Before letting AI change any production code (especially during audit findings r
    Specify the regression tests.
 
 ### Guarding Against Audit Code Sprawl
+
 During audits and remediation, AI agents must not rewrite surrounding logic, restructure unrelated modules, or introduce cascading abstractions that make the application logic harder to understand. Every fix must remain surgical, adhere strictly to the Minimal Diff Principle (Section 17), and preserve complete clarity for the developer.
 
 ---
 
-# 21. Feature Audit Checklist & Text Layout
+# 21. Feature Audit Checklist & Unified Text Layout Auditing
 
 All new feature audits and reopened audit reviews must use [audits/AUDIT_CHECKLIST.md](audits/AUDIT_CHECKLIST.md) in addition to the existing requirements above.
 
-- Explicitly audit text collision, containment inside cards/rows/modals, wrapping, truncation, and action visibility.
+- **Unified Single Audit Document Rule (No Separate Layout Review Files)**: Do NOT create separate standalone files for text layout reviews (e.g. never create `text-layout-review-*.md`). Text layout, reflow, collision, containment, truncation, responsive widths, and action visibility must be included directly within each feature's main audit result report (e.g., `audits/<version>/<feature>-audit-<version>.md`).
+- Explicitly audit text collision, containment inside cards/rows/modals, wrapping, truncation, and action visibility as dedicated findings within the feature audit report.
 - Test valid long content and large amounts at narrow widths, large system text/display sizes, and English/Filipino/Spanish. Check related forms with the keyboard visible.
 - Text must not overlap neighboring text or controls or escape its container. Hiding essential content with clipping or unreadable shrinking is not a passing fix.
 - Distinguish source risks from device-reproduced findings; record device/settings, exact reproduction, screenshots and regression coverage before visual sign-off.
-- When extending an already signed-off audit, reopen the added criterion explicitly while retaining historical functional resolutions and accepted policies.
+- When extending an already signed-off audit, reopen the added criterion explicitly within the feature's audit report while retaining historical functional resolutions and accepted policies.
 - Preserve the Section 19 performance standard and Section 20 four-question gate for any resulting production change.

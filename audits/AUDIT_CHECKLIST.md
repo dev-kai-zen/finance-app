@@ -4,11 +4,12 @@ Applies to new audits and reopened reviews. Added November 26, 2026 (Asia/Manila
 
 ## Workflow and evidence
 
-1. **Audit:** Record date, commit, working-tree state, scope, contracts, independent fixtures, ownership, actions, cross-feature consumers, database relationships, findings, and performance impact.
-2. **Validate:** Exercise actual production services/callbacks against migrated in-memory SQLite where appropriate. Separate executed failures, source-confirmed paths, layout risks awaiting device confirmation, policy questions, and accepted deferrals.
-3. **Review:** Settle findings and product decisions before remediation. Record each decision and any accepted limitations.
-4. **Remediate:** Answer all four AGENTS.md Section 20 questions for each production change; keep the fix surgical, respect public services, preserve atomicity, and add meaningful regressions.
-5. **Sign off:** Verify the final candidate, relevant consumers, typecheck, native behavior, localization/accessibility, and performance. Record incomplete checks explicitly. Passing TypeScript or source-shape tests does not establish native rendering or frame rate.
+6. **Unified Audit Report (No Separate Layout Review Files):** Every feature audit must be contained in a single unified audit document (e.g., `audits/<version>/<feature>-audit-<version>.md`). **Do not create separate standalone files for text layout reviews.** Text collision, reflow, containment, truncation, and layout checks must be documented and tracked directly within the feature's main audit report alongside functional, financial, lifecycle, recovery, and performance findings.
+7. **Audit:** Record date, commit, working-tree state, scope, contracts, independent fixtures, ownership, actions, cross-feature consumers, database relationships, findings (including functional, performance, accessibility, and layout), and performance impact.
+8. **Validate:** Exercise actual production services/callbacks against migrated in-memory SQLite where appropriate. Separate executed failures, source-confirmed paths, layout risks awaiting device confirmation, policy questions, and accepted deferrals.
+9. **Review:** Settle findings and product decisions before remediation. Record each decision and any accepted limitations.
+10. **Remediate:** Answer all four AGENTS.md Section 20 questions for each production change; keep the fix surgical, respect public services, preserve atomicity, and add meaningful regressions.
+11. **Sign off:** Verify the final candidate, relevant consumers, typecheck, native behavior, localization/accessibility, layout containment, and performance. Record incomplete checks explicitly. Passing TypeScript or source-shape tests does not establish native rendering or frame rate.
 
 For a documentation-only audit, production changes, release notes, version bumps, and commits are not implied. For implemented changes, follow AGENTS.md release-note and version-decision requirements.
 
@@ -53,16 +54,14 @@ For a documentation-only audit, production changes, release notes, version bumps
 
 For every suspected or confirmed issue, record:
 
-| Field | Required detail |
-| --- | --- |
-| Identity | Stable finding ID, owning feature, source file/component and current commit. |
-| Reproduction | Navigation steps, valid data, language, device/OS, logical width, font/display scale, and relevant UI state. |
-| Evidence level | **Source risk / needs native validation**, **native reproduced**, **verified fixed**, or **accepted limitation**. |
-| Expected vs actual | Exact content that should fit and what overlaps, clips, becomes unreadable, or loses its action. |
-| Visual proof | Screenshot of the whole card and surrounding content; before/after on the same settings for a fix. |
-| Regression | Retest affected states and consumers. Automated layout assertions are useful support, but mocked JSX/style tests alone cannot prove native glyph geometry. |
-| Performance | Assess additional layout passes, mounted rows, JS work, and query/render changes. Prefer native flex/wrapping/min-height over per-keystroke measurement or global font changes. |
+| Field              | Required detail                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity           | Stable finding ID, owning feature, source file/component and current commit.                                                                                                    |
+| Reproduction       | Navigation steps, valid data, language, device/OS, logical width, font/display scale, and relevant UI state.                                                                    |
+| Evidence level     | **Source risk / needs native validation**, **native reproduced**, **verified fixed**, or **accepted limitation**.                                                               |
+| Expected vs actual | Exact content that should fit and what overlaps, clips, becomes unreadable, or loses its action.                                                                                |
+| Visual proof       | Screenshot of the whole card and surrounding content; before/after on the same settings for a fix.                                                                              |
+| Regression         | Retest affected states and consumers. Automated layout assertions are useful support, but mocked JSX/style tests alone cannot prove native glyph geometry.                      |
+| Performance        | Assess additional layout passes, mounted rows, JS work, and query/render changes. Prefer native flex/wrapping/min-height over per-keystroke measurement or global font changes. |
 
-Do not mark this checklist complete solely from a grep for `flexShrink`, `numberOfLines`, or `overflow`. Inspect the rendered result. Do not reopen resolved financial findings merely because this new visual criterion is pending; add a separately scoped layout status to the original report.
-
-Current follow-up: [v1.8.0 manual layout review](v1.8.0/text-layout-review-v1.8.0.md).
+Do not mark this checklist complete solely from a grep for `flexShrink`, `numberOfLines`, or `overflow`. Inspect the rendered result. Do not reopen resolved financial findings merely because this visual criterion is pending; track layout findings directly in the feature audit report using standard feature finding IDs (e.g. `REP-F07`, `SUB-F07`). All text layout results are unified into the feature's audit result report—never in a separate layout review file.
