@@ -44,14 +44,14 @@ export const SubscriptionBurnRateSummaryCard = memo(
             <View style={styles.flameIconContainer}>
               <Flame color="#F59E0B" size={18} />
             </View>
-            <Text style={styles.title}>
+            <Text numberOfLines={1} style={styles.title}>
               {t("subscriptions.monthlyBurnRate", {
                 defaultValue: "Monthly Burn Rate",
               })}
             </Text>
           </View>
           <View style={styles.activePill}>
-            <Text style={styles.activePillText}>
+            <Text numberOfLines={1} style={styles.activePillText}>
               {t("subscriptions.activeCount", {
                 count: summary.activeCount,
                 defaultValue: `${summary.activeCount} Active`,
@@ -71,18 +71,25 @@ export const SubscriptionBurnRateSummaryCard = memo(
 
         <View style={styles.footerRow}>
           <View style={styles.statColumn}>
-            <Text style={styles.statLabel}>
+            <Text numberOfLines={1} style={styles.statLabel}>
               {t("subscriptions.yearlyProjected", {
                 defaultValue: "Yearly Projection",
               })}
             </Text>
-            <Text style={styles.statValue}>{displayYearly}</Text>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              numberOfLines={1}
+              style={styles.statValue}
+            >
+              {displayYearly}
+            </Text>
           </View>
 
           {summary.upcomingCount7Days > 0 ? (
             <View style={styles.alertChip}>
               <Calendar color={theme.colors.primary} size={13} />
-              <Text style={styles.alertChipText}>
+              <Text numberOfLines={1} style={styles.alertChipText}>
                 {t("subscriptions.dueIn7Days", {
                   count: summary.upcomingCount7Days,
                   defaultValue: `${summary.upcomingCount7Days} due this week`,
@@ -92,7 +99,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
           ) : summary.trialCount > 0 ? (
             <View style={styles.trialChip}>
               <Sparkles color="#8B5CF6" size={13} />
-              <Text style={styles.trialChipText}>
+              <Text numberOfLines={1} style={styles.trialChipText}>
                 {t("subscriptions.trialsActive", {
                   count: summary.trialCount,
                   defaultValue: `${summary.trialCount} on Trial`,
@@ -129,6 +136,8 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing.xs,
+      flex: 1,
+      minWidth: 140,
     },
     flameIconContainer: {
       width: 28,
@@ -142,12 +151,14 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "600",
       color: theme.colors.textSecondary,
+      flexShrink: 1,
     },
     activePill: {
       backgroundColor: "rgba(34, 197, 94, 0.12)",
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 3,
       borderRadius: theme.borderRadius.round,
+      flexShrink: 0,
     },
     activePillText: {
       fontSize: 12,
@@ -167,6 +178,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "800",
       color: theme.colors.textPrimary,
       letterSpacing: -0.5,
+      maxWidth: "100%",
     },
     perMonthLabel: {
       fontSize: 14,
@@ -187,6 +199,8 @@ function createStyles(theme: AppTheme) {
     },
     statColumn: {
       flexDirection: "column",
+      flexShrink: 1,
+      minWidth: 100,
     },
     statLabel: {
       fontSize: 11,
@@ -197,6 +211,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "700",
       color: theme.colors.textPrimary,
+      flexShrink: 1,
     },
     alertChip: {
       flexDirection: "row",
@@ -206,11 +221,14 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 4,
       borderRadius: theme.borderRadius.round,
+      flexShrink: 0,
+      maxWidth: "60%",
     },
     alertChipText: {
       fontSize: 12,
       fontWeight: "600",
       color: theme.colors.primary,
+      flexShrink: 1,
     },
     trialChip: {
       flexDirection: "row",
@@ -220,11 +238,14 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 4,
       borderRadius: theme.borderRadius.round,
+      flexShrink: 0,
+      maxWidth: "60%",
     },
     trialChipText: {
       fontSize: 12,
       fontWeight: "600",
       color: "#8B5CF6",
+      flexShrink: 1,
     },
   });
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -158,91 +159,100 @@ function MarkPaidModalContent({
             style={styles.backdrop}
           />
           <View style={styles.sheet}>
-            <View style={styles.header}>
-              <View style={styles.titleCol}>
-                <Text style={styles.title}>
-                  {t("subscriptions.recordPaymentTitle", {
-                    defaultValue: "Record Payment",
-                  })}
-                </Text>
-                <Text style={styles.subtitle}>
-                  {subscription.name} • {displayAmount}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityLabel={t("common.close")}
-                hitSlop={8}
-                onPress={onClose}
-                style={styles.closeBtn}
-              >
-                <X color={theme.colors.textSecondary} size={18} />
-              </Pressable>
-            </View>
-
-            {/* Payment Account Selector */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.sectionLabel}>
-                {t("subscriptions.selectPaymentAccount", {
-                  defaultValue: "Payment Account",
-                })}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setAccountPickerVisible(true)}
-                style={styles.selectorBtn}
-              >
-                <View style={styles.selectorLeft}>
-                  <Wallet color={theme.colors.primary} size={18} />
-                  <Text style={styles.selectorValue}>{accountDisplayLabel}</Text>
-                </View>
-                <ChevronRight color={theme.colors.textSecondary} size={18} />
-              </Pressable>
-            </View>
-
-            {/* Payment Date Selector */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.sectionLabel}>
-                {t("subscriptions.paymentDate", {
-                  defaultValue: "Transaction Date",
-                })}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setIsDatePickerOpen(true)}
-                style={styles.selectorBtn}
-              >
-                <View style={styles.selectorLeft}>
-                  <Calendar color={theme.colors.primary} size={18} />
-                  <Text style={styles.selectorValue}>
-                    {formatDisplayDate(selectedPaidAt)}
+            <ScrollView
+              bounces={false}
+              contentContainerStyle={styles.sheetContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.header}>
+                <View style={styles.titleCol}>
+                  <Text style={styles.title}>
+                    {t("subscriptions.recordPaymentTitle", {
+                      defaultValue: "Record Payment",
+                    })}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.subtitle}>
+                    {subscription.name} • {displayAmount}
                   </Text>
                 </View>
-                <ChevronRight color={theme.colors.textSecondary} size={18} />
-              </Pressable>
-            </View>
+                <Pressable
+                  accessibilityLabel={t("common.close")}
+                  hitSlop={12}
+                  onPress={onClose}
+                  style={styles.closeBtn}
+                >
+                  <X color={theme.colors.textSecondary} size={18} />
+                </Pressable>
+              </View>
 
-            <Text style={styles.rollForwardNotice}>
-              {t("subscriptions.rollForwardNotice", {
-                defaultValue:
-                  "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
-              })}
-            </Text>
+              {/* Payment Account Selector */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.sectionLabel}>
+                  {t("subscriptions.selectPaymentAccount", {
+                    defaultValue: "Payment Account",
+                  })}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setAccountPickerVisible(true)}
+                  style={styles.selectorBtn}
+                >
+                  <View style={styles.selectorLeft}>
+                    <Wallet color={theme.colors.primary} size={18} />
+                    <Text numberOfLines={1} style={styles.selectorValue}>
+                      {accountDisplayLabel}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textSecondary} size={18} />
+                </Pressable>
+              </View>
 
-            <View style={styles.btnRow}>
-              <AppButton
-                label={t("common.cancel")}
-                onPress={onClose}
-                variant="secondary"
-              />
-              <AppButton
-                disabled={!selectedAccountId}
-                label={t("subscriptions.confirmPayment", {
-                  defaultValue: "Confirm Payment",
+              {/* Payment Date Selector */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.sectionLabel}>
+                  {t("subscriptions.paymentDate", {
+                    defaultValue: "Transaction Date",
+                  })}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setIsDatePickerOpen(true)}
+                  style={styles.selectorBtn}
+                >
+                  <View style={styles.selectorLeft}>
+                    <Calendar color={theme.colors.primary} size={18} />
+                    <Text numberOfLines={1} style={styles.selectorValue}>
+                      {formatDisplayDate(selectedPaidAt)}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textSecondary} size={18} />
+                </Pressable>
+              </View>
+
+              <Text style={styles.rollForwardNotice}>
+                {t("subscriptions.rollForwardNotice", {
+                  defaultValue:
+                    "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
                 })}
-                onPress={handleConfirm}
-                variant="primary"
-              />
-            </View>
+              </Text>
+
+              <View style={styles.btnRow}>
+                <AppButton
+                  label={t("common.cancel")}
+                  onPress={onClose}
+                  variant="secondary"
+                />
+                <AppButton
+                  disabled={!selectedAccountId}
+                  label={t("subscriptions.confirmPayment", {
+                    defaultValue: "Confirm Payment",
+                  })}
+                  onPress={handleConfirm}
+                  variant="primary"
+                />
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -296,12 +306,15 @@ function createStyles(theme: AppTheme) {
     sheet: {
       width: "100%",
       maxWidth: 420,
+      maxHeight: "90%",
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.lg,
       borderWidth: 1,
       borderColor: theme.colors.border,
       elevation: 5,
+    },
+    sheetContent: {
+      padding: theme.spacing.lg,
     },
     header: {
       flexDirection: "row",
@@ -350,11 +363,14 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       gap: 10,
       flex: 1,
+      minWidth: 0,
     },
     selectorValue: {
       fontSize: 14,
       fontWeight: "500",
       color: theme.colors.textPrimary,
+      flex: 1,
+      flexShrink: 1,
     },
     rollForwardNotice: {
       fontSize: 11,
@@ -364,6 +380,7 @@ function createStyles(theme: AppTheme) {
     },
     btnRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "flex-end",
       gap: theme.spacing.sm,
     },

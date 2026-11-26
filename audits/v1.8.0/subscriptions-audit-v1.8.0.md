@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | In progress | SUB-F01, SUB-F02, and SUB-F03 fixed and verified with durable regressions. SUB-F04 pending review/remediation. |
+| Remediate | In progress | SUB-F01, SUB-F02, SUB-F03, SUB-F04, SUB-F05, SUB-F06, and SUB-F07 fixed and verified with durable regressions. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -85,7 +85,7 @@ Cross-feature financial writes already use public Transactions/Scheduled Transac
 | Reminders | Cancels existing subscription alerts; schedules active/trial next-renewal offsets within 30 days, with English copy. | Trial date mismatch, F03; localization/recovery coverage needed. Subscription scheduling is called independently of the scheduled-transaction reminder toggle; policy unresolved. |
 | Manage online | Opens stored cancellation URL directly. | Validate supported link behavior and surface failure; no native link exercise in this pass. |
 | Pro / walkthrough | Create/restore guards count non-archived subscriptions. First-item walkthrough waits after loading. | Limits are enforced at these UI entry points; alternate public service callers need separate policy coverage. Test error/empty interaction blocker before native sign-off. |
-| Privacy/layout | Most amounts visually mask, but card accessibility label includes raw formatted amount. Dense rows and fixed modal layout. | F07/F09. |
+| Privacy/layout | Most amounts visually mask, but card accessibility label includes raw formatted amount. Dense rows and fixed modal layout. | F07 FIXED (text containment, maxWidth, flex reflow, and modal ScrollView applied); F09 pending. |
 
 ## 5. Independent financial/lifecycle probes
 
@@ -180,12 +180,19 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `save-subscription.service.ts`, `delete-subscription.service.ts`, and `toggle-subscription-status.service.ts`, replaced blocking synchronous `processDueSchedules(new Date(), 1)` with asynchronous `DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED")`.
    - Verified via automated regression test `SUB-F06` in `subscription-remediation.test.cjs`. All 30 subscription tests and TypeScript typecheck pass.
 
-### SUB-F07 — P2, source risk / manual pending: text can exhaust the width of cards and payment modal
+### SUB-F07 — P2, FIXED: text can exhaust the width of cards and payment modal
 
 1. **Problem/evidence:** Source has non-wrapping competing siblings in card name/badge/amount, metadata/action rows, all three summary rows and Mark Paid selectors/buttons. No device overlap is claimed reproduced.
 2. **Cause/path:** `SubscriptionCard.amountCol` is unbounded; `subtextRow`/`actionRow` do not wrap. Summary header/amount/footer rows have no width/reflow budget. Mark Paid selector text has no flex/shrink allocation; its sheet lacks scroll/max-height adaptation for large text/short windows.
 3. **Smallest fix to review:** First collect native evidence via **TXT-SUB-01**. Then constrain/reflow only the failing sibling group, grow container height, and retain readable full amounts/actions. Do not hide overflow globally or disable font scaling.
 4. **Proof required:** [Shared matrix](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow), long 100-character valid subscription, long account/pocket/category, large positive cost, translated trial/action chips, Manage + all actions, privacy masks, 320/360 widths and large text. Capture before/after screenshots and keyboard/modal reachability; check stable scrolling.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `subscription-card.tsx`, constrained `amountCol` with `maxWidth: "45%"` and `flexShrink: 0`; added `flexShrink: 0` to `badge` to prevent countdown compression; added `flexShrink: 1` to `metaText` and `flexShrink: 0` to `metaDot` to guarantee clean ellipsis truncation for long account/pocket/category names.
+   - In `subscription-card.tsx`, added `minWidth: 8` to `spacer` and grouped right actions (`onToggleStatus`, `onEdit`, `onDelete`) into `<View style={styles.rightActions}>` (`flexDirection: "row"`) to prevent action button isolation or clipping upon flex wrap.
+   - In `subscription-burn-rate-summary.tsx`, added `flex: 1, minWidth: 140` to `titleWithIcon` and `flexShrink: 0` to `activePill`; added `numberOfLines={1}` and `adjustsFontSizeToFit` across header, stat, and alert/trial chips; constrained `statColumn` (`minWidth: 100, flexShrink: 1`) and `alertChip` / `trialChip` (`maxWidth: "60%"`).
+   - In `mark-paid-modal.tsx`, constrained `sheet` with `maxHeight: "90%"` and wrapped contents in a vertical `<ScrollView bounces={false} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>` to ensure complete reachability of all buttons and inputs on short viewports and large text scaling.
+   - In `mark-paid-modal.tsx`, added `flex: 1, flexShrink: 1` and `numberOfLines={1}` to `selectorValue` in `selectorLeft` (`minWidth: 0`), preventing long account/pocket names from displacing trailing chevron icons; added `flexWrap: "wrap"` to `btnRow` and expanded `closeBtn` hitSlop to 12 (50×50 effective touch target).
+   - Verified via automated regression test `SUB-F07` in `subscription-remediation.test.cjs`. All 31 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F08 — P2, source-confirmed: lifecycle failures can commit partial intent and lose the confirmation target
 

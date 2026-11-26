@@ -803,3 +803,90 @@ test("SUB-F06: hasSubscriptionPayments executes a bounded LIMIT 1 existence quer
     );
   } finally { sqlite.close(); }
 });
+
+test("SUB-F07: text containment, truncation, maxWidth bounds, and modal scroll constraints", () => {
+  const fs = require("fs");
+  const path = require("path");
+
+  // 1. SubscriptionCard layout rules
+  const cardSrc = fs.readFileSync(
+    path.resolve(__dirname, "../components/subscription-card.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /amountCol:\s*\{[^}]*maxWidth:\s*["']45%["']/s.test(cardSrc),
+    "amountCol must have maxWidth bound of 45%",
+  );
+  assert.ok(
+    /amountCol:\s*\{[^}]*flexShrink:\s*0/s.test(cardSrc),
+    "amountCol must have flexShrink: 0",
+  );
+  assert.ok(
+    /badge:\s*\{[^}]*flexShrink:\s*0/s.test(cardSrc),
+    "badge must have flexShrink: 0 to prevent countdown compression",
+  );
+  assert.ok(
+    /metaText:\s*\{[^}]*flexShrink:\s*1/s.test(cardSrc),
+    "metaText must have flexShrink: 1 to allow account/category text truncation",
+  );
+  assert.ok(
+    /spacer:\s*\{[^}]*minWidth:\s*8/s.test(cardSrc),
+    "spacer must have minWidth: 8 for stable separation",
+  );
+  assert.ok(
+    /rightActions:\s*\{[^}]*flexDirection:\s*["']row["']/s.test(cardSrc),
+    "rightActions must group action icons in a row",
+  );
+
+  // 2. SubscriptionBurnRateSummaryCard layout rules
+  const summarySrc = fs.readFileSync(
+    path.resolve(__dirname, "../components/subscription-burn-rate-summary.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /titleWithIcon:\s*\{[^}]*flex:\s*1/s.test(summarySrc) &&
+      /titleWithIcon:\s*\{[^}]*minWidth:\s*140/s.test(summarySrc),
+    "titleWithIcon must have flex: 1 and minWidth bounds",
+  );
+  assert.ok(
+    /activePill:\s*\{[^}]*flexShrink:\s*0/s.test(summarySrc),
+    "activePill must have flexShrink: 0",
+  );
+  assert.ok(
+    /statColumn:\s*\{[^}]*flexShrink:\s*1/s.test(summarySrc) &&
+      /statColumn:\s*\{[^}]*minWidth:\s*100/s.test(summarySrc),
+    "statColumn must have flexShrink: 1 and minWidth bounds",
+  );
+  assert.ok(
+    /alertChip:\s*\{[^}]*maxWidth:\s*["']60%["']/s.test(summarySrc),
+    "alertChip must have maxWidth bound of 60%",
+  );
+
+  // 3. MarkPaidModal layout and scroll reachability rules
+  const modalSrc = fs.readFileSync(
+    path.resolve(__dirname, "../components/mark-paid-modal.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /sheet:\s*\{[^}]*maxHeight:\s*["']90%["']/s.test(modalSrc),
+    "sheet must have maxHeight: '90%' to adapt to short screens and large text",
+  );
+  assert.ok(
+    /<ScrollView[^>]*bounces=\{false\}/s.test(modalSrc),
+    "MarkPaidModal must wrap content in ScrollView for vertical reachability",
+  );
+  assert.ok(
+    /selectorValue:\s*\{[^}]*flex:\s*1/s.test(modalSrc) &&
+      /selectorValue:\s*\{[^}]*flexShrink:\s*1/s.test(modalSrc),
+    "selectorValue must have flex: 1 and flexShrink: 1 to prevent pushing chevron off-screen",
+  );
+  assert.ok(
+    /btnRow:\s*\{[^}]*flexWrap:\s*["']wrap["']/s.test(modalSrc),
+    "btnRow must have flexWrap: 'wrap' to handle large localized button text",
+  );
+  assert.ok(
+    /hitSlop=\{12\}[\s\S]*?styles\.closeBtn/s.test(modalSrc) ||
+      /styles\.closeBtn[\s\S]*?hitSlop=\{12\}/s.test(modalSrc),
+    "closeBtn must have hitSlop >= 12 for accessible 44x44+ touch area",
+  );
+});

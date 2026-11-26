@@ -304,51 +304,53 @@ export const SubscriptionCard = memo(function SubscriptionCard({
 
         <View style={styles.spacer} />
 
-        {!isArchived && onToggleStatus && (
-          <Pressable
-            accessibilityLabel={
-              isPaused
-                ? t("subscriptions.resume", { defaultValue: "Resume" })
-                : t("subscriptions.pause", { defaultValue: "Pause" })
-            }
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={handleToggleStatus}
-            style={styles.iconActionBtn}
-          >
-            {isPaused ? (
-              <Play color={theme.colors.primary} size={15} />
-            ) : (
-              <Pause color={theme.colors.textSecondary} size={15} />
-            )}
-          </Pressable>
-        )}
+        <View style={styles.rightActions}>
+          {!isArchived && onToggleStatus && (
+            <Pressable
+              accessibilityLabel={
+                isPaused
+                  ? t("subscriptions.resume", { defaultValue: "Resume" })
+                  : t("subscriptions.pause", { defaultValue: "Pause" })
+              }
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleToggleStatus}
+              style={styles.iconActionBtn}
+            >
+              {isPaused ? (
+                <Play color={theme.colors.primary} size={15} />
+              ) : (
+                <Pause color={theme.colors.textSecondary} size={15} />
+              )}
+            </Pressable>
+          )}
 
-        {onEdit && (
-          <Pressable
-            accessibilityLabel={t("subscriptions.editSubscription", {
-              defaultValue: "Edit",
-            })}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={handleEdit}
-            style={styles.iconActionBtn}
-          >
-            <SquarePen color={theme.colors.textSecondary} size={15} />
-          </Pressable>
-        )}
+          {onEdit && (
+            <Pressable
+              accessibilityLabel={t("subscriptions.editSubscription", {
+                defaultValue: "Edit",
+              })}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleEdit}
+              style={styles.iconActionBtn}
+            >
+              <SquarePen color={theme.colors.textSecondary} size={15} />
+            </Pressable>
+          )}
 
-        {onDelete && (
-          <Pressable
-            accessibilityLabel={t("common.delete", { defaultValue: "Delete" })}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={handleDelete}
-            style={styles.iconActionBtn}
-          >
-            <Trash2 color={theme.colors.danger} size={15} />
-          </Pressable>
-        )}
+          {onDelete && (
+            <Pressable
+              accessibilityLabel={t("common.delete", { defaultValue: "Delete" })}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleDelete}
+              style={styles.iconActionBtn}
+            >
+              <Trash2 color={theme.colors.danger} size={15} />
+            </Pressable>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -406,13 +408,17 @@ function createStyles(theme: AppTheme) {
     metaText: {
       fontSize: 12,
       color: theme.colors.textSecondary,
+      flexShrink: 1,
     },
     metaDot: {
       fontSize: 12,
       color: theme.colors.textSecondary,
+      flexShrink: 0,
     },
     amountCol: {
       alignItems: "flex-end",
+      flexShrink: 0,
+      maxWidth: "45%",
     },
     amountText: {
       fontSize: 15,
@@ -433,6 +439,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 2,
       borderRadius: theme.borderRadius.round,
       marginLeft: 4,
+      flexShrink: 0,
     },
     badgeText: {
       fontSize: 10,
@@ -532,6 +539,12 @@ function createStyles(theme: AppTheme) {
     },
     spacer: {
       flex: 1,
+      minWidth: 8,
+    },
+    rightActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
     },
     iconActionBtn: {
       padding: 6,
