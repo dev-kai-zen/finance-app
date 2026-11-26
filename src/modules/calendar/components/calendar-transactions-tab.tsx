@@ -29,7 +29,7 @@ interface DateGroup {
   items: TransactionListItem[];
 }
 
-export function CalendarTransactionsTab({
+export const CalendarTransactionsTab = React.memo(function CalendarTransactionsTab({
   transactions,
   selectedDay,
   onPressTransaction,
@@ -164,7 +164,7 @@ export function CalendarTransactionsTab({
       )}
     </View>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

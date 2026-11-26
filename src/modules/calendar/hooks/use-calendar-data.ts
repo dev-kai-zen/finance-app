@@ -22,6 +22,10 @@ import {
 } from "@/modules/transactions";
 import { buildCategoryExpenseBreakdown } from "../utils/category-expense-breakdown";
 import { calculateProjectedMonthEndNet } from "../utils/calendar-forecast";
+import {
+  getCachedMonthTransactions,
+  setCachedMonthTransactions,
+} from "../utils/calendar-cache";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   convertCurrencyMinorUnits,
@@ -114,7 +118,7 @@ export function useCalendarData() {
       if (cancelled) return;
 
       if (monthCacheRef.current.has(key)) {
-        const cached = monthCacheRef.current.get(key)!;
+        const cached = getCachedMonthTransactions(monthCacheRef.current, key)!;
         loadedMonthKeyRef.current = key;
         setMonthError(null);
         setTransactions(cached);
@@ -126,7 +130,7 @@ export function useCalendarData() {
         const range = getCalendarGridDateRange(activeMonth.year, activeMonth.month);
         const fresh = getCalendarMonthTransactions(range.startDate, range.endDate);
         if (cancelled) return;
-        monthCacheRef.current.set(key, fresh);
+        setCachedMonthTransactions(monthCacheRef.current, key, fresh);
         loadedMonthKeyRef.current = key;
         setMonthError(null);
         setTransactions(fresh);
@@ -162,15 +166,16 @@ export function useCalendarData() {
 
     const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
     if (!force && monthCacheRef.current.has(key)) {
+      const cached = getCachedMonthTransactions(monthCacheRef.current, key)!;
       loadedMonthKeyRef.current = key;
       setMonthError(null);
-      setTransactions(monthCacheRef.current.get(key)!);
+      setTransactions(cached);
       return;
     }
     try {
       const range = getCalendarGridDateRange(activeMonth.year, activeMonth.month);
       const fresh = getCalendarMonthTransactions(range.startDate, range.endDate);
-      monthCacheRef.current.set(key, fresh);
+      setCachedMonthTransactions(monthCacheRef.current, key, fresh);
       loadedMonthKeyRef.current = key;
       setMonthError(null);
       setTransactions(fresh);

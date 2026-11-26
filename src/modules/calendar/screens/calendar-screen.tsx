@@ -232,16 +232,36 @@ function CalendarScreenContent() {
   }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   // Handlers for transactions
-  const handleEditTransaction = (tx: TransactionListItem) => {
+  const handleInspectTransaction = useCallback((tx: TransactionListItem) => {
+    setInspectedTransaction(tx);
+  }, []);
+
+  const handleCloseInspectTransaction = useCallback(() => {
+    setInspectedTransaction(null);
+  }, []);
+
+  const handleEditTransaction = useCallback((tx: TransactionListItem) => {
     setInspectedTransaction(null);
     setPrefilledTransaction(tx);
     setIsEditingTransaction(true);
     setFormModalOpen(true);
-  };
+  }, []);
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = useCallback((id: string) => {
     setPendingDeleteTxId(id);
-  };
+  }, []);
+
+  const handleNavigateToSchedules = useCallback(() => {
+    router.navigate("/transactions/scheduled" as any);
+  }, [router]);
+
+  const handlePostOccurrence = useCallback((id: string) => {
+    setPendingPostScheduleId(id);
+  }, []);
+
+  const handleSkipOccurrence = useCallback((id: string) => {
+    setPendingSkipScheduleId(id);
+  }, []);
 
   const handleConfirmDeleteTx = async () => {
     if (!pendingDeleteTxId) return;
@@ -450,7 +470,7 @@ function CalendarScreenContent() {
                   <CalendarTransactionsTab
                     onDeleteTransaction={handleDeleteTransaction}
                     onLoadMore={handleLoadMoreTransactions}
-                    onPressTransaction={(tx) => setInspectedTransaction(tx)}
+                    onPressTransaction={handleInspectTransaction}
                     selectedDay={selectedDay}
                     totalCount={scopedTransactions.length}
                     transactions={scopedTransactions}
@@ -462,9 +482,9 @@ function CalendarScreenContent() {
                   <CalendarSchedulesTab
                     accounts={accounts}
                     categories={categories}
-                    onNavigateToSchedules={() => router.navigate("/transactions/scheduled" as any)}
-                    onPostOccurrence={(id) => setPendingPostScheduleId(id)}
-                    onSkipOccurrence={(id) => setPendingSkipScheduleId(id)}
+                    onNavigateToSchedules={handleNavigateToSchedules}
+                    onPostOccurrence={handlePostOccurrence}
+                    onSkipOccurrence={handleSkipOccurrence}
                     schedules={scopedSchedules}
                     selectedDay={selectedDay}
                   />
@@ -505,7 +525,7 @@ function CalendarScreenContent() {
 
       {/* Transaction Details Modal */}
       <TransactionDetailModal
-        onClose={() => setInspectedTransaction(null)}
+        onClose={handleCloseInspectTransaction}
         onDelete={handleDeleteTransaction}
         onEdit={handleEditTransaction}
         transaction={inspectedTransaction}

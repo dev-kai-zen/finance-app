@@ -30,7 +30,7 @@ interface ScheduleDateGroup {
   items: CalendarScheduleOccurrence[];
 }
 
-export function CalendarSchedulesTab({
+export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
   schedules,
   selectedDay,
   accounts,
@@ -233,7 +233,7 @@ export function CalendarSchedulesTab({
       ))}
     </View>
   );
-}
+});
 
 function renderStatusBadge(
   status: CalendarScheduleOccurrence["status"],
