@@ -10,6 +10,7 @@ import {
 } from "../repositories/subscriptions.repository";
 import {
   getScheduleBySubscriptionId,
+  getScheduledTransaction,
   processDueSchedules,
   removeScheduledTransaction,
   restoreScheduledTransaction,
@@ -70,6 +71,21 @@ export function restoreSubscriptionInContext(
   const sub = findSubscriptionById(subscriptionId, context);
   if (sub) {
     const linkedScheduleId = syncSubscriptionScheduleInContext(sub, context);
+    const targetScheduleId = linkedScheduleId ?? resolveScheduleId(sub, context);
+    if (targetScheduleId) {
+      const sched = getScheduledTransaction(targetScheduleId, context);
+      if (sched && (sched.archivedAt !== null || sched.nextNominalAt === null)) {
+        const targetStatus: "active" | "paused" =
+          sub.status === "paused" || sub.status === "cancelled"
+            ? "paused"
+            : "active";
+        restoreScheduledTransaction(
+          targetScheduleId,
+          { status: targetStatus },
+          context,
+        );
+      }
+    }
     if (linkedScheduleId && linkedScheduleId !== sub.scheduleId) {
       updateSubscriptionRecord(
         subscriptionId,

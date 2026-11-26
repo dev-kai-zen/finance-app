@@ -202,13 +202,21 @@ function setupTestDb() {
 const loadWithNativeMocks = Module._load;
 Module._load = function (request, ...args) {
   if (request === "@/modules/scheduled-transactions") return {
-    getScheduleBySubscriptionId: () => null,
-    processDueSchedules() {},
+    getScheduleBySubscriptionId: (...args) =>
+      require("../../scheduled-transactions/repositories/scheduled-transactions.repository").findScheduleBySubscriptionId(...args),
+    processDueSchedules: (...args) =>
+      require("../../scheduled-transactions/services/process-due-schedules.service").processDueSchedules(...args),
     saveScheduledTransactionInContext: (...args) => require("../../scheduled-transactions/services/save-scheduled-transaction.service").saveScheduledTransactionInContext(...args),
     resolveScheduleOccurrencePaidInContext: (...args) =>
       require("../../scheduled-transactions/services/resolve-schedule-paid.service").resolveScheduleOccurrencePaidInContext(...args),
     setScheduledTransactionPaused() {},
     getScheduledTransaction: (...args) => require("../../scheduled-transactions/repositories/scheduled-transactions.repository").findScheduledTransaction(...args),
+    restoreScheduledTransaction: (...args) =>
+      require("../../scheduled-transactions/services/manage-scheduled-transaction.service").restoreScheduledTransaction(...args),
+    removeScheduledTransaction: (...args) =>
+      require("../../scheduled-transactions/services/manage-scheduled-transaction.service").removeScheduledTransaction(...args),
+    unlinkScheduledTransactionSubscription: (...args) =>
+      require("../../scheduled-transactions/services/manage-scheduled-transaction.service").unlinkScheduledTransactionSubscription(...args),
   };
   if (request === "@/modules/transactions") return {
     recordTransactionInContext(command, context) {
@@ -553,5 +561,70 @@ test("SUB-F01: intentional recurrence edit updates next renewal date", t => {
 
     const after = sqlite.prepare("SELECT next_renewal_date FROM subscriptions WHERE id = ?").get(id);
     assert.equal(after.next_renewal_date, newDate.getTime(), "Intentional first billing date change must recalculate renewal");
+  } finally { sqlite.close(); }
+});
+
+test("SUB-F02: restoring an archived subscription reactivates its linked schedule and restores a valid next nominal date", t => {
+  const fixedNow = new Date(2026, 10, 26, 12, 0, 0);
+  t.mock.timers.enable({ apis: ["Date"], now: fixedNow.getTime() });
+  const db = setupTestDb();
+  try {
+    const firstBillingDate = new Date(2026, 10, 26);
+    const id = saveSubscriptionInContext(
+      input({
+        name: "Netflix",
+        amountMinorUnits: 54900,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        firstBillingDate,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+        autoPost: false,
+      }),
+      undefined,
+      db,
+    );
+
+    const sub = sqlite.prepare("SELECT schedule_id FROM subscriptions WHERE id = ?").get(id);
+    assert.ok(sub.schedule_id, "Linked schedule must be created");
+
+    // Generate due occurrence and post it to establish schedule posting history
+    const { processDueSchedules } = require("../../scheduled-transactions/services/process-due-schedules.service");
+    processDueSchedules(fixedNow);
+
+    const payResult = recordSubscriptionPayment(id, { paidAt: fixedNow });
+    assert.ok(payResult.transactionId);
+
+    // Archive the subscription
+    const { deleteOrArchiveSubscriptionInContext, restoreSubscriptionInContext } = require("../services/delete-subscription.service");
+    const archiveResult = deleteOrArchiveSubscriptionInContext(id, db);
+    assert.equal(archiveResult, "archived");
+
+    // Verify both subscription and schedule are archived with null next date
+    const archivedSub = sqlite.prepare("SELECT archived_at FROM subscriptions WHERE id = ?").get(id);
+    assert.ok(archivedSub.archived_at !== null, "Subscription must be archived");
+
+    const archivedSched = sqlite.prepare("SELECT status, archived_at, next_nominal_at FROM transaction_schedules WHERE id = ?").get(sub.schedule_id);
+    assert.ok(archivedSched.archived_at !== null, "Linked schedule must be archived");
+    assert.equal(archivedSched.next_nominal_at, null, "Archived schedule has null next_nominal_at");
+
+    // Restore the subscription
+    restoreSubscriptionInContext(id, db);
+
+    // Verify subscription is restored
+    const restoredSub = sqlite.prepare("SELECT status, archived_at FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(restoredSub.archived_at, null, "Subscription archived_at must be cleared");
+    assert.equal(restoredSub.status, "active");
+
+    // Verify linked schedule is restored with valid next date
+    const restoredSched = sqlite.prepare("SELECT status, archived_at, next_nominal_at, next_effective_at FROM transaction_schedules WHERE id = ?").get(sub.schedule_id);
+    assert.equal(restoredSched.archived_at, null, "Linked schedule archived_at must be cleared");
+    assert.equal(restoredSched.status, "active", "Linked schedule status must be active");
+    assert.ok(restoredSched.next_nominal_at !== null, "Linked schedule next_nominal_at must NOT be null");
+    assert.ok(restoredSched.next_effective_at !== null, "Linked schedule next_effective_at must NOT be null");
+
+    // Next nominal date should be Dec 26, 2026 (1 month after Nov 26 payment)
+    const expectedNext = new Date(2026, 11, 26);
+    assert.equal(new Date(restoredSched.next_nominal_at).toDateString(), expectedNext.toDateString());
   } finally { sqlite.close(); }
 });

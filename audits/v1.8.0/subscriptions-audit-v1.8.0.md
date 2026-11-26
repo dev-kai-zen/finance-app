@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | In progress | SUB-F01 fixed and verified with durable regressions. SUB-F02–F04 pending review/remediation. |
+| Remediate | In progress | SUB-F01 and SUB-F02 fixed and verified with durable regressions. SUB-F03–F04 pending review/remediation. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -94,7 +94,7 @@ All fixtures freeze local time to **November 26, 2026 at noon**. Costs are integ
 | Probe | Fixture and correct expectation | Executed observation |
 | --- | --- | --- |
 | SUB-F01 | Monthly PHP 149, first due **Dec 1**. Pay early on Nov 26, advancing renewal to **Jan 1, 2027**. Edit only note with the same first billing date and no explicit next renewal (as the form does). Expect Jan 1 retained. | **FIXED in v1.8.0:** Renewal date retained at Jan 1, 2027 on note/name/amount edit. Linked schedule cursor also retained. Covered by permanent regression tests `SUB-F01` in `subscription-remediation.test.cjs`. |
-| SUB-F02 | Create due subscription, process and Post one occurrence, archive the posted schedule and subscription, then call actual `restoreSubscriptionInContext`. Expect non-archived linked schedule with a valid next date, unless explicitly completed. | Linked schedule: `status = active`, `archived_at = 1795665600000`, `next_nominal_at = null`. It remains excluded from active due processing. Probe builds the archived state with actual schedule removal plus subscription archive repository because the reused harness mocks public removal. |
+| SUB-F02 | Create due subscription, process and Post one occurrence, archive the posted schedule and subscription, then call actual `restoreSubscriptionInContext`. Expect non-archived linked schedule with a valid next date, unless explicitly completed. | **FIXED in v1.8.0:** Restoring subscription reactivates linked schedule via `restoreScheduledTransaction`, clearing `archived_at` and setting next nominal date to the next valid unposted occurrence. Covered by permanent regression test `SUB-F02` in `subscription-remediation.test.cjs`. |
 | SUB-F03 | Trial starts Nov 26; trial ends **Dec 10**; PHP 149, auto-post on. Process Nov 26. Under a free-until-trial-end contract, expect no charge. | **One expense/payment before trial end.** Production mapping never receives trial end; card/reminder date source also differs from the stored trial date. Final billing policy still needs agreement. |
 | SUB-F04 / B02 | USD 15 (`1500`) subscription with PHP account; compare manual and automatic payment using the same saved cost and local rate book. Expect equal PHP ledger deltas or a validation rejection before either path. | Manual debit **-87750** (PHP 877.50), automatic debit **-1500** (PHP 15). Default quote in this fixture: PHP 58.50/USD. No network quote used. |
 
@@ -116,12 +116,17 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - If recurrence did not change and no explicit `nextRenewalDate` is provided, `existing.nextRenewalDate` is preserved.
    - Verified via 3 dedicated regression tests in `subscription-remediation.test.cjs`: early payment renewal retention, overdue date retention, and intentional recurrence recalculation. All 24 subscription tests and TypeScript typecheck pass.
 
-### SUB-F02 — P1, reproduced: subscription restore leaves the posted schedule archived
+### SUB-F02 — P1, FIXED: subscription restore leaves the posted schedule archived
 
 1. **Problem/evidence:** Restore shows subscription active while its linked schedule remains archived with null next date.
 2. **Cause/path:** `restoreSubscriptionInContext` calls `syncSubscriptionScheduleInContext`; shared save preserves existing null dates and never clears `archivedAt`. The public `restoreScheduledTransaction` is imported by the lifecycle service but not called. Clearing only the subscription archive does not repair schedule lifecycle.
 3. **Smallest fix to review:** Use the owning scheduler's existing public restore capability in the same transaction after synchronizing template fields; preserve paused/cancelled/completed intent and avoid old-date replay. No new restore engine.
 4. **Proof required:** Actual archive→restore orchestration with/without payments, active/paused/cancelled and ended schedules, stale/missing schedule IDs, repeated restore and injected failure. Assert archive flags, status, next dates, posting idempotency and unchanged historical ledger.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `delete-subscription.service.ts`, `restoreSubscriptionInContext` now detects when the linked schedule has `archivedAt !== null` or `nextNominalAt === null`.
+   - Invokes the public `restoreScheduledTransaction(targetScheduleId, { status: targetStatus }, context)` in the same transaction.
+   - Clears `transaction_schedules.archived_at = NULL` and re-anchors the cursor to the next valid unposted occurrence, preserving paused/active intent without replaying posted history.
+   - Verified via automated regression test `SUB-F02` in `subscription-remediation.test.cjs`. All 25 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F03 — P1, reproduced behavior / policy open: trial dates disagree with charging/countdown/reminders
 
@@ -213,7 +218,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 | ID | Required coverage |
 | --- | --- |
 | SUB-V01 | Promote F01 fixture; compare paid-through renewal/schedule/ledger before and after non-recurrence and recurrence edits. Verified in `subscription-remediation.test.cjs`. |
-| SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. |
+| SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. |
 | SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. |
 | SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. |
