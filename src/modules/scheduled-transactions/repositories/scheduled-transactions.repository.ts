@@ -317,7 +317,7 @@ export function listScheduleOccurrencesInDateWindow(
     .select()
     .from(transactionScheduleOccurrences)
     .where(and(gte(calendarDueAt, startMs), lte(calendarDueAt, endMs)))
-    .orderBy(asc(transactionScheduleOccurrences.nominalDueAt))
+    .orderBy(asc(calendarDueAt))
     .all()
     .map(mapOccurrence);
 }

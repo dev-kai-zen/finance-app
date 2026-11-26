@@ -200,6 +200,7 @@ const {
 const {
   insertScheduleOccurrence,
   updateScheduledTransactionRecord,
+  listScheduleOccurrencesInDateWindow,
 } = require("../repositories/scheduled-transactions.repository.ts");
 const {
   getCalendarScheduleOccurrences,
@@ -318,6 +319,172 @@ test("ST-F05 fix: projection still fills upcoming rows inside the month window",
     assert.equal(projected.length, 1);
     assert.equal(projected[0].sequenceNumber, 3);
     assert.equal(projected[0].status, "upcoming");
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CAL-F09 fix: listScheduleOccurrencesInDateWindow uses schedule_occurrences_calendar_due_index without full scan or temp B-tree", () => {
+  setupTestDb();
+  try {
+    // Check SQLite EXPLAIN QUERY PLAN directly
+    const plan = sqlite
+      .prepare(
+        "EXPLAIN QUERY PLAN SELECT * FROM transaction_schedule_occurrences WHERE COALESCE(effective_due_at, nominal_due_at) >= ? AND COALESCE(effective_due_at, nominal_due_at) <= ? ORDER BY COALESCE(effective_due_at, nominal_due_at) ASC;",
+      )
+      .all(1772409600000, 1775087999999);
+
+    const planDetails = plan.map((p) => p.detail);
+
+    // 1. Must use the calendar due index
+    const usesIndex = planDetails.some((d) =>
+      d.includes("schedule_occurrences_calendar_due_index"),
+    );
+    assert.ok(
+      usesIndex,
+      `Expected plan to use schedule_occurrences_calendar_due_index, got: ${JSON.stringify(planDetails)}`,
+    );
+
+    // 2. Must NOT perform a table scan
+    const hasScan = planDetails.some((d) =>
+      d.includes("SCAN transaction_schedule_occurrences"),
+    );
+    assert.equal(hasScan, false, "Query must not scan table");
+
+    // 3. Must NOT build a temporary B-tree for ORDER BY
+    const hasTempBTree = planDetails.some((d) =>
+      d.includes("USE TEMP B-TREE FOR ORDER BY"),
+    );
+    assert.equal(hasTempBTree, false, "Query must not construct a temp B-tree for sorting");
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("CAL-F09 fix: listScheduleOccurrencesInDateWindow correctly resolves effective vs nominal dates, month shifts, and exclusions", () => {
+  setupTestDb();
+  try {
+    const startsAt = new Date("2026-01-01T09:00:00.000Z");
+    const schedule = saveScheduledTransactionInContext(
+      {
+        transactionType: "expense",
+        accountId: "acc_1",
+        categoryId: "cat_rent",
+        amountMinorUnits: -15000,
+        name: "Rent",
+        note: null,
+        frequency: "monthly",
+        intervalCount: 1,
+        startsAt,
+        timeZone: "UTC",
+        endMode: "never",
+        weekendPolicy: "exact",
+        autoPost: false,
+      },
+      undefined,
+      database,
+    );
+
+    const now = Date.now();
+    const insert = sqlite.prepare(`
+      INSERT INTO transaction_schedule_occurrences (
+        id, schedule_id, sequence_number, nominal_due_at, effective_due_at, template_snapshot, status, processed_at, error_message, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const snapshotStr = JSON.stringify({
+      name: "Rent",
+      amountMinorUnits: -15000,
+      transactionType: "expense",
+      accountId: "acc_1",
+      categoryId: "cat_rent",
+    });
+
+    // 1. Nominal in March, effectiveDueAt is NULL -> must match March window
+    insert.run(
+      "occ_march_null_effective",
+      schedule.id,
+      1,
+      new Date("2026-03-10T09:00:00.000Z").getTime(),
+      null,
+      snapshotStr,
+      "due",
+      null,
+      null,
+      now,
+      now,
+    );
+
+    // 2. Nominal in Feb (Feb 28), but weekend shift moved effective to March 2 -> must match March window
+    insert.run(
+      "occ_feb_shifted_to_march",
+      schedule.id,
+      2,
+      new Date("2026-02-28T09:00:00.000Z").getTime(),
+      new Date("2026-03-02T09:00:00.000Z").getTime(),
+      snapshotStr,
+      "due",
+      null,
+      null,
+      now,
+      now,
+    );
+
+    // 3. Nominal in March (March 31), but shifted to April 2 -> must be EXCLUDED from March window
+    insert.run(
+      "occ_march_shifted_to_april",
+      schedule.id,
+      3,
+      new Date("2026-03-31T09:00:00.000Z").getTime(),
+      new Date("2026-04-02T09:00:00.000Z").getTime(),
+      snapshotStr,
+      "due",
+      null,
+      null,
+      now,
+      now,
+    );
+
+    // 4. Out of window entirely (January 15) -> must be EXCLUDED from March window
+    insert.run(
+      "occ_jan_out_of_window",
+      schedule.id,
+      4,
+      new Date("2026-01-15T09:00:00.000Z").getTime(),
+      new Date("2026-01-15T09:00:00.000Z").getTime(),
+      snapshotStr,
+      "posted",
+      now,
+      null,
+      now,
+      now,
+    );
+
+    const marchStart = new Date("2026-03-01T00:00:00.000Z");
+    const marchEnd = new Date("2026-03-31T23:59:59.999Z");
+
+    const marchRows = listScheduleOccurrencesInDateWindow(
+      marchStart,
+      marchEnd,
+      database,
+    );
+
+    // Assert only occurrences resolving to March are returned
+    assert.equal(marchRows.length, 2, "Expected exactly 2 occurrences in March window");
+    assert.equal(marchRows[0].id, "occ_feb_shifted_to_march", "March 2 effective date should be first");
+    assert.equal(marchRows[1].id, "occ_march_null_effective", "March 10 nominal fallback should be second");
+
+    // Query April window: should contain the occurrence shifted out of March
+    const aprilStart = new Date("2026-04-01T00:00:00.000Z");
+    const aprilEnd = new Date("2026-04-30T23:59:59.999Z");
+
+    const aprilRows = listScheduleOccurrencesInDateWindow(
+      aprilStart,
+      aprilEnd,
+      database,
+    );
+    assert.equal(aprilRows.length, 1);
+    assert.equal(aprilRows[0].id, "occ_march_shifted_to_april");
   } finally {
     sqlite.close();
   }
