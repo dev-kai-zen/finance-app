@@ -8,7 +8,7 @@
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Two confirmed financial-display defects affect the forecast and category spending. Read failures can look like valid empty/zero results, mutation failures are hidden, and measured synchronous reads exceed the 8.3–16.6 ms frame budget at scale. No ledger corruption or duplicate posting was demonstrated by this audit.
 
-**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. CAL-F03 query failure recovery is fixed with error tracking, retry callbacks, and `PageErrorState` integration in `calendar-screen.tsx` and `calendar-recovery.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
+**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. CAL-F03 query failure recovery is fixed with error tracking, retry callbacks, and `PageErrorState` integration in `calendar-screen.tsx` and `calendar-recovery.test.cjs` regressions. CAL-F04 mutation feedback is fixed with pending and error state forwarding, modal retention on failure, and error clearing on dismissal in `calendar-screen.tsx` and `use-calendar-data.ts`, covered by `calendar-mutation-feedback.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
 
 ## 1. Prior audits and workflow
 
@@ -116,7 +116,7 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 | CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite. |
 | CAL-F02 | P1 — FIXED | Top Expense Categories adds refunds to spending | Fixed with signed parent netting in buildCategoryExpenseBreakdown and category-expense-breakdown.test.cjs regressions. |
 | CAL-F03 | P2 — FIXED | Read failures become empty/zero success with no recovery | Fixed with error and retry handling in useCalendarData, PageErrorState in CalendarScreen, and calendar-recovery.test.cjs regressions. |
-| CAL-F04 | P2 | Failed post/skip/edit/delete actions lack error feedback | Actual post/skip callback execution; error props omitted in screen. |
+| CAL-F04 | P2 — FIXED | Failed post/skip/edit/delete actions lack error feedback | Fixed with pending and error state forwarding, modal retention on failure, and calendar-mutation-feedback.test.cjs regressions. |
 | CAL-F05 | P2 | Failed schedule occurrences display as Upcoming | Complete occurrence-status union versus badge/action branches. |
 | CAL-F06 | P2 | Render-time reads, eager supporting queries, and duplicate mutation refresh | Hook counters, lifecycle/caller trace, SQL samples. |
 | CAL-F07 | P2 | Display slicing retains full month hydration and an unlimited month cache | Actual 1/1k/10k-row service execution and source. |
@@ -151,8 +151,8 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 1. **Actual problem:** Failed post/skip closes the dialog with no explanation. Failed edits/deletes receive no useful service error in Calendar's shared form/confirmation.
 2. **Cause/path:** [Post/skip handlers](../../src/modules/calendar/screens/calendar-screen.tsx#L242) ignore the boolean result and always clear IDs. `useCalendarData` discards schedule `pending/error`; the screen discards `useTransactions.error`. Existing `TransactionFormModal` and `ConfirmModal` accept `error`, but Calendar supplies none.
-3. **Smallest fix:** Expose/forward pending and error state, close schedule confirmations only on success, and clear action-specific errors on dismissal/retry. Reuse existing dialogs and owning mutation services.
-4. **Regression proof:** Inject posting, skipping, transaction update, transfer update, and delete failures. Assert visible feedback, preserved edit draft/action identity, successful retry, correct pending controls, and no duplicate successful commit.
+3. **Smallest fix:** Expose/forward pending and error state, close schedule confirmations only on success, and clear action-specific errors on dismissal/retry. Reuse existing dialogs and owning mutation services. Implemented in [use-calendar-data.ts](../../src/modules/calendar/hooks/use-calendar-data.ts) by exposing `schedulesPendingAction`, `schedulesError`, and `clearSchedulesError`, and in [calendar-screen.tsx](../../src/modules/calendar/screens/calendar-screen.tsx) by wiring `error`/`onClearError`/`pending` to `ConfirmModal` (Delete, Post, Skip) and `TransactionFormModal`, keeping dialogs open on mutation failure, and preventing action errors from crashing the background calendar view.
+4. **Regression proof:** Inject posting, skipping, transaction update, transfer update, and delete failures. Assert visible feedback, preserved edit draft/action identity, successful retry, correct pending controls, and no duplicate successful commit. Permanent regressions implemented in [calendar-mutation-feedback.test.cjs](../../src/modules/calendar/__tests__/calendar-mutation-feedback.test.cjs).
 
 ### CAL-F05 — Failed occurrence state
 

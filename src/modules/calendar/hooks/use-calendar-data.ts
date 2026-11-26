@@ -205,7 +205,9 @@ export function useCalendarData() {
     schedules,
     occurrences,
     loading: schedulesLoading,
+    pending: schedulesPendingAction,
     error: schedulesError,
+    clearError: clearSchedulesError,
     refresh: refreshSchedules,
     postOccurrence: rawPostOccurrence,
     skipOccurrence: rawSkipOccurrence,
@@ -708,5 +710,8 @@ export function useCalendarData() {
     refreshAll,
     postOccurrence,
     skipOccurrence,
+    schedulesPendingAction,
+    schedulesError,
+    clearSchedulesError,
   };
 }

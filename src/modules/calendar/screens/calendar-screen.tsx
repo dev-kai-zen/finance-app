@@ -95,6 +95,9 @@ function CalendarScreenContent() {
     refreshAll,
     postOccurrence,
     skipOccurrence,
+    schedulesPendingAction,
+    schedulesError,
+    clearSchedulesError,
     loading: calendarLoading,
   } = useCalendarData();
 
@@ -105,6 +108,8 @@ function CalendarScreenContent() {
     editTransfer,
     deleteTx,
     pendingAction,
+    error: txError,
+    clearError: clearTxError,
   } = useTransactions({ skipQuery: true });
 
   const {
@@ -142,6 +147,11 @@ function CalendarScreenContent() {
   const [pendingSkipScheduleId, setPendingSkipScheduleId] = useState<
     string | null
   >(null);
+
+  const isScheduleActionPending = Boolean(
+    pendingPostScheduleId || pendingSkipScheduleId,
+  );
+  const fatalCalendarError = isScheduleActionPending ? null : calendarError;
 
   // Walkthrough targets & coordination
   const navControlsRef = useWalkthroughTarget("calArrows");
@@ -235,9 +245,9 @@ function CalendarScreenContent() {
 
   const handleConfirmDeleteTx = async () => {
     if (!pendingDeleteTxId) return;
-    setInspectedTransaction(null);
     const success = await deleteTx(pendingDeleteTxId);
     if (success) {
+      setInspectedTransaction(null);
       setPendingDeleteTxId(null);
       refreshAll();
     }
@@ -245,14 +255,20 @@ function CalendarScreenContent() {
 
   const handleConfirmPostSchedule = () => {
     if (!pendingPostScheduleId) return;
-    postOccurrence(pendingPostScheduleId);
-    setPendingPostScheduleId(null);
+    const ok = postOccurrence(pendingPostScheduleId);
+    if (ok) {
+      setPendingPostScheduleId(null);
+      refreshAll();
+    }
   };
 
   const handleConfirmSkipSchedule = () => {
     if (!pendingSkipScheduleId) return;
-    skipOccurrence(pendingSkipScheduleId);
-    setPendingSkipScheduleId(null);
+    const ok = skipOccurrence(pendingSkipScheduleId);
+    if (ok) {
+      setPendingSkipScheduleId(null);
+      refreshAll();
+    }
   };
 
   const handleSelectTab = (tab: CalendarTab) => {
@@ -363,8 +379,8 @@ function CalendarScreenContent() {
 
         {loading ? (
           <PageLoadingState message="Loading calendar..." variant="grid" />
-        ) : calendarError ? (
-          <PageErrorState message={calendarError} onRetry={refreshAll} />
+        ) : fatalCalendarError ? (
+          <PageErrorState message={fatalCalendarError} onRetry={refreshAll} />
         ) : (
           <>
             {/* 2. Calendar Grid */}
@@ -501,14 +517,17 @@ function CalendarScreenContent() {
         accounts={accounts}
         archivedPresets={archivedPresets}
         categories={categories}
+        error={txError}
         initialTransaction={prefilledTransaction}
         isEditing={isEditingTransaction}
         onArchivePreset={archivePreset}
+        onClearError={clearTxError}
         onClearPresetError={onClearPresetError}
         onClose={() => {
           setFormModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
+          clearTxError();
         }}
         onDeletePreset={deletePreset}
         onPermanentlyDeletePreset={permanentlyDeletePreset}
@@ -549,8 +568,12 @@ function CalendarScreenContent() {
       <ConfirmModal
         cancelLabel="Keep"
         confirmLabel="Delete"
+        error={pendingDeleteTxId ? txError : null}
         message="Are you sure you want to delete this transaction?"
-        onCancel={() => setPendingDeleteTxId(null)}
+        onCancel={() => {
+          setPendingDeleteTxId(null);
+          clearTxError();
+        }}
         onConfirm={handleConfirmDeleteTx}
         pending={pendingAction}
         title="Delete Transaction"
@@ -562,9 +585,14 @@ function CalendarScreenContent() {
       <ConfirmModal
         cancelLabel="Cancel"
         confirmLabel="Post Now"
+        error={pendingPostScheduleId ? schedulesError : null}
         message="Do you want to post this scheduled transaction now?"
-        onCancel={() => setPendingPostScheduleId(null)}
+        onCancel={() => {
+          setPendingPostScheduleId(null);
+          clearSchedulesError();
+        }}
         onConfirm={handleConfirmPostSchedule}
+        pending={schedulesPendingAction}
         title="Post Scheduled Transaction"
         variant="primary"
         visible={pendingPostScheduleId !== null}
@@ -574,9 +602,14 @@ function CalendarScreenContent() {
       <ConfirmModal
         cancelLabel="Cancel"
         confirmLabel="Skip Occurrence"
+        error={pendingSkipScheduleId ? schedulesError : null}
         message="This scheduled occurrence will be marked as skipped and will not record a transaction."
-        onCancel={() => setPendingSkipScheduleId(null)}
+        onCancel={() => {
+          setPendingSkipScheduleId(null);
+          clearSchedulesError();
+        }}
         onConfirm={handleConfirmSkipSchedule}
+        pending={schedulesPendingAction}
         title="Skip Scheduled Occurrence"
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
