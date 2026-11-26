@@ -4,6 +4,7 @@ import { ArrowLeftRight } from "lucide-react-native";
 import { AppButton, PageEmptyState } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   TransactionRow,
   type TransactionListItem,
@@ -39,6 +40,7 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
   onLoadMore,
 }: CalendarTransactionsTabProps) {
   const theme = useAppTheme();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const effectiveTotal = totalCount ?? transactions.length;
@@ -65,10 +67,10 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
 
     return keys.map((key) => ({
       dateKey: key,
-      label: formatFriendlyDate(key),
+      label: formatFriendlyDate(key, locale, t),
       items: map.get(key)!,
     }));
-  }, [displayedTransactions]);
+  }, [displayedTransactions, locale, t]);
 
   if (transactions.length === 0) {
     return (
@@ -76,11 +78,13 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
         <PageEmptyState
           description={
             selectedDay
-              ? `No transactions recorded on ${formatFriendlyDate(selectedDay)}.`
-              : "No transactions recorded for this month."
+              ? t("calendar.empty.noTransactionsDay", {
+                  date: formatFriendlyDate(selectedDay, locale, t),
+                })
+              : t("calendar.empty.noTransactionsMonth")
           }
           icon={<ArrowLeftRight color={theme.colors.primary} size={32} />}
-          title="No Transactions Found"
+          title={t("calendar.empty.noTransactionsTitle")}
         />
       </View>
     );
@@ -103,11 +107,14 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
         {hasMore && (
           <View style={styles.loadMoreContainer}>
             <Text style={styles.loadMoreText}>
-              Showing {displayedTransactions.length} of {effectiveTotal} records
+              {t("calendar.loadMore", {
+                visible: displayedTransactions.length,
+                total: effectiveTotal,
+              })}
             </Text>
             {onLoadMore && (
               <AppButton
-                label="Load next 50"
+                label={t("calendar.loadNext50")}
                 onPress={onLoadMore}
                 size="small"
                 variant="secondary"
@@ -129,7 +136,9 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
                 {group.items.length}{" "}
-                {group.items.length === 1 ? "record" : "records"}
+                {group.items.length === 1
+                  ? t("calendar.scope.units.record")
+                  : t("calendar.scope.units.records")}
               </Text>
             </View>
           </View>
@@ -150,11 +159,14 @@ export const CalendarTransactionsTab = React.memo(function CalendarTransactionsT
       {hasMore && (
         <View style={styles.loadMoreContainer}>
           <Text style={styles.loadMoreText}>
-            Showing {displayedTransactions.length} of {effectiveTotal} records
+            {t("calendar.loadMore", {
+              visible: displayedTransactions.length,
+              total: effectiveTotal,
+            })}
           </Text>
           {onLoadMore && (
             <AppButton
-              label="Load next 50"
+              label={t("calendar.loadNext50")}
               onPress={onLoadMore}
               size="small"
               variant="secondary"

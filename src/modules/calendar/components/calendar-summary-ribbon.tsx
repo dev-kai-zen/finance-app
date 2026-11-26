@@ -10,6 +10,7 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -32,6 +33,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
   isLoading = false,
 }: CalendarSummaryRibbonProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
@@ -57,7 +59,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Inflow</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.inflow")}</Text>
           </View>
           <Text
             style={[
@@ -83,7 +85,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Outflow</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.outflow")}</Text>
           </View>
           <Text
             style={[
@@ -109,7 +111,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Net</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.net")}</Text>
           </View>
           <Text
             style={[
@@ -147,7 +149,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Assets</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.assets")}</Text>
           </View>
           <Text
             style={[
@@ -175,7 +177,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Liabilities</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.liabilities")}</Text>
           </View>
           <Text
             style={[
@@ -201,7 +203,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>Net Worth</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.netWorth")}</Text>
           </View>
           <Text
             style={[
@@ -226,7 +228,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
         <View style={styles.metricItem}>
           <View style={styles.metricLabelRow}>
             <Clock color={theme.colors.warning ?? "#f59e0b"} size={13} />
-            <Text style={styles.metricLabel}>Total Due</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.totalDue")}</Text>
           </View>
           <Text
             style={[
@@ -243,22 +245,34 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
         <View style={styles.separator} />
 
         <View style={styles.metricItem}>
-          <Text style={styles.metricLabel}>Upcoming</Text>
+          <Text style={styles.metricLabel}>{t("calendar.metrics.upcoming")}</Text>
           <Text style={styles.metricValue}>
             {isLoading
               ? "—"
-              : `${metrics.schedulesPendingCount} ${metrics.schedulesPendingCount === 1 ? "item" : "items"}`}
+              : t("calendar.metrics.itemCount", {
+                  count: metrics.schedulesPendingCount,
+                  unit:
+                    metrics.schedulesPendingCount === 1
+                      ? t("calendar.scope.units.item")
+                      : t("calendar.scope.units.items"),
+                })}
           </Text>
         </View>
 
         <View style={styles.separator} />
 
         <View style={styles.metricItem}>
-          <Text style={styles.metricLabel}>Posted</Text>
+          <Text style={styles.metricLabel}>{t("calendar.metrics.posted")}</Text>
           <Text style={[styles.metricValue, { color: theme.colors.success }]}>
             {isLoading
               ? "—"
-              : `${metrics.schedulesPostedCount} ${metrics.schedulesPostedCount === 1 ? "item" : "items"}`}
+              : t("calendar.metrics.itemCount", {
+                  count: metrics.schedulesPostedCount,
+                  unit:
+                    metrics.schedulesPostedCount === 1
+                      ? t("calendar.scope.units.item")
+                      : t("calendar.scope.units.items"),
+                })}
           </Text>
         </View>
       </View>
@@ -272,7 +286,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
   return (
     <View style={styles.ribbon}>
       <View style={styles.metricItem}>
-        <Text style={styles.metricLabel}>Net Result</Text>
+        <Text style={styles.metricLabel}>{t("calendar.metrics.netResult")}</Text>
         <Text
           style={[
             styles.metricValue,
@@ -290,7 +304,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
       <View style={styles.separator} />
 
       <View style={styles.metricItem}>
-        <Text style={styles.metricLabel}>Savings Rate</Text>
+        <Text style={styles.metricLabel}>{t("calendar.metrics.savingsRate")}</Text>
         <Text style={styles.metricValue}>
           {isLoading
             ? "—"
@@ -304,7 +318,7 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
         <>
           <View style={styles.separator} />
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Month Forecast</Text>
+            <Text style={styles.metricLabel}>{t("calendar.metrics.monthForecast")}</Text>
             <Text
               style={[
                 styles.metricValue,

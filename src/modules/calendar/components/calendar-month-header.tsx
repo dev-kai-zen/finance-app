@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { CalendarMonth } from "../types/calendar.types";
-import { MONTH_NAMES, getTodayParts } from "../utils/calendar-dates";
+import { getLocalizedMonthName, getTodayParts } from "../utils/calendar-dates";
 
 export interface CalendarMonthHeaderProps {
   activeMonth: CalendarMonth;
@@ -22,6 +23,7 @@ export function CalendarMonthHeader({
   navControlsRef,
 }: CalendarMonthHeaderProps) {
   const theme = useAppTheme();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const todayParts = getTodayParts();
 
@@ -29,7 +31,8 @@ export function CalendarMonthHeader({
     activeMonth.year === todayParts.year &&
     activeMonth.month === todayParts.month;
 
-  const monthLabel = `${MONTH_NAMES[activeMonth.month]} ${activeMonth.year}`;
+  const localizedMonth = getLocalizedMonthName(activeMonth.year, activeMonth.month, locale);
+  const monthLabel = `${localizedMonth} ${activeMonth.year}`;
 
   return (
     <View style={styles.container}>
@@ -38,7 +41,7 @@ export function CalendarMonthHeader({
 
         {!isCurrentMonthNow && (
           <Pressable
-            accessibilityLabel="Jump to today"
+            accessibilityLabel={t("calendar.jumpToToday")}
             accessibilityRole="button"
             onPress={onToday}
             style={({ pressed }) => [
@@ -47,7 +50,7 @@ export function CalendarMonthHeader({
             ]}
           >
             <RotateCcw color={theme.colors.primary} size={13} />
-            <Text style={styles.todayButtonText}>Today</Text>
+            <Text style={styles.todayButtonText}>{t("calendar.today")}</Text>
           </Pressable>
         )}
       </View>
@@ -58,7 +61,7 @@ export function CalendarMonthHeader({
         style={styles.navControls}
       >
         <Pressable
-          accessibilityLabel="Previous month"
+          accessibilityLabel={t("calendar.prevMonth")}
           accessibilityRole="button"
           onPress={onPrevMonth}
           style={({ pressed }) => [
@@ -70,7 +73,7 @@ export function CalendarMonthHeader({
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Next month"
+          accessibilityLabel={t("calendar.nextMonth")}
           accessibilityRole="button"
           onPress={onNextMonth}
           style={({ pressed }) => [

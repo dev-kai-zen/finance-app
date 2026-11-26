@@ -406,7 +406,7 @@ function CalendarScreenContent() {
         />
 
         {loading ? (
-          <PageLoadingState message="Loading calendar..." variant="grid" />
+          <PageLoadingState message={t("calendar.loading.calendar")} variant="grid" />
         ) : fatalCalendarError ? (
           <PageErrorState message={fatalCalendarError} onRetry={refreshAll} />
         ) : (
@@ -455,12 +455,12 @@ function CalendarScreenContent() {
               <PageLoadingState
                 message={
                   activeTab === "transactions"
-                    ? "Loading transactions..."
+                    ? t("calendar.loading.transactions")
                     : activeTab === "schedules"
-                      ? "Loading schedules..."
+                      ? t("calendar.loading.schedules")
                       : activeTab === "net"
-                        ? "Calculating net earnings..."
-                        : "Loading balance sheet..."
+                        ? t("calendar.loading.netEarnings")
+                        : t("calendar.loading.balanceSheet")
                 }
                 variant={
                   activeTab === "net" || activeTab === "balance_sheet"
@@ -595,51 +595,51 @@ function CalendarScreenContent() {
 
       {/* Delete Transaction Confirmation */}
       <ConfirmModal
-        cancelLabel="Keep"
-        confirmLabel="Delete"
+        cancelLabel={t("common.keep")}
+        confirmLabel={t("common.delete")}
         error={pendingDeleteTxId ? txError : null}
-        message="Are you sure you want to delete this transaction?"
+        message={t("calendar.confirm.deleteTransactionMessage")}
         onCancel={() => {
           setPendingDeleteTxId(null);
           clearTxError();
         }}
         onConfirm={handleConfirmDeleteTx}
         pending={pendingAction}
-        title="Delete Transaction"
+        title={t("calendar.confirm.deleteTransactionTitle")}
         variant="destructive"
         visible={pendingDeleteTxId !== null}
       />
 
       {/* Post Schedule Occurrence Confirmation */}
       <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Post Now"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("calendar.confirm.postNow")}
         error={pendingPostScheduleId ? schedulesError : null}
-        message="Do you want to post this scheduled transaction now?"
+        message={t("calendar.confirm.postScheduleMessage")}
         onCancel={() => {
           setPendingPostScheduleId(null);
           clearSchedulesError();
         }}
         onConfirm={handleConfirmPostSchedule}
         pending={schedulesPendingAction}
-        title="Post Scheduled Transaction"
+        title={t("calendar.confirm.postScheduleTitle")}
         variant="primary"
         visible={pendingPostScheduleId !== null}
       />
 
       {/* Skip Schedule Occurrence Confirmation */}
       <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Skip Occurrence"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("calendar.confirm.skipOccurrence")}
         error={pendingSkipScheduleId ? schedulesError : null}
-        message="This scheduled occurrence will be marked as skipped and will not record a transaction."
+        message={t("calendar.confirm.skipScheduleMessage")}
         onCancel={() => {
           setPendingSkipScheduleId(null);
           clearSchedulesError();
         }}
         onConfirm={handleConfirmSkipSchedule}
         pending={schedulesPendingAction}
-        title="Skip Scheduled Occurrence"
+        title={t("calendar.confirm.skipScheduleTitle")}
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
       />

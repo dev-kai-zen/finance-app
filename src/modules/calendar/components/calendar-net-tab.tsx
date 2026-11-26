@@ -12,6 +12,7 @@ import {
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -30,6 +31,7 @@ export function CalendarNetTab({
   isMonthScope,
 }: CalendarNetTabProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
@@ -76,7 +78,7 @@ export function CalendarNetTab({
                 size={15}
               />
             </View>
-            <Text style={styles.statCardLabel}>Inflow</Text>
+            <Text style={styles.statCardLabel}>{t("calendar.metrics.inflow")}</Text>
           </View>
           <Text
             style={[
@@ -115,7 +117,7 @@ export function CalendarNetTab({
                 size={15}
               />
             </View>
-            <Text style={styles.statCardLabel}>Outflow</Text>
+            <Text style={styles.statCardLabel}>{t("calendar.metrics.outflow")}</Text>
           </View>
           <Text
             style={[
@@ -142,7 +144,7 @@ export function CalendarNetTab({
               color={isNetPositive ? theme.colors.success : theme.colors.danger}
               size={18}
             />
-            <Text style={styles.cardTitle}>Net Cashflow</Text>
+            <Text style={styles.cardTitle}>{t("calendar.net.netCashflow")}</Text>
           </View>
           <View
             style={[
@@ -169,7 +171,9 @@ export function CalendarNetTab({
                 },
               ]}
             >
-              {isNetPositive ? "Surplus" : "Deficit"}
+              {isNetPositive
+                ? t("calendar.net.surplus")
+                : t("calendar.net.deficit")}
             </Text>
           </View>
         </View>
@@ -214,10 +218,10 @@ export function CalendarNetTab({
             </View>
             <View style={styles.ratioLegend}>
               <Text style={styles.legendText}>
-                Inflow: <Text style={{ fontWeight: "700" }}>{inflowPercent}%</Text>
+                {t("calendar.net.inflowLegend", { percent: inflowPercent })}
               </Text>
               <Text style={styles.legendText}>
-                Outflow: <Text style={{ fontWeight: "700" }}>{outflowPercent}%</Text>
+                {t("calendar.net.outflowLegend", { percent: outflowPercent })}
               </Text>
             </View>
           </View>
@@ -229,17 +233,20 @@ export function CalendarNetTab({
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
             <PieChart color={theme.colors.primary} size={18} />
-            <Text style={styles.cardTitle}>Top Expense Categories</Text>
+            <Text style={styles.cardTitle}>{t("calendar.net.topCategories")}</Text>
           </View>
           <Text style={styles.cardHeaderSub}>
-            {categoryBreakdown.length}{" "}
-            {categoryBreakdown.length === 1 ? "category" : "categories"}
+            {`${categoryBreakdown.length} ${
+              categoryBreakdown.length === 1
+                ? t("calendar.scope.units.category")
+                : t("calendar.scope.units.categories")
+            }`}
           </Text>
         </View>
 
         {categoryBreakdown.length === 0 ? (
           <Text style={styles.emptyCategoriesText}>
-            No expenses recorded for this period.
+            {t("calendar.empty.noExpensesPeriod")}
           </Text>
         ) : (
           <View style={styles.categoriesList}>
@@ -298,7 +305,7 @@ export function CalendarNetTab({
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
               <Sparkles color={theme.colors.primary} size={18} />
-              <Text style={styles.cardTitle}>Month-End Projection</Text>
+              <Text style={styles.cardTitle}>{t("calendar.net.monthEndProjection")}</Text>
             </View>
             <View
               style={[
@@ -320,7 +327,9 @@ export function CalendarNetTab({
                   },
                 ]}
               >
-                {isProjectedPositive ? "Projected Surplus" : "Projected Deficit"}
+                {isProjectedPositive
+                  ? t("calendar.net.projectedSurplus")
+                  : t("calendar.net.projectedDeficit")}
               </Text>
             </View>
           </View>
@@ -345,9 +354,7 @@ export function CalendarNetTab({
           </Text>
 
           <Text style={styles.forecastDescription}>
-            Estimated net cash position at the end of the month combining
-            recorded transactions with remaining scheduled bills and expected
-            income.
+            {t("calendar.net.forecastDescription")}
           </Text>
         </View>
       )}

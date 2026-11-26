@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Calendar as CalendarIcon, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { CalendarMonth, CalendarTab } from "../types/calendar.types";
-import { MONTH_NAMES, formatFriendlyDate } from "../utils/calendar-dates";
+import { getLocalizedMonthName, formatFriendlyDate } from "../utils/calendar-dates";
 
 export interface CalendarScopeBadgeProps {
   selectedDay: string | null;
@@ -22,25 +23,26 @@ export function CalendarScopeBadge({
   onClearDay,
 }: CalendarScopeBadgeProps) {
   const theme = useAppTheme();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const noun =
     activeTab === "transactions"
       ? itemCount === 1
-        ? "transaction"
-        : "transactions"
+        ? t("calendar.scope.units.transaction")
+        : t("calendar.scope.units.transactions")
       : activeTab === "schedules"
         ? itemCount === 1
-          ? "schedule"
-          : "schedules"
+          ? t("calendar.scope.units.schedule")
+          : t("calendar.scope.units.schedules")
         : activeTab === "balance_sheet"
           ? itemCount === 1
-            ? "account"
-            : "accounts"
-          : "records";
+            ? t("calendar.scope.units.account")
+            : t("calendar.scope.units.accounts")
+          : t("calendar.scope.units.records");
 
   if (selectedDay) {
-    const formatted = formatFriendlyDate(selectedDay);
+    const formatted = formatFriendlyDate(selectedDay, locale, t);
 
     return (
       <View style={styles.containerSelected}>
@@ -52,14 +54,20 @@ export function CalendarScopeBadge({
             <Text style={styles.title}>{formatted}</Text>
             <Text style={styles.subtitle}>
               {activeTab === "balance_sheet"
-                ? `Balances as of this day (${itemCount} ${noun})`
-                : `${itemCount} ${noun} on this day`}
+                ? t("calendar.scope.balancesAsOfThisDay", {
+                    count: itemCount,
+                    unit: noun,
+                  })
+                : t("calendar.scope.onThisDay", {
+                    count: itemCount,
+                    unit: noun,
+                  })}
             </Text>
           </View>
         </View>
 
         <Pressable
-          accessibilityLabel="View entire month"
+          accessibilityLabel={t("calendar.scope.viewEntireMonth")}
           accessibilityRole="button"
           onPress={onClearDay}
           style={({ pressed }) => [
@@ -67,14 +75,19 @@ export function CalendarScopeBadge({
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.clearButtonText}>View Month</Text>
+          <Text style={styles.clearButtonText}>{t("calendar.scope.viewMonth")}</Text>
           <X color={theme.colors.primary} size={14} />
         </Pressable>
       </View>
     );
   }
 
-  const monthLabel = `${MONTH_NAMES[activeMonth.month]} ${activeMonth.year}`;
+  const localizedMonth = getLocalizedMonthName(
+    activeMonth.year,
+    activeMonth.month,
+    locale,
+  );
+  const monthLabel = `${localizedMonth} ${activeMonth.year}`;
 
   return (
     <View style={styles.containerAll}>
@@ -83,11 +96,16 @@ export function CalendarScopeBadge({
           <CalendarIcon color={theme.colors.textSecondary} size={14} />
         </View>
         <View>
-          <Text style={styles.titleMuted}>{monthLabel} (Whole Month)</Text>
+          <Text style={styles.titleMuted}>
+            {t("calendar.scope.wholeMonth", { month: monthLabel })}
+          </Text>
           <Text style={styles.subtitle}>
             {activeTab === "balance_sheet"
-              ? "Balances as of end of month · Tap a day to inspect"
-              : `${itemCount} ${noun} · Tap a day to inspect`}
+              ? t("calendar.scope.balancesAsOfEndOfMonth")
+              : t("calendar.scope.recordsCountTapToInspect", {
+                  count: itemCount,
+                  unit: noun,
+                })}
           </Text>
         </View>
       </View>

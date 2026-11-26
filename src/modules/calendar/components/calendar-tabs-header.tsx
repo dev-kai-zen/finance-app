@@ -17,6 +17,7 @@ import { Crown } from "lucide-react-native";
 import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { CalendarTab } from "../types/calendar.types";
 
 export interface CalendarTabsHeaderProps {
@@ -53,6 +54,7 @@ export const CalendarTabsHeader = forwardRef<
   ref,
 ) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const scrollViewRef = useRef<ScrollView>(null);
   const tabLayouts = useRef<Partial<Record<CalendarTab, { x: number; width: number }>>>({});
@@ -107,7 +109,7 @@ export const CalendarTabsHeader = forwardRef<
         onContentSizeChange={handleContentSizeChange}
       >
         <Pressable
-          accessibilityLabel="Transactions tab"
+          accessibilityLabel={t("calendar.tabs.transactionsAccessibility")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "transactions" }}
           collapsable={false}
@@ -125,7 +127,7 @@ export const CalendarTabsHeader = forwardRef<
               activeTab === "transactions" && styles.activeTabText,
             ]}
           >
-            Transactions
+            {t("calendar.tabs.transactions")}
           </Text>
           {transactionCount > 0 && (
             <View
@@ -147,7 +149,7 @@ export const CalendarTabsHeader = forwardRef<
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Schedules tab"
+          accessibilityLabel={t("calendar.tabs.schedulesAccessibility")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "schedules" }}
           collapsable={false}
@@ -165,7 +167,7 @@ export const CalendarTabsHeader = forwardRef<
               activeTab === "schedules" && styles.activeTabText,
             ]}
           >
-            Schedules
+            {t("calendar.tabs.schedules")}
           </Text>
           {scheduleCount > 0 && (
             <View
@@ -187,7 +189,7 @@ export const CalendarTabsHeader = forwardRef<
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Net Earnings tab"
+          accessibilityLabel={t("calendar.tabs.netAccessibility")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "net" }}
           collapsable={false}
@@ -205,7 +207,7 @@ export const CalendarTabsHeader = forwardRef<
               activeTab === "net" && styles.activeTabText,
             ]}
           >
-            Net Earnings
+            {t("calendar.tabs.net")}
           </Text>
           {!isPro && (
             <View style={styles.proChip}>
@@ -216,7 +218,7 @@ export const CalendarTabsHeader = forwardRef<
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Balance Sheet tab"
+          accessibilityLabel={t("calendar.tabs.balanceSheetAccessibility")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "balance_sheet" }}
           collapsable={false}
@@ -234,7 +236,7 @@ export const CalendarTabsHeader = forwardRef<
               activeTab === "balance_sheet" && styles.activeTabText,
             ]}
           >
-            Balance Sheet
+            {t("calendar.tabs.balanceSheet")}
           </Text>
           {!isPro && (
             <View style={styles.proChip}>

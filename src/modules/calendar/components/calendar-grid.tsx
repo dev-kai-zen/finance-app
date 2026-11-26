@@ -1,9 +1,10 @@
-import React, { memo, useCallback } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { CalendarDayCellData, CalendarTab } from "../types/calendar.types";
-import { WEEKDAY_SHORT_NAMES } from "../utils/calendar-dates";
+import { getLocalizedWeekdayNames } from "../utils/calendar-dates";
 
 export interface CalendarGridProps {
   cells: CalendarDayCellData[];
@@ -29,13 +30,17 @@ const DayCell = memo(function DayCell({
   theme,
   styles,
 }: DayCellProps) {
+  const { t } = useLocalization();
   const handlePress = useCallback(() => {
     onToggleDay(cell.dateKey);
   }, [onToggleDay, cell.dateKey]);
 
   return (
     <Pressable
-      accessibilityLabel={`Day ${cell.dayNumber}, ${cell.dateKey}`}
+      accessibilityLabel={t("calendar.dayAccessibility", {
+        day: cell.dayNumber,
+        date: cell.dateKey,
+      })}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
       onPress={handlePress}
@@ -83,13 +88,15 @@ export const CalendarGrid = memo(function CalendarGrid({
   onToggleDay,
 }: CalendarGridProps) {
   const theme = useAppTheme();
+  const { locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
+  const weekdays = useMemo(() => getLocalizedWeekdayNames(locale), [locale]);
 
   return (
     <View style={styles.card}>
       {/* Weekday Header Row */}
       <View style={styles.weekdayRow}>
-        {WEEKDAY_SHORT_NAMES.map((name, index) => {
+        {weekdays.map((name, index) => {
           const isWeekend = index === 0 || index === 6;
           return (
             <View key={name} style={styles.weekdayCell}>

@@ -17,6 +17,42 @@ export const MONTH_NAMES = [
 
 export const WEEKDAY_SHORT_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+export function resolveBcp47Locale(locale?: string): string {
+  if (locale === "fil") return "fil-PH";
+  if (locale === "es") return "es-ES";
+  return "en-US";
+}
+
+export function getLocalizedMonthName(
+  year: number,
+  monthIndex: number,
+  locale?: string,
+): string {
+  const bcp47 = resolveBcp47Locale(locale);
+  try {
+    const d = new Date(year, monthIndex, 1);
+    const str = d.toLocaleDateString(bcp47, { month: "long" });
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  } catch {
+    return MONTH_NAMES[monthIndex] ?? "";
+  }
+}
+
+export function getLocalizedWeekdayNames(locale?: string): string[] {
+  const bcp47 = resolveBcp47Locale(locale);
+  try {
+    // Jan 4, 2026 was a Sunday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(2026, 0, 4 + i);
+      const str = d.toLocaleDateString(bcp47, { weekday: "short" });
+      const clean = str.replace(/\./g, "");
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    });
+  } catch {
+    return WEEKDAY_SHORT_NAMES;
+  }
+}
+
 export function getTodayParts(): { year: number; month: number; day: number; dateKey: string } {
   const now = new Date();
   const year = now.getFullYear();
@@ -165,7 +201,11 @@ export function buildCalendarMonthGrid(year: number, month: number): GridCellMet
   return cells;
 }
 
-export function formatFriendlyDate(dateKey: string): string {
+export function formatFriendlyDate(
+  dateKey: string,
+  locale?: string,
+  t?: (key: any, opts?: any) => string,
+): string {
   const { year, month, day } = parseDateKey(dateKey);
   const date = new Date(year, month, day);
   const now = new Date();
@@ -182,10 +222,21 @@ export function formatFriendlyDate(dateKey: string): string {
     month === yesterday.getMonth() &&
     day === yesterday.getDate();
 
-  if (isSameDay) return "Today";
-  if (isYesterday) return "Yesterday";
+  if (isSameDay) return t ? t("common.today") : "Today";
+  if (isYesterday) return t ? t("calendar.yesterday") : "Yesterday";
 
-  const monthName = MONTH_NAMES[month];
-  const dayName = WEEKDAY_SHORT_NAMES[date.getDay()];
-  return `${dayName}, ${monthName} ${day}, ${year}`;
+  const bcp47 = resolveBcp47Locale(locale);
+  try {
+    const formatted = date.toLocaleDateString(bcp47, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    return formatted;
+  } catch {
+    const monthName = MONTH_NAMES[month];
+    const dayName = WEEKDAY_SHORT_NAMES[date.getDay()];
+    return `${dayName}, ${monthName} ${day}, ${year}`;
+  }
 }

@@ -15,6 +15,7 @@ import {
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type {
   BalanceSheetAccountItem,
   BalanceSheetAccountTypeGroup,
@@ -24,7 +25,7 @@ import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { CalendarMonth } from "../types/calendar.types";
-import { MONTH_NAMES, formatFriendlyDate } from "../utils/calendar-dates";
+import { getLocalizedMonthName, formatFriendlyDate } from "../utils/calendar-dates";
 
 export interface CalendarBalanceSheetTabProps {
   balanceSheet: BalanceSheetData;
@@ -38,6 +39,7 @@ export function CalendarBalanceSheetTab({
   activeMonth,
 }: CalendarBalanceSheetTabProps) {
   const theme = useAppTheme();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
@@ -104,9 +106,14 @@ export function CalendarBalanceSheetTab({
   const isAssetsPositive = balanceSheet.assets.totalMinorUnits >= 0;
   const isLiabilitiesPositive = balanceSheet.liabilities.totalMinorUnits >= 0;
 
+  const localizedMonth = getLocalizedMonthName(
+    activeMonth.year,
+    activeMonth.month,
+    locale,
+  );
   const scopeLabel = selectedDay
-    ? `Balances as of ${formatFriendlyDate(selectedDay)}`
-    : `Balances as of end of ${MONTH_NAMES[activeMonth.month]} ${activeMonth.year}`;
+    ? `${t("calendar.balanceSheet.selectedDay")} (${formatFriendlyDate(selectedDay, locale, t)})`
+    : `${t("calendar.balanceSheet.monthEnd")} (${localizedMonth} ${activeMonth.year})`;
 
   return (
     <View style={styles.container}>
@@ -118,7 +125,9 @@ export function CalendarBalanceSheetTab({
         </View>
         <View style={styles.scopeTag}>
           <Text style={styles.scopeTagText}>
-            {selectedDay ? "Selected Day" : "Month-End"}
+            {selectedDay
+              ? t("calendar.balanceSheet.selectedDay")
+              : t("calendar.balanceSheet.monthEnd")}
           </Text>
         </View>
       </View>
@@ -147,7 +156,9 @@ export function CalendarBalanceSheetTab({
                 size={16}
               />
             </View>
-            <Text style={styles.netWorthTitle}>Net Worth</Text>
+            <Text style={styles.netWorthTitle}>
+              {t("calendar.metrics.netWorth")}
+            </Text>
           </View>
           <View
             style={[
@@ -175,7 +186,9 @@ export function CalendarBalanceSheetTab({
                 },
               ]}
             >
-              {isNetWorthPositive ? "Positive" : "Deficit"}
+              {isNetWorthPositive
+                ? t("calendar.balanceSheet.positive")
+                : t("calendar.balanceSheet.deficit")}
             </Text>
           </View>
         </View>
@@ -199,7 +212,9 @@ export function CalendarBalanceSheetTab({
 
         <View style={styles.netWorthSubRow}>
           <View style={styles.subItem}>
-            <Text style={styles.subItemLabel}>Total Assets</Text>
+            <Text style={styles.subItemLabel}>
+              {t("calendar.balanceSheet.totalAssets")}
+            </Text>
             <Text
               style={[
                 styles.subItemValue,
@@ -219,7 +234,9 @@ export function CalendarBalanceSheetTab({
           <View style={styles.subDivider} />
 
           <View style={styles.subItem}>
-            <Text style={styles.subItemLabel}>Total Liabilities</Text>
+            <Text style={styles.subItemLabel}>
+              {t("calendar.balanceSheet.totalLiabilities")}
+            </Text>
             <Text
               style={[
                 styles.subItemValue,
@@ -254,7 +271,9 @@ export function CalendarBalanceSheetTab({
             >
               <Landmark color={theme.colors.success} size={16} />
             </View>
-            <Text style={styles.sectionTitle}>Assets</Text>
+            <Text style={styles.sectionTitle}>
+              {t("calendar.balanceSheet.assets")}
+            </Text>
           </View>
           <Text
             style={[
@@ -274,7 +293,9 @@ export function CalendarBalanceSheetTab({
 
         {balanceSheet.assets.accountTypes.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>No asset accounts recorded.</Text>
+            <Text style={styles.emptyText}>
+              {t("calendar.empty.noAssetAccounts")}
+            </Text>
           </View>
         ) : (
           <View style={styles.groupList}>
@@ -288,6 +309,7 @@ export function CalendarBalanceSheetTab({
                 currencyCode,
                 preferences.colorAmounts,
                 isPrivate,
+                t,
               ),
             )}
           </View>
@@ -306,7 +328,9 @@ export function CalendarBalanceSheetTab({
             >
               <CreditCard color={theme.colors.danger} size={16} />
             </View>
-            <Text style={styles.sectionTitle}>Liabilities</Text>
+            <Text style={styles.sectionTitle}>
+              {t("calendar.balanceSheet.liabilities")}
+            </Text>
           </View>
           <Text
             style={[
@@ -330,7 +354,9 @@ export function CalendarBalanceSheetTab({
 
         {balanceSheet.liabilities.accountTypes.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>No liabilities recorded.</Text>
+            <Text style={styles.emptyText}>
+              {t("calendar.empty.noLiabilities")}
+            </Text>
           </View>
         ) : (
           <View style={styles.groupList}>
@@ -344,6 +370,7 @@ export function CalendarBalanceSheetTab({
                 currencyCode,
                 preferences.colorAmounts,
                 isPrivate,
+                t,
               ),
             )}
           </View>
@@ -353,7 +380,9 @@ export function CalendarBalanceSheetTab({
       {/* 5. Net Worth Summary Card */}
       <View style={styles.summaryFooterCard}>
         <View style={styles.summaryFooterRow}>
-          <Text style={styles.summaryFooterLabel}>Assets</Text>
+          <Text style={styles.summaryFooterLabel}>
+            {t("calendar.balanceSheet.assets")}
+          </Text>
           <Text
             style={[
               styles.summaryFooterValue,
@@ -370,7 +399,9 @@ export function CalendarBalanceSheetTab({
           </Text>
         </View>
         <View style={styles.summaryFooterRow}>
-          <Text style={styles.summaryFooterLabel}>Liabilities</Text>
+          <Text style={styles.summaryFooterLabel}>
+            {t("calendar.balanceSheet.liabilities")}
+          </Text>
           <Text
             style={[
               styles.summaryFooterValue,
@@ -392,7 +423,9 @@ export function CalendarBalanceSheetTab({
         </View>
         <View style={styles.summaryFooterDivider} />
         <View style={styles.summaryFooterRow}>
-          <Text style={styles.summaryFooterTotalLabel}>Net Worth</Text>
+          <Text style={styles.summaryFooterTotalLabel}>
+            {t("calendar.metrics.netWorth")}
+          </Text>
           <Text
             style={[
               styles.summaryFooterTotalValue,
@@ -422,6 +455,7 @@ function renderAccountTypeGroup(
   currencyCode: string,
   colorAmounts: boolean,
   isPrivate: boolean,
+  t: (key: any, opts?: any) => string,
 ) {
   const isPositive = group.totalBalanceMinorUnits >= 0;
 
@@ -483,6 +517,7 @@ function renderAccountTypeGroup(
             styles,
             colorAmounts,
             isPrivate,
+            t,
           ),
         )}
       </View>
@@ -498,6 +533,7 @@ function renderAccountItem(
   styles: ReturnType<typeof createStyles>,
   colorAmounts: boolean,
   isPrivate: boolean,
+  t: (key: any, opts?: any) => string,
 ) {
   const isPositive = account.balanceMinorUnits >= 0;
   const hasPockets = account.pockets.length > 0;
@@ -506,7 +542,13 @@ function renderAccountItem(
     <View key={account.id} style={styles.accountItemWrapper}>
       {/* Account Row */}
       <Pressable
-        accessibilityLabel={`${account.name}, balance ${formatPrivacyAmount(formatCurrency(account.balanceMinorUnits, account.currencyCode, false), isPrivate)}`}
+        accessibilityLabel={t("calendar.balanceSheet.balanceAccessibility", {
+          name: account.name,
+          balance: formatPrivacyAmount(
+            formatCurrency(account.balanceMinorUnits, account.currencyCode, false),
+            isPrivate,
+          ),
+        })}
         accessibilityRole="button"
         disabled={!hasPockets}
         onPress={onTogglePockets}
@@ -529,8 +571,11 @@ function renderAccountItem(
           {hasPockets && (
             <View style={styles.pocketPill}>
               <Text style={styles.pocketPillText}>
-                {account.pockets.length}{" "}
-                {account.pockets.length === 1 ? "pocket" : "pockets"}
+                {`${account.pockets.length} ${
+                  account.pockets.length === 1
+                    ? t("calendar.scope.units.pocket")
+                    : t("calendar.scope.units.pockets")
+                }`}
               </Text>
               {isExpanded ? (
                 <ChevronDown color={theme.colors.textMuted} size={12} />
@@ -570,7 +615,7 @@ function renderAccountItem(
                 <WalletCards color={theme.colors.textSecondary} size={12} />
               </View>
               <Text numberOfLines={1} style={styles.pocketNameMuted}>
-                Available (Unallocated)
+                {t("calendar.balanceSheet.availableUnallocated")}
               </Text>
             </View>
             <Text

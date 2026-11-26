@@ -4,6 +4,7 @@ import { Check, CalendarClock, FastForward, Clock, RotateCcw } from "lucide-reac
 import { PageEmptyState } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { Account } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
 import type { CalendarScheduleOccurrence } from "@/modules/scheduled-transactions";
@@ -40,6 +41,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
   onNavigateToSchedules,
 }: CalendarSchedulesTabProps) {
   const theme = useAppTheme();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { isPrivate } = usePrivacyMode();
 
@@ -67,24 +69,30 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
 
     return keys.map((key) => ({
       dateKey: key,
-      label: formatFriendlyDate(key),
+      label: formatFriendlyDate(key, locale, t),
       items: map.get(key)!,
     }));
-  }, [schedules]);
+  }, [schedules, locale, t]);
 
   if (schedules.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <PageEmptyState
-          actionLabel={onNavigateToSchedules ? "Manage Recurring Schedules" : undefined}
+          actionLabel={
+            onNavigateToSchedules
+              ? t("calendar.schedules.manageRecurring")
+              : undefined
+          }
           description={
             selectedDay
-              ? `No recurring schedules or bills due on ${formatFriendlyDate(selectedDay)}.`
-              : "No recurring transactions scheduled for this month."
+              ? t("calendar.empty.noSchedulesDay", {
+                  date: formatFriendlyDate(selectedDay, locale, t),
+                })
+              : t("calendar.empty.noSchedulesMonth")
           }
           icon={<CalendarClock color={theme.colors.primary} size={32} />}
           onAction={onNavigateToSchedules}
-          title="No Schedules Found"
+          title={t("calendar.empty.noSchedulesTitle")}
         />
       </View>
     );
@@ -102,7 +110,9 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
                 {group.items.length}{" "}
-                {group.items.length === 1 ? "occurrence" : "occurrences"}
+                {group.items.length === 1
+                  ? t("calendar.scope.units.occurrence")
+                  : t("calendar.scope.units.occurrences")}
               </Text>
             </View>
           </View>
@@ -135,7 +145,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                       <Text numberOfLines={1} style={styles.scheduleName}>
                         {item.scheduleName}
                       </Text>
-                      {renderStatusBadge(item.status, theme, styles)}
+                      {renderStatusBadge(item.status, theme, styles, t)}
                     </View>
 
                     <View style={styles.metaRow}>
@@ -156,7 +166,9 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                       {item.autoPost && (
                         <>
                           <Text style={styles.metaDot}>•</Text>
-                          <Text style={styles.autoPostText}>Auto-posts</Text>
+                          <Text style={styles.autoPostText}>
+                            {t("calendar.schedules.autoPosts")}
+                          </Text>
                         </>
                       )}
                     </View>
@@ -186,8 +198,8 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                           <Pressable
                             accessibilityLabel={
                               item.status === "failed"
-                                ? "Retry posting occurrence now"
-                                : "Post occurrence now"
+                                ? t("calendar.schedules.retryAccessibility")
+                                : t("calendar.schedules.postAccessibility")
                             }
                             accessibilityRole="button"
                             onPress={() => onPostOccurrence(item.id)}
@@ -203,12 +215,14 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                               <Check color="#ffffff" size={12} />
                             )}
                             <Text style={styles.postButtonText}>
-                              {item.status === "failed" ? "Retry" : "Post"}
+                              {item.status === "failed"
+                                ? t("calendar.schedules.retry")
+                                : t("calendar.schedules.post")}
                             </Text>
                           </Pressable>
 
                           <Pressable
-                            accessibilityLabel="Skip occurrence"
+                            accessibilityLabel={t("calendar.schedules.skipAccessibility")}
                             accessibilityRole="button"
                             onPress={() => onSkipOccurrence(item.id)}
                             style={({ pressed }) => [
@@ -220,7 +234,9 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                               color={theme.colors.textSecondary}
                               size={12}
                             />
-                            <Text style={styles.skipButtonText}>Skip</Text>
+                            <Text style={styles.skipButtonText}>
+                              {t("calendar.schedules.skip")}
+                            </Text>
                           </Pressable>
                         </View>
                       )}
@@ -239,27 +255,28 @@ function renderStatusBadge(
   status: CalendarScheduleOccurrence["status"],
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
+  t: (key: any, opts?: any) => string,
 ) {
   let badgeStyle = styles.badgeUpcoming;
   let textStyle = styles.badgeTextUpcoming;
-  let label = "Upcoming";
+  let label = t("calendar.schedules.upcoming");
 
   if (status === "due") {
     badgeStyle = styles.badgeDue;
     textStyle = styles.badgeTextDue;
-    label = "Due Now";
+    label = t("calendar.schedules.dueNow");
   } else if (status === "failed") {
     badgeStyle = styles.badgeFailed;
     textStyle = styles.badgeTextFailed;
-    label = "Failed";
+    label = t("calendar.schedules.failed");
   } else if (status === "posted") {
     badgeStyle = styles.badgePosted;
     textStyle = styles.badgeTextPosted;
-    label = "Posted";
+    label = t("calendar.schedules.posted");
   } else if (status === "skipped") {
     badgeStyle = styles.badgeSkipped;
     textStyle = styles.badgeTextSkipped;
-    label = "Skipped";
+    label = t("calendar.schedules.skipped");
   }
 
   return (
