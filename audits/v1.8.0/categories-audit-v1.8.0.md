@@ -10,6 +10,8 @@
 
 **Stage:** 5 - Functional Sign-Off (Remaining Native Validation and Performance Follow-Up Pending)
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-CAT-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** Functionally signed off within the evidence scope below. C-F01 through C-F11 are resolved; all 65 category tests, 7 related walkthrough/sorting tests, and TypeScript checking passed during revalidation. User-reported manual checks confirm one-tap form dismissal, keyboard/system-back behavior, successful saving with the keyboard open, and picker/nested-form navigation. Untested native scenarios, card memoization, and release-device performance profiling remain open; sustained 60–120fps compliance is not verified.
 
 **C-F02 update:** RESOLVED. Bulk preset deletion now preserves saved Quick Presets and related references atomically. The split failure is classified as defensive service coverage because the UI hides bulk deletion once any transaction exists.
@@ -557,3 +559,20 @@ Automated regression coverage in `src/modules/categories/__tests__/` verifies:
 - Creating identical subcategory names under different parent groups succeeds.
 - Reordering category groups keeps "Others" pinned at the bottom without jumping.
 - 0 TypeScript compilation errors (`npx tsc --noEmit`).
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-CAT-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** CategoryGroupCard: long group/subcategory names with all expand/reorder/add/edit/delete controls visible, including clipping behind the card border.
+
+**Source:** [implementation](../../src/modules/categories/components/category-group-card.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

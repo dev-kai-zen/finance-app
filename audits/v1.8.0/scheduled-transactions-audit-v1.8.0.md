@@ -6,6 +6,8 @@
 
 **Stage:** 5 — **Feature sign-off (ready for v1.8.0).** Audit, remediation (ST-F01–F08), and expanded regression tests completed. Scale and polish items are **consciously deferred** — revisit if real-world scaling issues appear (see §13).
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-ST-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** **READY FOR FEATURE SIGN-OFF (v1.8.0).** P1 money paths (save cursor, Mark Paid link, subscription post atomicity) and P2 UX/localization items ST-F04–F08 are fixed with dedicated remediation tests. Staged catch-up and the bounded **Needs attention** page (100 rows + load more) are accepted for typical use. Amounts on this screen stay visible in privacy mode by **product design** (ST-F08).
 
 **Changes made:** Initial audit at reviewed commit; subsequent remediation for ST-F01–F08 and remediation `*.test.cjs` files. Feature-ready decision recorded with deferred scale/polish (§13).
@@ -329,3 +331,20 @@ These items are **not blockers** for typical personal/small-business use (bounde
 | Device FPS sign-off | No measured frame timing on release hardware | User reports or Play internal testing flags jank |
 
 **Policy carryovers (unchanged code unless product changes):** End leaves existing due cards postable; failed auto-post requires manual Post/Retry; advance post is early posting for the current period identity.
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-ST-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** ScheduledOccurrenceCard and schedule list cards: long title/account/category, status badge, unbounded amount column, failed error copy and nested Retry/Skip/Post action row.
+
+**Source:** [implementation](../../src/modules/scheduled-transactions/components/scheduled-occurrence-card.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

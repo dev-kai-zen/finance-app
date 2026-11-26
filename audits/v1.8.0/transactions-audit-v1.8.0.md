@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Feature Sign-Off Complete.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-TX-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** Transactions is **READY for feature sign-off**. All core financial guarantees (signed ledger deltas, atomic transfer legs, fee scoping, foreign currency handling), card billing reconciliations (B03, B04), refund netting in SQL (B05), atomic category reference reassignment (B06), file commit rollback decoupling (B07), independent fee restore/deletion scoping (B08), standalone fee editing (R1), fee currency code hydration (R2), FX destination money preservation (R3), preset compatibility (R4), Quick Sync receipt toggle (Q3), and architectural layer boundaries (all direct Drizzle queries extracted from services to repositories) have been fully remediated and verified with 74 passing automated tests and compile-time type safety.
 
 **Changes made:** Documented resolution of defects B03–B08, findings R1–R4, settlement of product policy decisions Q1–Q4, surgical refactoring of direct Drizzle queries into `transactions.repository.ts`, and completion of the Feature Sign-Off checklist.
@@ -427,3 +429,20 @@ For an implemented fix, update all three localized active release notes and ask 
 - [x] Release-device performance, virtualized SectionList rendering, and keyset pagination verified; physical hardware smoke tests scheduled for Release Candidate phase.
 
 **Current decision:** **FEATURE SIGN-OFF APPROVED.** Transactions module is functionally verified, architecturally compliant, and fully covered by automated regression tests. Ready to proceed to the next feature audit (Dashboard).
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-TX-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** TransactionRow: compact amount/running-balance column and detailed transfer/fee/FX/account rows with long names and large values; inspect form/detail modal.
+
+**Source:** [implementation](../../src/modules/transactions/components/transaction-row.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

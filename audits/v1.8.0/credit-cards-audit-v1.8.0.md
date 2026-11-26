@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Ready for Feature Sign-Off.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-CC-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** **READY FOR FEATURE SIGN-OFF.**
 
 - **CC-F01 through CC-F07, CC-F09, CC-F10, CC-F11, and CC-F12** are fixed with automated SQLite/service regressions; **CC-F08** closed as designed.
@@ -715,3 +717,20 @@ CC-F01 through CC-F06 are fixed with permanent automated regression coverage. Ne
 - [x] Release notes / version bump explicitly skipped per product request during remediation.
 
 **Current decision:** **FEATURE SIGN-OFF APPROVED.** Credit Cards is functionally verified by automated actual-service/SQLite regressions, policy-complete for v1.8.0, and architecturally aligned with module boundaries. Proceed to Release Candidate native smoke, notification delivery checks, and device profiling before store submission.
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-CC-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** CreditCardMonitoringCard: localized metric labels, large balances, statement headers and recent-activity amount/date columns; inspect related modals.
+
+**Source:** [implementation](../../src/modules/credit-cards/components/credit-card-monitoring-card.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

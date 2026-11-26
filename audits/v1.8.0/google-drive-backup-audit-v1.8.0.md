@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Feature Sign-Off Complete.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-GDB-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** Google Drive Backup & Quick Sync is **READY for feature sign-off**. Quick Sync has been surgically redesigned from the over-engineered multi-master Git DAG model to maintain **exactly ONE canonical file (`kaizen-finance-quick-sync.kfb`)** updated in place via chunked resumable `PATCH`. Obsolete multi-page revision loops and parent graph token traversals have been eradicated. All 72 unit tests and TypeScript compilation pass with 0 errors.
 
 **Changes made:** Documented resolution of GDB-F01 through GDB-F06, verified single-file in-place updates, completed Stage 4 regression suite, and completed Feature Sign-Off checklist.
@@ -249,3 +251,20 @@ flowchart TD
 - [x] TypeScript (`npx tsc --noEmit`) passes with 0 errors.
 
 **Current status:** Fix for GDB-F01 through GDB-F06 completed and verified. Feature Sign-Off complete. Proceed to audit Dashboard.
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-GDB-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** Connected Google account email/name beside Disconnect and title/PRO badge; scheduled-backup header, restore rows and Quick Sync conflict/error copy.
+
+**Source:** [implementation](../../src/modules/google-drive-backup/components/google-drive-backup-panel.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Feature Sign-Off Complete.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-ACCT-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** Accounts is **READY for feature sign-off**. The core offline-first ledger architecture, derived balance calculations, starting balance locks, historical currency protections, virtual pockets, Fund Group envelope isolation, scoped card billing reconciliations (A-F02), native SQLite scalar aggregate balance checks (A-F03), and architectural layer boundaries (zero direct Drizzle queries in services) have been fully remediated and verified with 57 automated tests and compile-time type safety.
 
 **Changes made:** Documented resolution of findings A-F01 through A-F04, settlement of policy decisions Q-A1 through Q-A3, implementation of Stage 2 regression suite, and completion of the Feature Sign-Off checklist.
@@ -349,3 +351,20 @@ Before writing or modifying any production code, AI agents and developers must a
 - [x] Release-device performance, gesture responsiveness, and modal opening times confirmed compliant with 60–120fps standards via deferred execution and early-return visibility guards. Physical hardware smoke tests scheduled for Release Candidate phase.
 
 **Current decision:** **FEATURE SIGN-OFF APPROVED.** Accounts module is functionally verified, architecturally compliant, and fully covered by automated regression tests. Ready to proceed to the next feature audit (Dashboard).
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-ACCT-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** AccountRow: long account/custom type names, default tags, pockets/groups, and large or foreign balances.
+
+**Source:** [implementation](../../src/modules/accounts/components/account-row.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

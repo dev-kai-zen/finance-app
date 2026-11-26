@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Ready for Feature Sign-Off.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-BUD-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** **READY FOR FEATURE SIGN-OFF.** BUD-F01 through BUD-F14 are remediated with automated regression coverage. Section 7 policies are agreed, including Stealth Mode masking. Public module boundaries and English, Filipino, and Spanish key parity are in place. Release-device frame timing remains a Release Candidate follow-up and does not block this sign-off.
 
 **Changes made:** Initial pass added this audit only. BUD-F01 updates budget currency handling; BUD-F02 adds exact-period/category drill-downs; BUD-F03 checks complete expenses and lists all exceeded budgets before saving. BUD-F04 aligns zero-limit previews, confirmations, cards, and alerts. All four have automated regression coverage. No migrations or stored-value conversions. Release notes skipped at the user's request; versions remain unchanged pending a version decision.
@@ -492,3 +494,20 @@ When actual fixes/features are implemented, update active release notes in Engli
 
 **Feature Sign-Off Completed**: November 24, 2026  
 All 14 prioritized audit findings (`BUD-F01` through `BUD-F14`) remediated and verified by regression test suites; Section 7 policy decisions agreed and implemented (including Stealth Mode privacy masking); public module boundaries preserved; 100% localization key parity achieved; full test suite and TypeScript validation passed.
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-BUD-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** BudgetCard: Spent / Budget / Remaining columns, large over-budget values, localized period labels and rollover states.
+
+**Source:** [implementation](../../src/modules/budgets/components/budget-card.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

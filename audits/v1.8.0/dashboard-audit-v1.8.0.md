@@ -6,6 +6,8 @@
 
 **Stage:** 5 — Ready for Feature Sign-Off.
 
+**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-DASH-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+
 **Result:** **READY FOR FEATURE SIGN-OFF.**
 
 - **D-F01 is CLOSED as Working as Designed:** Product decision confirmed. Dashboard masks glanceable values in public, but tapping into the inspector or transaction details is an explicit, intentional user action to view figures.
@@ -251,3 +253,20 @@ On a small 2-account fixture, opening or focusing the Dashboard executes:
 - [x] Feature Sign-Off achieved.
 
 **Current status:** **READY FOR FEATURE SIGN-OFF.** All 10 findings resolved (D-F01 settled, D-F02 through D-F10 remediated and tested). Zero TypeScript compilation errors and all test suites passing.
+
+## Text-layout addendum - November 26, 2026
+
+**Scope:** TXT-DASH-01; source review at `699251f`, native rendering not executed. See the [cross-feature manual list](text-layout-review-v1.8.0.md) for evidence, fixtures and priority.
+
+**Revisit:** Active Cash Flow and Net Worth cards: long translated badges, large amounts/percentages and headers in simple/detailed Home; verify existing amount fitting.
+
+**Source:** [implementation](../../src/modules/dashboard/components/dashboard-cashflow-card.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
+
+- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+
+**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+
+**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.

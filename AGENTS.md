@@ -540,5 +540,15 @@ Before letting AI change any production code (especially during audit findings r
 ### Guarding Against Audit Code Sprawl
 During audits and remediation, AI agents must not rewrite surrounding logic, restructure unrelated modules, or introduce cascading abstractions that make the application logic harder to understand. Every fix must remain surgical, adhere strictly to the Minimal Diff Principle (Section 17), and preserve complete clarity for the developer.
 
+---
 
+# 21. Feature Audit Checklist & Text Layout
 
+All new feature audits and reopened audit reviews must use [audits/AUDIT_CHECKLIST.md](audits/AUDIT_CHECKLIST.md) in addition to the existing requirements above.
+
+- Explicitly audit text collision, containment inside cards/rows/modals, wrapping, truncation, and action visibility.
+- Test valid long content and large amounts at narrow widths, large system text/display sizes, and English/Filipino/Spanish. Check related forms with the keyboard visible.
+- Text must not overlap neighboring text or controls or escape its container. Hiding essential content with clipping or unreadable shrinking is not a passing fix.
+- Distinguish source risks from device-reproduced findings; record device/settings, exact reproduction, screenshots and regression coverage before visual sign-off.
+- When extending an already signed-off audit, reopen the added criterion explicitly while retaining historical functional resolutions and accepted policies.
+- Preserve the Section 19 performance standard and Section 20 four-question gate for any resulting production change.
