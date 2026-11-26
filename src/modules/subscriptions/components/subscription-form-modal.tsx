@@ -397,7 +397,7 @@ function SubscriptionFormModalContent({
       status,
       amountMinorUnits,
       currencyCode:
-        subscription?.currencyCode || selectedAccount?.currencyCode || "PHP",
+        selectedAccount?.currencyCode || subscription?.currencyCode || "PHP",
       billingCycle,
       billingCycleInterval,
       firstBillingDate,

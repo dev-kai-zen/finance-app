@@ -4,6 +4,7 @@ import { resolveScheduleOccurrencePaidInContext } from "@/modules/scheduled-tran
 import { getDefaultExpenseCategoryId } from "@/modules/categories";
 import { subscriptionFormSchema } from "../schemas/subscription.schema";
 import { recordTransactionInContext } from "@/modules/transactions";
+import { findAccountById } from "@/modules/accounts";
 import {
   findSubscriptionById,
   generateSubscriptionId,
@@ -72,6 +73,12 @@ export function recordSubscriptionPaymentInContext(
     throw new Error("Create an expense category before recording a subscription payment.");
   }
 
+  const paymentAccount = findAccountById(accountId, context);
+  const effectivePaymentCurrency =
+    accountId === subscription.accountId && paymentAccount?.currencyCode
+      ? paymentAccount.currencyCode
+      : subscription.currencyCode;
+
   // 1. Post expense transaction into general ledger via transactions service
   const txRecord = recordTransactionInContext(
     {
@@ -82,7 +89,7 @@ export function recordSubscriptionPaymentInContext(
         categoryId,
         type: "expense",
         amountMinorUnits: -paymentAmount,
-        currencyCode: subscription.currencyCode,
+        currencyCode: effectivePaymentCurrency,
         occurredAt: paidDate,
         name: subscription.name,
         note: options.note || subscription.notes || `Subscription payment: ${subscription.name}`,

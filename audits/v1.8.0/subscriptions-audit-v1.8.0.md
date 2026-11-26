@@ -96,7 +96,7 @@ All fixtures freeze local time to **November 26, 2026 at noon**. Costs are integ
 | SUB-F01 | Monthly PHP 149, first due **Dec 1**. Pay early on Nov 26, advancing renewal to **Jan 1, 2027**. Edit only note with the same first billing date and no explicit next renewal (as the form does). Expect Jan 1 retained. | **FIXED in v1.8.0:** Renewal date retained at Jan 1, 2027 on note/name/amount edit. Linked schedule cursor also retained. Covered by permanent regression tests `SUB-F01` in `subscription-remediation.test.cjs`. |
 | SUB-F02 | Create due subscription, process and Post one occurrence, archive the posted schedule and subscription, then call actual `restoreSubscriptionInContext`. Expect non-archived linked schedule with a valid next date, unless explicitly completed. | **FIXED in v1.8.0:** Restoring subscription reactivates linked schedule via `restoreScheduledTransaction`, clearing `archived_at` and setting next nominal date to the next valid unposted occurrence. Covered by permanent regression test `SUB-F02` in `subscription-remediation.test.cjs`. |
 | SUB-F03 | Trial starts Nov 26; trial ends **Dec 10**; PHP 149, auto-post on. Process Nov 26. Under a free-until-trial-end contract, expect no charge. | **FIXED in v1.8.0:** Trial subscriptions delay charging and schedule start date until `trialEndsAt`. Card countdown and reminders correctly reference `trialEndsAt`. First payment transitions status to `active`. Covered by permanent regression test `SUB-F03` in `subscription-remediation.test.cjs`. |
-| SUB-F04 / B02 | USD 15 (`1500`) subscription with PHP account; compare manual and automatic payment using the same saved cost and local rate book. Expect equal PHP ledger deltas or a validation rejection before either path. | Manual debit **-87750** (PHP 877.50), automatic debit **-1500** (PHP 15). Default quote in this fixture: PHP 58.50/USD. No network quote used. |
+| SUB-F04 / B02 | USD 15 (`1500`) subscription with PHP account; compare manual and automatic payment using the same saved cost and local rate book. Expect equal PHP ledger deltas or a validation rejection before either path. | **FIXED in v1.8.0:** Subscriptions linked to an account strictly inherit the account's currency in the form modal and backend save service. Manual payments with the linked account enforce the account currency, guaranteeing 100% magnitude and currency parity with scheduled automatic payments (-1500 PHP). Covered by permanent regression test `SUB-F04` in `subscription-remediation.test.cjs`. |
 
 The script's four assertions express these expected contracts and intentionally fail. They must not be reported as passing regressions or added to ordinary CI without a remediation plan. Promote them into focused permanent regression tests when implementing each fix.
 
@@ -141,12 +141,17 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `record-subscription-payment.service.ts`, recording the first payment transitions status from `trial` to `active` and advances renewal from `trialEndsAt`.
    - Verified via automated regression test `SUB-F03` in `subscription-remediation.test.cjs`. All 26 subscription tests and TypeScript typecheck pass.
 
-### SUB-F04 / existing B02 — P1, reproduced: manual and scheduled payments debit different currencies/magnitudes
+### SUB-F04 / existing B02 — P1, FIXED: manual and scheduled payments debit different currencies/magnitudes
 
 1. **Problem/evidence:** Same USD 15 cost yields PHP 877.50 manually versus PHP 15 automatically. Earlier B02 remains open at this candidate.
 2. **Cause/path:** Form calculator follows selected account currency but `handleSave` prefers prior subscription currency. Schedule sync passes unchanged integer magnitude; shared schedule save sets `currencyCode = account.currencyCode`. Manual payment instead passes subscription currency through Transactions' FX snapshot service.
 3. **Smallest fix to review:** Pick one cost-denomination rule. Either enforce same-currency account/cost with clear validation, or make all posting paths use the same Transactions-owned FX capability and visible amount semantics. Do not relabel historical integers or duplicate FX arithmetic in UI.
 4. **Proof required:** Actual account-switch form callback plus manual/Post/auto/Calendar ledger parity; PHP/USD, zero-/three-decimal currencies, custom/current rates, edits and payment-account overrides. Compare account deltas, original currency/amount and FX snapshot, including subscription history. Preserve existing transfer/refund regressions.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `subscription-form-modal.tsx`, `currencyCode` prioritizes `selectedAccount?.currencyCode || subscription?.currencyCode || "PHP"` so the form submission matches the account denomination shown in the amount calculator.
+   - In `save-subscription.service.ts`, when `input.accountId` is provided, `saveSubscriptionInContext` looks up the account via `findAccountById(input.accountId, context)` and sets `record.currencyCode = account.currencyCode`, keeping `subscriptions.currency_code`, `accounts.currency_code`, and `transaction_schedules.currency_code` strictly synchronized.
+   - In `record-subscription-payment.service.ts`, payments made with the subscription's linked account enforce `paymentAccount.currencyCode`, preventing unexpected FX conversion.
+   - Verified via automated regression test `SUB-F04` in `subscription-remediation.test.cjs`. Both manual payment and scheduled auto-post debit exactly `-1500` PHP. All 27 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F05 — P2, source-confirmed: read failure has no retry state and external posts do not refresh the focused list
 
@@ -226,7 +231,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 | SUB-V01 | Promote F01 fixture; compare paid-through renewal/schedule/ledger before and after non-recurrence and recurrence edits. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. Verified in `subscription-remediation.test.cjs`. |
-| SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. |
+| SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. |
 | SUB-V06 | SQL statement/row budgets, render/typing SQL zero, bounded archive/list and index plan at scale, cancellation and stable memoized rows. |
 | SUB-V07 | TXT-SUB-01 full native layout matrix, related forms/selectors, long errors, translations, accessibility privacy and close targets. |

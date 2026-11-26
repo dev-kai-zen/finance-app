@@ -1,6 +1,7 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import type { NewSubscriptionRecord } from "@/infrastructure/database/schema";
 import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
+import { findAccountById } from "@/modules/accounts";
 import {
   findSubscriptionById,
   generateSubscriptionId,
@@ -264,12 +265,20 @@ export function saveSubscriptionInContext(
     context,
   );
 
+  let effectiveCurrency = input.currencyCode || DEFAULT_BASE_CURRENCY;
+  if (input.accountId) {
+    const linkedAccount = findAccountById(input.accountId, context);
+    if (linkedAccount?.currencyCode) {
+      effectiveCurrency = linkedAccount.currencyCode;
+    }
+  }
+
   const record: NewSubscriptionRecord = {
     id: subscriptionId,
     name: input.name.trim(),
     status: input.status,
     amountMinorUnits: Math.abs(input.amountMinorUnits),
-    currencyCode: input.currencyCode || DEFAULT_BASE_CURRENCY,
+    currencyCode: effectiveCurrency,
     billingCycle: input.billingCycle,
     billingCycleInterval: interval,
     firstBillingDate: input.firstBillingDate,
