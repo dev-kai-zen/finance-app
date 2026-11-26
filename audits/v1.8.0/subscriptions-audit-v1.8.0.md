@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | Not started | Apply only reviewed, surgically scoped changes with permanent regressions. |
+| Remediate | In progress | SUB-F01 fixed and verified with durable regressions. SUB-F02–F04 pending review/remediation. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -93,7 +93,7 @@ All fixtures freeze local time to **November 26, 2026 at noon**. Costs are integ
 
 | Probe | Fixture and correct expectation | Executed observation |
 | --- | --- | --- |
-| SUB-F01 | Monthly PHP 149, first due **Dec 1**. Pay early on Nov 26, advancing renewal to **Jan 1, 2027**. Edit only note with the same first billing date and no explicit next renewal (as the form does). Expect Jan 1 retained. | Subscription renewal resets to **Dec 1, 2026**. UTC evidence: `2026-12-31T16:00:00.000Z` → `2026-11-30T16:00:00.000Z`. Shared schedule cursor remains advanced. |
+| SUB-F01 | Monthly PHP 149, first due **Dec 1**. Pay early on Nov 26, advancing renewal to **Jan 1, 2027**. Edit only note with the same first billing date and no explicit next renewal (as the form does). Expect Jan 1 retained. | **FIXED in v1.8.0:** Renewal date retained at Jan 1, 2027 on note/name/amount edit. Linked schedule cursor also retained. Covered by permanent regression tests `SUB-F01` in `subscription-remediation.test.cjs`. |
 | SUB-F02 | Create due subscription, process and Post one occurrence, archive the posted schedule and subscription, then call actual `restoreSubscriptionInContext`. Expect non-archived linked schedule with a valid next date, unless explicitly completed. | Linked schedule: `status = active`, `archived_at = 1795665600000`, `next_nominal_at = null`. It remains excluded from active due processing. Probe builds the archived state with actual schedule removal plus subscription archive repository because the reused harness mocks public removal. |
 | SUB-F03 | Trial starts Nov 26; trial ends **Dec 10**; PHP 149, auto-post on. Process Nov 26. Under a free-until-trial-end contract, expect no charge. | **One expense/payment before trial end.** Production mapping never receives trial end; card/reminder date source also differs from the stored trial date. Final billing policy still needs agreement. |
 | SUB-F04 / B02 | USD 15 (`1500`) subscription with PHP account; compare manual and automatic payment using the same saved cost and local rate book. Expect equal PHP ledger deltas or a validation rejection before either path. | Manual debit **-87750** (PHP 877.50), automatic debit **-1500** (PHP 15). Default quote in this fixture: PHP 58.50/USD. No network quote used. |
@@ -104,12 +104,17 @@ The script's four assertions express these expected contracts and intentionally 
 
 P1: wrong posted money, wrong paid-through period or lost future charging. P2: recovery, architecture, performance, presentation or privacy/accessibility. Only F01–F04 were executed here; the remaining classifications are explicit below.
 
-### SUB-F01 — P1, reproduced: note-only save rewinds the subscription renewal
+### SUB-F01 — P1, FIXED: note-only save rewinds the subscription renewal
 
 1. **Problem/evidence:** Probe preserves January's schedule cursor but subscription renewal falls back to December after an early payment.
 2. **Cause/path:** Screen → `handleSaveSubscription` directly → `saveSubscription` → `saveSubscriptionInContext` calls `resolveUpcomingRenewal` before considering the existing record. Form `handleSave` omits next renewal. Scheduler recurrence preservation does not preserve this separate subscription field.
 3. **Smallest fix to review:** Load existing state first and retain renewal on non-recurrence edits; define an explicit anchor for intentional recurrence edits. Keep this in the existing save service; no new abstraction/file needed.
 4. **Proof required:** Early payment, overdue/unpaid periods, note/name/amount/account edits, intentional first-date/cycle changes, month-end clamp and caller-supplied renewal. Assert subscription and schedule dates together, with unchanged payment/ledger counts on note edits.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `save-subscription.service.ts`, `existing` subscription state is loaded at the beginning of `saveSubscriptionInContext`.
+   - Added helper `didSubscriptionRecurrenceChange` to detect whether `billingCycle`, `billingCycleInterval`, or `firstBillingDate` changed.
+   - If recurrence did not change and no explicit `nextRenewalDate` is provided, `existing.nextRenewalDate` is preserved.
+   - Verified via 3 dedicated regression tests in `subscription-remediation.test.cjs`: early payment renewal retention, overdue date retention, and intentional recurrence recalculation. All 24 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F02 — P1, reproduced: subscription restore leaves the posted schedule archived
 
@@ -207,7 +212,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 
 | ID | Required coverage |
 | --- | --- |
-| SUB-V01 | Promote F01 fixture; compare paid-through renewal/schedule/ledger before and after non-recurrence and recurrence edits. |
+| SUB-V01 | Promote F01 fixture; compare paid-through renewal/schedule/ledger before and after non-recurrence and recurrence edits. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. |
 | SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. |
 | SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. |

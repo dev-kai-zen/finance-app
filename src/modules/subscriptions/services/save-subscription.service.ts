@@ -43,11 +43,23 @@ function mapCycleToSchedule(cycle: BillingCycle, intervalCount: number): {
   }
 }
 
-function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+function toDateKey(date: Date | number): string {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function didSubscriptionRecurrenceChange(
+  existing: SubscriptionItem,
+  input: SaveSubscriptionInput,
+  interval: number,
+): boolean {
+  if (existing.billingCycle !== input.billingCycle) return true;
+  if ((existing.billingCycleInterval || 1) !== interval) return true;
+  if (toDateKey(existing.firstBillingDate) !== toDateKey(input.firstBillingDate)) return true;
+  return false;
 }
 
 function resolveUpcomingRenewal(
@@ -193,20 +205,28 @@ export function saveSubscriptionInContext(
   const now = new Date();
 
   const interval = Math.max(1, input.billingCycleInterval || 1);
-  const nextRenewal = resolveUpcomingRenewal(
-    input.firstBillingDate,
-    input.billingCycle,
-    interval,
-    input.nextRenewalDate,
-  );
+  const existing = existingId ? findSubscriptionById(existingId, context) : null;
+
+  const nextRenewalDateValue =
+    input.nextRenewalDate
+      ? input.nextRenewalDate
+      : existing && !didSubscriptionRecurrenceChange(existing, input, interval)
+        ? existing.nextRenewalDate
+        : resolveUpcomingRenewal(
+            input.firstBillingDate,
+            input.billingCycle,
+            interval,
+          );
+  const nextRenewal =
+    nextRenewalDateValue instanceof Date
+      ? nextRenewalDateValue
+      : new Date(nextRenewalDateValue);
 
   const reminderLeadDaysJson = JSON.stringify(
     input.reminderLeadDays && input.reminderLeadDays.length > 0
       ? input.reminderLeadDays
       : [1, 3],
   );
-
-  const existing = existingId ? findSubscriptionById(existingId, context) : null;
 
   const linkedScheduleId = syncSubscriptionScheduleInContext(
     {

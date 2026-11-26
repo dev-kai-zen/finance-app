@@ -415,3 +415,143 @@ test("V2-01: migration repairs only linked future payments, preserves history an
     assert.equal(sqlite.prepare("SELECT value FROM settings WHERE key='__subscription_payment_sign_repair_v1'").get().value,evidence);
   } finally { sqlite.close(); }
 });
+
+test("SUB-F01: note/name/amount edit preserves advanced renewal after early payment and preserves linked schedule", t => {
+  const fixedNow = new Date(2026, 10, 26, 12, 0, 0);
+  t.mock.timers.enable({ apis: ["Date"], now: fixedNow.getTime() });
+  const db = setupTestDb();
+  try {
+    const firstBillingDate = new Date(2026, 11, 1);
+    const id = saveSubscriptionInContext(
+      input({
+        name: "Spotify",
+        amountMinorUnits: 14900,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        firstBillingDate,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+      }),
+      undefined,
+      db,
+    );
+
+    const initialSub = sqlite.prepare("SELECT next_renewal_date, schedule_id FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(initialSub.next_renewal_date, firstBillingDate.getTime());
+
+    const payResult = recordSubscriptionPayment(id, { paidAt: fixedNow });
+    const jan1 = new Date(2027, 0, 1);
+    assert.equal(payResult.nextRenewalDate.getTime(), jan1.getTime());
+
+    const paidSub = sqlite.prepare("SELECT next_renewal_date, schedule_id FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(paidSub.next_renewal_date, jan1.getTime());
+
+    saveSubscriptionInContext(
+      input({
+        name: "Spotify Family",
+        notes: "Paid early via GCash",
+        amountMinorUnits: 14900,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        firstBillingDate,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+      }),
+      id,
+      db,
+    );
+
+    const afterEdit = sqlite.prepare("SELECT next_renewal_date, name, notes, schedule_id FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(afterEdit.next_renewal_date, jan1.getTime(), "Renewal date must be preserved at Jan 1, 2027 on note/name edit");
+    assert.equal(afterEdit.name, "Spotify Family");
+    assert.equal(afterEdit.notes, "Paid early via GCash");
+
+    if (afterEdit.schedule_id) {
+      const sched = sqlite.prepare("SELECT next_nominal_at FROM transaction_schedules WHERE id = ?").get(afterEdit.schedule_id);
+      if (sched && sched.next_nominal_at) {
+        assert.equal(sched.next_nominal_at, jan1.getTime(), "Linked schedule cursor must remain at Jan 1, 2027");
+      }
+    }
+
+    const paymentCount = sqlite.prepare("SELECT count(*) as count FROM subscription_payments WHERE subscription_id = ?").get(id).count;
+    assert.equal(paymentCount, 1);
+  } finally { sqlite.close(); }
+});
+
+test("SUB-F01: overdue renewal is preserved on note-only edit without jumping forward", t => {
+  const fixedNow = new Date(2026, 10, 26, 12, 0, 0);
+  t.mock.timers.enable({ apis: ["Date"], now: fixedNow.getTime() });
+  const db = setupTestDb();
+  try {
+    const overdueDate = new Date(2026, 10, 10);
+    const id = saveSubscriptionInContext(
+      input({
+        name: "Gym",
+        firstBillingDate: overdueDate,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+        nextRenewalDate: overdueDate,
+      }),
+      undefined,
+      db,
+    );
+
+    assert.equal(sqlite.prepare("SELECT next_renewal_date FROM subscriptions WHERE id = ?").get(id).next_renewal_date, overdueDate.getTime());
+
+    saveSubscriptionInContext(
+      input({
+        name: "Gym",
+        notes: "Overdue reminder sent",
+        firstBillingDate: overdueDate,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+      }),
+      id,
+      db,
+    );
+
+    const after = sqlite.prepare("SELECT next_renewal_date, notes FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(after.next_renewal_date, overdueDate.getTime(), "Overdue renewal must remain Nov 10");
+    assert.equal(after.notes, "Overdue reminder sent");
+  } finally { sqlite.close(); }
+});
+
+test("SUB-F01: intentional recurrence edit updates next renewal date", t => {
+  const fixedNow = new Date(2026, 10, 26, 12, 0, 0);
+  t.mock.timers.enable({ apis: ["Date"], now: fixedNow.getTime() });
+  const db = setupTestDb();
+  try {
+    const originalDate = new Date(2026, 11, 1);
+    const id = saveSubscriptionInContext(
+      input({
+        firstBillingDate: originalDate,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+      }),
+      undefined,
+      db,
+    );
+
+    const newDate = new Date(2026, 11, 15);
+    saveSubscriptionInContext(
+      input({
+        firstBillingDate: newDate,
+        billingCycle: "monthly",
+        billingCycleInterval: 1,
+        accountId: "acc_1",
+        categoryId: "cat_dining",
+      }),
+      id,
+      db,
+    );
+
+    const after = sqlite.prepare("SELECT next_renewal_date FROM subscriptions WHERE id = ?").get(id);
+    assert.equal(after.next_renewal_date, newDate.getTime(), "Intentional first billing date change must recalculate renewal");
+  } finally { sqlite.close(); }
+});
