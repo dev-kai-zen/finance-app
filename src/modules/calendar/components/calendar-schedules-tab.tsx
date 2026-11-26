@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Check, CalendarClock, FastForward, Clock } from "lucide-react-native";
+import { Check, CalendarClock, FastForward, Clock, RotateCcw } from "lucide-react-native";
 import { PageEmptyState } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -160,6 +160,11 @@ export function CalendarSchedulesTab({
                         </>
                       )}
                     </View>
+                    {item.status === "failed" && item.errorMessage ? (
+                      <Text numberOfLines={1} style={styles.failureErrorText}>
+                        {item.errorMessage}
+                      </Text>
+                    ) : null}
                   </View>
 
                   <View style={styles.rowRight}>
@@ -174,39 +179,51 @@ export function CalendarSchedulesTab({
                       )}
                     </Text>
 
-                    {/* Action buttons if due and actionable */}
-                    {item.status === "due" && !item.isProjected && (
-                      <View style={styles.actionsRow}>
-                        <Pressable
-                          accessibilityLabel="Post occurrence now"
-                          accessibilityRole="button"
-                          onPress={() => onPostOccurrence(item.id)}
-                          style={({ pressed }) => [
-                            styles.postButton,
-                            pressed && styles.buttonPressed,
-                          ]}
-                        >
-                          <Check color="#ffffff" size={12} />
-                          <Text style={styles.postButtonText}>Post</Text>
-                        </Pressable>
+                    {/* Action buttons if due or failed, and not projected */}
+                    {(item.status === "due" || item.status === "failed") &&
+                      !item.isProjected && (
+                        <View style={styles.actionsRow}>
+                          <Pressable
+                            accessibilityLabel={
+                              item.status === "failed"
+                                ? "Retry posting occurrence now"
+                                : "Post occurrence now"
+                            }
+                            accessibilityRole="button"
+                            onPress={() => onPostOccurrence(item.id)}
+                            style={({ pressed }) => [
+                              styles.postButton,
+                              item.status === "failed" && styles.retryButton,
+                              pressed && styles.buttonPressed,
+                            ]}
+                          >
+                            {item.status === "failed" ? (
+                              <RotateCcw color="#ffffff" size={12} />
+                            ) : (
+                              <Check color="#ffffff" size={12} />
+                            )}
+                            <Text style={styles.postButtonText}>
+                              {item.status === "failed" ? "Retry" : "Post"}
+                            </Text>
+                          </Pressable>
 
-                        <Pressable
-                          accessibilityLabel="Skip occurrence"
-                          accessibilityRole="button"
-                          onPress={() => onSkipOccurrence(item.id)}
-                          style={({ pressed }) => [
-                            styles.skipButton,
-                            pressed && styles.buttonPressed,
-                          ]}
-                        >
-                          <FastForward
-                            color={theme.colors.textSecondary}
-                            size={12}
-                          />
-                          <Text style={styles.skipButtonText}>Skip</Text>
-                        </Pressable>
-                      </View>
-                    )}
+                          <Pressable
+                            accessibilityLabel="Skip occurrence"
+                            accessibilityRole="button"
+                            onPress={() => onSkipOccurrence(item.id)}
+                            style={({ pressed }) => [
+                              styles.skipButton,
+                              pressed && styles.buttonPressed,
+                            ]}
+                          >
+                            <FastForward
+                              color={theme.colors.textSecondary}
+                              size={12}
+                            />
+                            <Text style={styles.skipButtonText}>Skip</Text>
+                          </Pressable>
+                        </View>
+                      )}
                   </View>
                 </View>
               );
@@ -231,6 +248,10 @@ function renderStatusBadge(
     badgeStyle = styles.badgeDue;
     textStyle = styles.badgeTextDue;
     label = "Due Now";
+  } else if (status === "failed") {
+    badgeStyle = styles.badgeFailed;
+    textStyle = styles.badgeTextFailed;
+    label = "Failed";
   } else if (status === "posted") {
     badgeStyle = styles.badgePosted;
     textStyle = styles.badgeTextPosted;
@@ -365,6 +386,9 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 7,
       paddingVertical: 3,
     },
+    retryButton: {
+      backgroundColor: theme.colors.primary,
+    },
     postButtonText: {
       fontSize: 10,
       fontWeight: "700",
@@ -407,6 +431,17 @@ function createStyles(theme: AppTheme) {
     },
     badgeTextDue: {
       color: theme.colors.warning ?? "#f59e0b",
+    },
+    badgeFailed: {
+      backgroundColor: theme.colors.danger + "18",
+    },
+    badgeTextFailed: {
+      color: theme.colors.danger,
+    },
+    failureErrorText: {
+      fontSize: 10,
+      color: theme.colors.danger,
+      marginTop: 2,
     },
     badgePosted: {
       backgroundColor: theme.colors.success + "18",

@@ -25,6 +25,7 @@ export interface CalendarScheduleOccurrence {
   toPocketId: string | null;
   autoPost: boolean;
   isProjected: boolean;
+  errorMessage?: string | null;
 }
 
 export function getCalendarScheduleOccurrences(options: {
@@ -107,6 +108,7 @@ export function getCalendarScheduleOccurrences(options: {
           toPocketId: snapshotData.toPocketId ?? schedule.toPocketId,
           autoPost: schedule.autoPost,
           isProjected: false,
+          errorMessage: occ.errorMessage ?? null,
         });
     }
 
@@ -151,6 +153,7 @@ export function getCalendarScheduleOccurrences(options: {
             toPocketId: schedule.toPocketId,
             autoPost: schedule.autoPost,
             isProjected: true,
+            errorMessage: null,
           });
         }
 
