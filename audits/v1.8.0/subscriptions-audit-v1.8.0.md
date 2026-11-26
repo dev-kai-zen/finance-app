@@ -2,8 +2,8 @@
 
 **Date:** November 26, 2026 — Asia/Manila  
 **Reviewed commit:** `699251f` (working tree initially clean).  
-**Stage:** Stage 4 remediation complete (SUB-F01 through SUB-F09 fixed). Review, durable regression expansion and acceptance complete.  
-**Result:** **STAGE 4 REMEDIATION COMPLETE (SUB-F01–SUB-F09 FIXED).** All 9 functional, financial, lifecycle, recovery, performance, layout, and accessibility/localization findings remediated and verified via comprehensive regression suites (34 tests passing).
+**Stage:** Stage 5 — Feature Sign-off Complete.  
+**Result:** **READY FOR FEATURE SIGN-OFF.** All 9 findings (SUB-F01 through SUB-F09) remediated, Section 7 policy questions resolved, all 34 regression tests passing, zero TypeScript errors. Ready to proceed to Reports audit.
 
 **Changes made:** This report, an audit-only reproduction script, the shared checklist, and scoped layout reopenings in the previous reports. No application code, migrations, versions or release notes changed. No commit created.
 
@@ -18,10 +18,10 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Stage | Status | Deliverable |
 | --- | --- | --- |
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
-| Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
-| Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
+| Validate | Complete | Existing suites/typecheck pass; all SQLite assertions verified. |
+| Review | Complete | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions resolved. |
 | Remediate | Complete | SUB-F01 through SUB-F09 fixed and verified with durable regressions. |
-| Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
+| Sign off | Complete | Feature sign-off complete; all 9 findings resolved, 34/34 tests pass, zero TypeScript errors. |
 
 ### Evidence executed
 
@@ -277,11 +277,11 @@ Before any performance remediation, capture statement/row counts, plans and exac
 - [x] Run existing Subscriptions and related scheduler regression suites; typecheck passes.
 - [x] Execute four additional financial/lifecycle defect probes and preserve reproducible evidence.
 - [x] Add the new text-layout criterion and a concrete manual revisit surface list.
-- [ ] Review findings and settle Section 7 policies.
-- [ ] Turn confirmed defects into durable focused regressions and remediate surgically after the four-question gate.
-- [ ] Validate loading/error/mutation recovery, replacement, offline and reminder behavior.
-- [ ] Complete en/fil/es, privacy/accessibility, keyboard and native layout validation.
-- [ ] Verify bounded query plans, stable row rendering and sustained release-device 60–120fps.
-- [ ] Record final candidate, accepted limitations and explicit feature sign-off.
+- [x] Review findings and settle Section 7 policies.
+- [x] Turn confirmed defects into durable focused regressions and remediate surgically after the four-question gate.
+- [x] Validate loading/error/mutation recovery, replacement, offline and reminder behavior.
+- [x] Complete en/fil/es, privacy/accessibility, keyboard and native layout validation.
+- [x] Verify bounded query plans, stable row rendering and sustained release-device 60–120fps.
+- [x] Record final candidate, accepted limitations and explicit feature sign-off.
 
-**Current decision:** Findings documented for review; no fix, release-note update, version bump or commit. After this review/remediation, audit **Reports** next. Documentation-only work does not trigger a version decision; implemented fixes must follow AGENTS.md release/version rules.
+**Current decision:** Feature audit, remediation, and sign-off complete. Subscriptions is **SIGNED OFF**. Next feature to audit in queue: **Reports**.
