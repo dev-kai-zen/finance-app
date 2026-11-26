@@ -295,15 +295,23 @@ function CalendarScreenContent() {
     setActiveTab(tab);
   };
 
+  const reportableAccountCount = useMemo(
+    () => accounts.filter((a) => !a.isArchived && !a.hideFromReports).length,
+    [accounts],
+  );
+
   const balanceSheetAccountCount =
-    balanceSheetData.assets.accountTypes.reduce(
-      (sum, g) => sum + g.accounts.length,
-      0,
-    ) +
-    balanceSheetData.liabilities.accountTypes.reduce(
-      (sum, g) => sum + g.accounts.length,
-      0,
-    );
+    balanceSheetData.assets.accountTypes.length > 0 ||
+    balanceSheetData.liabilities.accountTypes.length > 0
+      ? balanceSheetData.assets.accountTypes.reduce(
+          (sum, g) => sum + g.accounts.length,
+          0,
+        ) +
+        balanceSheetData.liabilities.accountTypes.reduce(
+          (sum, g) => sum + g.accounts.length,
+          0,
+        )
+      : reportableAccountCount;
 
   const currentTabCount =
     activeTab === "transactions"
@@ -423,6 +431,7 @@ function CalendarScreenContent() {
             {/* 4. Mini Summary Ribbon */}
             <CalendarSummaryRibbon
               activeTab={activeTab}
+              isLoading={isTabLoading}
               isMonthScope={selectedDay === null}
               metrics={summaryMetrics}
             />

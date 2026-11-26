@@ -645,10 +645,15 @@ export function useCalendarData() {
       schedulesPostedCount: postedCount,
       savingsRatePercent: savingsRate,
       projectedMonthEndNetMinorUnits: projectedMonthEndNet,
-      balanceSheetAssetsMinorUnits: balanceSheetData.assets.totalMinorUnits,
-      balanceSheetLiabilitiesMinorUnits:
-        balanceSheetData.liabilities.totalMinorUnits,
-      balanceSheetNetWorthMinorUnits: balanceSheetData.netWorthMinorUnits,
+      balanceSheetAssetsMinorUnits: isBalanceSheetPending
+        ? 0
+        : balanceSheetData.assets.totalMinorUnits,
+      balanceSheetLiabilitiesMinorUnits: isBalanceSheetPending
+        ? 0
+        : balanceSheetData.liabilities.totalMinorUnits,
+      balanceSheetNetWorthMinorUnits: isBalanceSheetPending
+        ? 0
+        : balanceSheetData.netWorthMinorUnits,
     };
   }, [
     scopedTransactions,
@@ -750,7 +755,10 @@ export function useCalendarData() {
     activeTab,
     loading,
     isTabLoading:
-      isTabLoading || isBalanceSheetPending || isBalanceSheetLoading,
+      isTabLoading ||
+      (activeTab === "transactions" && (isMonthPending || isMonthLoading)) ||
+      isBalanceSheetPending ||
+      isBalanceSheetLoading,
     error,
     balanceSheetError,
     retryBalanceSheet,

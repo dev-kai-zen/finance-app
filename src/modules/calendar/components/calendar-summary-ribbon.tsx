@@ -22,12 +22,14 @@ export interface CalendarSummaryRibbonProps {
   metrics: CalendarSummaryMetrics;
   activeTab: CalendarTab;
   isMonthScope: boolean;
+  isLoading?: boolean;
 }
 
-export function CalendarSummaryRibbon({
+export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
   metrics,
   activeTab,
   isMonthScope,
+  isLoading = false,
 }: CalendarSummaryRibbonProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -35,8 +37,10 @@ export function CalendarSummaryRibbon({
   const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
 
-  const maskAmount = (val: number, showSign = false) =>
-    isPrivate ? "••••••" : formatCurrency(val, currencyCode, showSign);
+  const maskAmount = (val: number, showSign = false) => {
+    if (isLoading) return "—";
+    return isPrivate ? "••••••" : formatCurrency(val, currencyCode, showSign);
+  };
 
   if (activeTab === "transactions") {
     const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
@@ -241,8 +245,9 @@ export function CalendarSummaryRibbon({
         <View style={styles.metricItem}>
           <Text style={styles.metricLabel}>Upcoming</Text>
           <Text style={styles.metricValue}>
-            {metrics.schedulesPendingCount}{" "}
-            {metrics.schedulesPendingCount === 1 ? "item" : "items"}
+            {isLoading
+              ? "—"
+              : `${metrics.schedulesPendingCount} ${metrics.schedulesPendingCount === 1 ? "item" : "items"}`}
           </Text>
         </View>
 
@@ -251,8 +256,9 @@ export function CalendarSummaryRibbon({
         <View style={styles.metricItem}>
           <Text style={styles.metricLabel}>Posted</Text>
           <Text style={[styles.metricValue, { color: theme.colors.success }]}>
-            {metrics.schedulesPostedCount}{" "}
-            {metrics.schedulesPostedCount === 1 ? "item" : "items"}
+            {isLoading
+              ? "—"
+              : `${metrics.schedulesPostedCount} ${metrics.schedulesPostedCount === 1 ? "item" : "items"}`}
           </Text>
         </View>
       </View>
@@ -286,7 +292,11 @@ export function CalendarSummaryRibbon({
       <View style={styles.metricItem}>
         <Text style={styles.metricLabel}>Savings Rate</Text>
         <Text style={styles.metricValue}>
-          {metrics.savingsRatePercent > 0 ? `${metrics.savingsRatePercent}%` : "0%"}
+          {isLoading
+            ? "—"
+            : metrics.savingsRatePercent > 0
+              ? `${metrics.savingsRatePercent}%`
+              : "0%"}
         </Text>
       </View>
 
@@ -312,7 +322,7 @@ export function CalendarSummaryRibbon({
       )}
     </View>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
