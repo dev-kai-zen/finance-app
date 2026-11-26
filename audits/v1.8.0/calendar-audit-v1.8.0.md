@@ -8,7 +8,7 @@
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Two confirmed financial-display defects affect the forecast and category spending. Read failures can look like valid empty/zero results, mutation failures are hidden, and measured synchronous reads exceed the 8.3–16.6 ms frame budget at scale. No ledger corruption or duplicate posting was demonstrated by this audit.
 
-**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
+**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
 
 ## 1. Prior audits and workflow
 
@@ -114,7 +114,7 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 | ID | Priority | Finding | Evidence |
 | --- | --- | --- | --- |
 | CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite. |
-| CAL-F02 | P1 | Top Expense Categories adds refunds to spending | Actual helper execution; contradicts the signed refund contract. |
+| CAL-F02 | P1 — FIXED | Top Expense Categories adds refunds to spending | Fixed with signed parent netting in buildCategoryExpenseBreakdown and category-expense-breakdown.test.cjs regressions. |
 | CAL-F03 | P2 | Read failures become empty/zero success with no recovery | Hook failure injection and screen source. |
 | CAL-F04 | P2 | Failed post/skip/edit/delete actions lack error feedback | Actual post/skip callback execution; error props omitted in screen. |
 | CAL-F05 | P2 | Failed schedule occurrences display as Upcoming | Complete occurrence-status union versus badge/action branches. |
@@ -137,8 +137,8 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 1. **Actual problem:** -100 expense plus +20 refund displays 120 spent instead of 80. Refund-only categories become positive spending.
 2. **Cause/path:** Net tab → `buildCategoryExpenseBreakdown` → [absolute conversion at line 24](../../src/modules/calendar/utils/category-expense-breakdown.ts#L24). Every row/entry adds an absolute magnitude. Split entry magnitudes also need the parent transaction's direction.
-3. **Smallest fix:** Net spending using the parent's signed direction; allocate split magnitudes consistently without also adding the parent. Preserve category metadata, date scope, FX rounding, and negative net spending. Set percentage presentation deliberately when totals are zero/negative; do not disguise a refund as a positive expense.
-4. **Regression proof:** Execute the actual helper with unsplit/split refunds, refund-only and net-negative categories, fees, deleted rows, nested category metadata, and currencies. Compare amounts to the owning Transactions expense aggregation. Existing Dashboard/Calendar parity tests cover ordinary splits but contain no refund fixture.
+3. **Smallest fix:** Net spending using the parent's signed direction; allocate split magnitudes consistently without also adding the parent. Preserve category metadata, date scope, FX rounding, and negative net spending. Set percentage presentation deliberately when totals are zero/negative; do not disguise a refund as a positive expense. Implemented in [category-expense-breakdown.ts](../../src/modules/calendar/utils/category-expense-breakdown.ts).
+4. **Regression proof:** Execute the actual helper with unsplit/split refunds, refund-only and net-negative categories, fees, deleted rows, nested category metadata, and currencies. Compare amounts to the owning Transactions expense aggregation. Permanent regressions implemented in [category-expense-breakdown.test.cjs](../../src/modules/calendar/__tests__/category-expense-breakdown.test.cjs) and verified against [category-spending.test.cjs](../../src/modules/dashboard/__tests__/category-spending.test.cjs).
 
 ### CAL-F03 — Query failure recovery
 

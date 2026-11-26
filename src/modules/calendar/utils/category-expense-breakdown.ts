@@ -19,20 +19,27 @@ export function buildCategoryExpenseBreakdown(
 
   const totals = new Map<string, number>();
   let overall = 0;
-  function add(categoryId: string | null, amount: number, currency: string) {
+  function add(categoryId: string | null, signedSpending: number, currency: string) {
     const id = categoryId ?? "uncategorized";
-    const converted = Math.abs(convert(amount, currency));
+    const converted = convert(signedSpending, currency);
     totals.set(id, (totals.get(id) ?? 0) + converted);
     overall += converted;
   }
   for (const transaction of transactions) {
     if (transaction.type !== "expense" || transaction.deletedAt) continue;
+
+    const isParentRefund = transaction.amountMinorUnits > 0;
+
     if (transaction.isSplit && transaction.splitEntries?.length) {
       for (const entry of transaction.splitEntries) {
-        add(entry.categoryId, entry.amountMinorUnits, transaction.accountCurrency);
+        const signedSpending = isParentRefund
+          ? -Math.abs(entry.amountMinorUnits)
+          : Math.abs(entry.amountMinorUnits);
+        add(entry.categoryId, signedSpending, transaction.accountCurrency);
       }
     } else {
-      add(transaction.categoryId, transaction.amountMinorUnits, transaction.accountCurrency);
+      const signedSpending = -transaction.amountMinorUnits;
+      add(transaction.categoryId, signedSpending, transaction.accountCurrency);
     }
   }
 
@@ -44,7 +51,7 @@ export function buildCategoryExpenseBreakdown(
       icon: category?.icon ?? null,
       color: category?.color ?? null,
       totalMinorUnits: total,
-      percentage: overall > 0 ? Math.round(total / overall * 100) : 0,
+      percentage: overall > 0 && total > 0 ? Math.round((total / overall) * 100) : 0,
     };
   }).sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
 }
