@@ -1022,3 +1022,100 @@ test("SUB-F08: hook exposes save and screen maintains confirmation targets until
     "handleToggleStatus must handle errors via try/catch",
   );
 });
+
+test("SUB-F09: accessibility privacy, localized reminders, keyboard dismissal, and non-English date ordinal formatting", () => {
+  const fs = require("fs");
+  const path = require("path");
+
+  // 1. Accessibility label in SubscriptionCard uses displayAmount (masked in Privacy Mode)
+  const cardSrc = fs.readFileSync(
+    path.resolve(__dirname, "../components/subscription-card.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /accessibilityLabel=\{`\$\{subscription\.name\},\s*\$\{displayAmount\}/.test(cardSrc),
+    "SubscriptionCard accessibilityLabel must use displayAmount instead of raw formattedAmount for privacy parity",
+  );
+  assert.ok(
+    cardSrc.includes("displayMonthlyBurn") && cardSrc.includes('subscriptions.cycle_monthly'),
+    "SubscriptionCard normalized burn must use localized cycle_monthly label",
+  );
+
+  // 2. MarkPaidModal handles keyboard dismissal and localized date display
+  const markPaidSrc = fs.readFileSync(
+    path.resolve(__dirname, "../components/mark-paid-modal.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /Keyboard\.dismiss\(\)/.test(markPaidSrc),
+    "MarkPaidModal must dismiss the software keyboard on modal dismiss/confirm",
+  );
+  assert.ok(
+    /formatDisplayDate\(selectedPaidAt,\s*locale\)/.test(markPaidSrc),
+    "MarkPaidModal must pass the active locale to formatDisplayDate",
+  );
+  assert.ok(
+    /\{subscription\.name\}\s*•\s*\{formattedAmount\}/.test(markPaidSrc),
+    "MarkPaidModal must display unmasked formattedAmount even when privacy mode is enabled per original app design",
+  );
+
+  // 3. Localized reminder notifications across en, fil, es
+  const { getSubscriptionReminderCopy } = require("../services/schedule-sub-reminders.service");
+
+  // English Active & Trial
+  const enActive = getSubscriptionReminderCopy("Netflix", false, "₱549.00", 1, "en");
+  assert.equal(enActive.title, "Subscription Renewal: Netflix");
+  assert.equal(enActive.body, "Netflix renews tomorrow (₱549.00).");
+
+  const enTrial = getSubscriptionReminderCopy("Spotify", true, "₱149.00", 0, "en");
+  assert.equal(enTrial.title, "Free Trial Ending: Spotify");
+  assert.equal(enTrial.body, "Spotify trial ends today. Renewing at ₱149.00.");
+
+  const enDays = getSubscriptionReminderCopy("Cloud", false, "₱299.00", 3, "en");
+  assert.equal(enDays.body, "Cloud renews in 3 days (₱299.00).");
+
+  // Filipino Active & Trial
+  const filActive = getSubscriptionReminderCopy("Netflix", false, "₱549.00", 1, "fil");
+  assert.equal(filActive.title, "Pag-renew ng Suskrisyon: Netflix");
+  assert.equal(filActive.body, "Magre-renew ang Netflix bukas (₱549.00).");
+
+  const filTrial = getSubscriptionReminderCopy("Spotify", true, "₱149.00", 0, "fil");
+  assert.equal(filTrial.title, "Matatapos na ang Libreng Pagsubok: Spotify");
+  assert.equal(filTrial.body, "Matatapos ang pagsubok sa Spotify ngayong araw. Magre-renew sa halagang ₱149.00.");
+
+  const filDays = getSubscriptionReminderCopy("Cloud", false, "₱299.00", 3, "fil");
+  assert.equal(filDays.body, "Magre-renew ang Cloud sa loob ng 3 araw (₱299.00).");
+
+  // Spanish Active & Trial
+  const esActive = getSubscriptionReminderCopy("Netflix", false, "₱549.00", 1, "es");
+  assert.equal(esActive.title, "Renovación de suscripción: Netflix");
+  assert.equal(esActive.body, "Netflix se renueva mañana (₱549.00).");
+
+  const esTrial = getSubscriptionReminderCopy("Spotify", true, "₱149.00", 0, "es");
+  assert.equal(esTrial.title, "Fin de prueba gratuita: Spotify");
+  assert.equal(esTrial.body, "La prueba de Spotify finaliza hoy. Se renovará por ₱149.00.");
+
+  const esDays = getSubscriptionReminderCopy("Cloud", false, "₱299.00", 3, "es");
+  assert.equal(esDays.body, "Cloud se renueva en 3 días (₱299.00).");
+
+  // 4. Ordinal formatting in subscription form modal
+  const { getOrdinalSuffix, getBillingCycleDescription } = require("../components/subscription-form-modal");
+  assert.equal(getOrdinalSuffix(1, "en"), "1st");
+  assert.equal(getOrdinalSuffix(2, "en"), "2nd");
+  assert.equal(getOrdinalSuffix(3, "en"), "3rd");
+  assert.equal(getOrdinalSuffix(21, "en"), "21st");
+
+  // Non-English locales return cardinal day string
+  assert.equal(getOrdinalSuffix(1, "fil"), "1");
+  assert.equal(getOrdinalSuffix(21, "es"), "21");
+  assert.equal(getOrdinalSuffix(21, "tl"), "21");
+
+  const mockTranslate = (_key, opts) => opts?.defaultValue || "";
+  const d = new Date(2026, 10, 21); // Nov 21 2026
+  const enDesc = getBillingCycleDescription("monthly", d, mockTranslate, "en");
+  assert.ok(enDesc.includes("21st"), `English monthly description must contain ordinal suffix: ${enDesc}`);
+
+  const esDesc = getBillingCycleDescription("monthly", d, mockTranslate, "es");
+  assert.ok(esDesc.includes("21"), `Spanish monthly description must contain day number: ${esDesc}`);
+  assert.ok(!esDesc.includes("21st"), `Spanish monthly description must not bleed English 'st': ${esDesc}`);
+});

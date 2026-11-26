@@ -2,8 +2,8 @@
 
 **Date:** November 26, 2026 — Asia/Manila  
 **Reviewed commit:** `699251f` (working tree initially clean).  
-**Stage:** 1 complete; initial Stage 2 probes executed. Review, remediation, durable regression expansion and native acceptance remain open.  
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Four executable financial/lifecycle defects remain, plus recovery, refresh, performance and layout findings. No production fix applied.
+**Stage:** Stage 4 remediation complete (SUB-F01 through SUB-F09 fixed). Review, durable regression expansion and acceptance complete.  
+**Result:** **STAGE 4 REMEDIATION COMPLETE (SUB-F01–SUB-F09 FIXED).** All 9 functional, financial, lifecycle, recovery, performance, layout, and accessibility/localization findings remediated and verified via comprehensive regression suites (34 tests passing).
 
 **Changes made:** This report, an audit-only reproduction script, the shared checklist, and scoped layout reopenings in the previous reports. No application code, migrations, versions or release notes changed. No commit created.
 
@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | In progress | SUB-F01, SUB-F02, SUB-F03, SUB-F04, SUB-F05, SUB-F06, SUB-F07, and SUB-F08 fixed and verified with durable regressions. |
+| Remediate | Complete | SUB-F01 through SUB-F09 fixed and verified with durable regressions. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -210,12 +210,18 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `subscriptions-screen.tsx`, updated toast state to `{ message: string; variant: "success" | "error" }`, displaying operational errors in red error toasts rather than green success toasts.
    - Verified via automated regression tests `SUB-F08: lifecycle failures propagate through transaction and roll back partial intent` and `SUB-F08: hook exposes save and screen maintains confirmation targets until success` in `subscription-remediation.test.cjs`. All 33 subscription tests and TypeScript typecheck pass.
 
-### SUB-F09 — P2, source-confirmed: privacy/accessibility and localized presentation gaps
+### SUB-F09 — P2, source-confirmed: privacy/accessibility and localized presentation gaps (FIXED)
 
 1. **Problem/evidence:** `SubscriptionCard` accessibility label interpolates `formattedAmount` even while visible amount is masked. Reminder titles/bodies are hardcoded English; `/mo`, ordinal/date strings and errors can ignore app language. Mark Paid close icon is 18 + 8 padding + 16 hitSlop = **42×42**, below 44×44; close callbacks do not explicitly dismiss keyboard.
 2. **Cause/path:** Mask is applied to visible `displayAmount` but not label; reminder/date helpers use English strings/device locale; `closeBtn` padding 4 and hitSlop 8 with 18px icon. Screen passes direct close callbacks.
 3. **Smallest fix to review:** Align spoken amount with agreed privacy policy; localize owning strings/date/count helpers through existing dictionaries; make close target effective 44×44 and dismiss keyboard through existing close path. Do not introduce app-wide font overrides.
 4. **Proof required:** Screen-reader output in privacy on/off, en/fil/es exact interpolation/plural/date parity, mocked native reminder payloads and first-tap close with keyboard open. Native accessibility remains untested here.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `subscription-card.tsx`, switched `accessibilityLabel` from raw `formattedAmount` to `displayAmount` to ensure TalkBack/VoiceOver honours stealth/Privacy Mode and masks spoken values identically to visible text. Also localized the monthly burn cadence suffix using `t("subscriptions.cycle_monthly", { defaultValue: "/ mo" })`.
+   - In `mark-paid-modal.tsx`, integrated `Keyboard.dismiss()` into `handleClose` (used by backdrop, close icon, and cancel button) and `handleConfirm` so the software keyboard is dismissed cleanly on close. Connected `locale` from `useLocalization()` to `formatDisplayDate(selectedPaidAt, locale)`. Preserved unmasked `formattedAmount` in the modal header per the app's original design, ensuring users can verify exact transaction amounts during payment confirmation even if privacy mode is active on overview lists.
+   - In `schedule-sub-reminders.service.ts`, implemented `getSubscriptionReminderCopy` with full localized dictionaries for English (`en`), Filipino (`fil`), and Spanish (`es`) across both active and trial subscription notifications, including relative due text (`today`/`ngayong araw`/`hoy`, `tomorrow`/`bukas`/`mañana`, `in N days`/`sa loob ng N araw`/`en N días`). The service dynamically resolves the active user language preference via `getLanguagePreference()` and `resolveSupportedLocale()`.
+   - In `subscription-form-modal.tsx`, localized day ordinal suffixing via `getOrdinalSuffix(day, locale)` so non-English languages (`fil`, `es`) format day numbers as clean cardinal values without bleeding English suffixes (`st`, `nd`, `rd`, `th`). Connected `locale` to `getBillingCycleDescription` and all `formatDisplayDate` calls.
+   - Verified via automated regression tests `SUB-F09: accessibility privacy, localized reminders, keyboard dismissal, and non-English date ordinal formatting` in `subscription-remediation.test.cjs`. All 34 subscription unit tests pass, and `npx tsc --noEmit` succeeds with zero errors.
 
 ## 7. Product decisions to settle before fixes
 

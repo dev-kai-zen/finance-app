@@ -60,15 +60,18 @@ function parseIsoDate(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
-function formatDisplayDate(d: Date): string {
-  return d.toLocaleDateString(undefined, {
+export function formatDisplayDate(d: Date, locale?: string): string {
+  return d.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-function getOrdinalSuffix(day: number): string {
+export function getOrdinalSuffix(day: number, locale?: string): string {
+  if (locale && locale !== "en") {
+    return String(day);
+  }
   if (day > 3 && day < 21) return `${day}th`;
   switch (day % 10) {
     case 1:
@@ -82,29 +85,30 @@ function getOrdinalSuffix(day: number): string {
   }
 }
 
-function getBillingCycleDescription(
+export function getBillingCycleDescription(
   cycle: BillingCycle,
   date: Date,
   t: (key: any, options?: any) => string,
+  locale?: string,
 ): string {
   switch (cycle) {
     case "weekly": {
-      const weekday = date.toLocaleDateString(undefined, { weekday: "long" });
+      const weekday = date.toLocaleDateString(locale, { weekday: "long" });
       return t("subscriptions.cycleDescWeekly", {
         day: weekday,
         defaultValue: `Billed every ${weekday} of the week`,
       });
     }
     case "monthly": {
-      const day = getOrdinalSuffix(date.getDate());
+      const day = getOrdinalSuffix(date.getDate(), locale);
       return t("subscriptions.cycleDescMonthly", {
         day,
         defaultValue: `Billed on the ${day} of every month`,
       });
     }
     case "quarterly": {
-      const day = getOrdinalSuffix(date.getDate());
-      const dateFormatted = date.toLocaleDateString(undefined, {
+      const day = getOrdinalSuffix(date.getDate(), locale);
+      const dateFormatted = date.toLocaleDateString(locale, {
         month: "short",
         day: "numeric",
       });
@@ -115,8 +119,8 @@ function getBillingCycleDescription(
       });
     }
     case "semi_annual": {
-      const day = getOrdinalSuffix(date.getDate());
-      const dateFormatted = date.toLocaleDateString(undefined, {
+      const day = getOrdinalSuffix(date.getDate(), locale);
+      const dateFormatted = date.toLocaleDateString(locale, {
         month: "short",
         day: "numeric",
       });
@@ -127,7 +131,7 @@ function getBillingCycleDescription(
       });
     }
     case "yearly": {
-      const dateFormatted = date.toLocaleDateString(undefined, {
+      const dateFormatted = date.toLocaleDateString(locale, {
         month: "long",
         day: "numeric",
       });
@@ -162,7 +166,7 @@ function SubscriptionFormModalContent({
 }: SubscriptionFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { t } = useLocalization();
+  const { t, locale } = useLocalization();
 
   const { accounts, pockets } = useAccounts({
     includeCreditCardMonitoring: false,
@@ -355,8 +359,8 @@ function SubscriptionFormModalContent({
   }, [categories, categoryId]);
 
   const billingCycleDescription = useMemo(() => {
-    return getBillingCycleDescription(billingCycle, firstBillingDate, t);
-  }, [billingCycle, firstBillingDate, t]);
+    return getBillingCycleDescription(billingCycle, firstBillingDate, t, locale);
+  }, [billingCycle, firstBillingDate, t, locale]);
 
   const trialSummaryCaption = useMemo(() => {
     if (!trialEndsAt) return "";
@@ -366,12 +370,12 @@ function SubscriptionFormModalContent({
     );
     const daysLeftText = `${daysLeft}d left`;
     return t("subscriptions.trialSummaryCaption", {
-      date: formatDisplayDate(trialEndsAt),
+      date: formatDisplayDate(trialEndsAt, locale),
       daysLeft: daysLeftText,
       reminder: "",
-      defaultValue: `Trial ends on ${formatDisplayDate(trialEndsAt)} (${daysLeftText}).`,
+      defaultValue: `Trial ends on ${formatDisplayDate(trialEndsAt, locale)} (${daysLeftText}).`,
     });
-  }, [trialEndsAt, t]);
+  }, [trialEndsAt, t, locale]);
 
   const isAmountValid = subscriptionFormSchema.shape.amountMinorUnits.safeParse(amountMinorUnits).success;
   const isValid =
@@ -588,7 +592,7 @@ function SubscriptionFormModalContent({
               <View style={styles.selectorLeft}>
                 <Calendar color={theme.colors.primary} size={18} />
                 <Text style={styles.selectorValue}>
-                  {formatDisplayDate(firstBillingDate)}
+                  {formatDisplayDate(firstBillingDate, locale)}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textSecondary} size={18} />
@@ -759,7 +763,7 @@ function SubscriptionFormModalContent({
                     ]}
                   >
                     {trialDurationPreset === "custom" && trialEndsAt
-                      ? formatDisplayDate(trialEndsAt)
+                      ? formatDisplayDate(trialEndsAt, locale)
                       : t("subscriptions.customDate", {
                           defaultValue: "Custom Date",
                         })}
@@ -834,7 +838,7 @@ function SubscriptionFormModalContent({
                   ]}
                 >
                   {endsOn
-                    ? formatDisplayDate(endsOn)
+                    ? formatDisplayDate(endsOn, locale)
                     : t("subscriptions.noExpiration", {
                         defaultValue: "Renews indefinitely (no end date)",
                       })}

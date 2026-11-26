@@ -177,7 +177,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
     <Pressable
       ref={cardRef as any}
       collapsable={false}
-      accessibilityLabel={`${subscription.name}, ${formattedAmount} ${cycleLabel}, ${countdownText}`}
+      accessibilityLabel={`${subscription.name}, ${displayAmount} ${cycleLabel}, ${countdownText}`}
       accessibilityRole="button"
       onPress={handlePress}
       style={({ pressed }) => [
@@ -234,7 +234,8 @@ export const SubscriptionCard = memo(function SubscriptionCard({
           <Text numberOfLines={1} style={styles.cycleText}>{cycleLabel}</Text>
           {subscription.billingCycle !== "monthly" && (
             <Text numberOfLines={1} style={styles.normalizedText}>
-              ({displayMonthlyBurn}/mo)
+              ({displayMonthlyBurn}
+              {t("subscriptions.cycle_monthly", { defaultValue: "/ mo" })})
             </Text>
           )}
         </View>

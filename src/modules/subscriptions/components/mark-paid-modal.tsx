@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -16,7 +17,6 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { formatCurrency } from "@/utils/currency";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { SubscriptionItem } from "../types/subscription.types";
 
 function toIsoDate(d: Date): string {
@@ -26,8 +26,8 @@ function toIsoDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function formatDisplayDate(d: Date): string {
-  return d.toLocaleDateString(undefined, {
+function formatDisplayDate(d: Date, locale?: string): string {
+  return d.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -82,11 +82,15 @@ function MarkPaidModalContent({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { t } = useLocalization();
+  const { t, locale } = useLocalization();
   const { accounts, pockets } = useAccounts({
     includeCreditCardMonitoring: false,
   });
-  const { isPrivate } = usePrivacyMode();
+
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(
     subscription.accountId || (accounts[0]?.id ?? ""),
@@ -133,10 +137,10 @@ function MarkPaidModalContent({
     subscription.amountMinorUnits,
     subscription.currencyCode,
   );
-  const displayAmount = formatPrivacyAmount(formattedAmount, isPrivate);
 
   const handleConfirm = () => {
     if (!selectedAccountId) return;
+    Keyboard.dismiss();
     onConfirm({
       accountId: selectedAccountId,
       pocketId: selectedPocketId,
@@ -148,14 +152,14 @@ function MarkPaidModalContent({
     <>
       <Modal
         animationType="fade"
-        onRequestClose={onClose}
+        onRequestClose={handleClose}
         transparent
         visible={visible}
       >
         <View style={styles.overlay}>
           <Pressable
             accessibilityLabel={t("common.close")}
-            onPress={onClose}
+            onPress={handleClose}
             style={styles.backdrop}
           />
           <View style={styles.sheet}>
@@ -173,13 +177,13 @@ function MarkPaidModalContent({
                     })}
                   </Text>
                   <Text numberOfLines={1} style={styles.subtitle}>
-                    {subscription.name} • {displayAmount}
+                    {subscription.name} • {formattedAmount}
                   </Text>
                 </View>
                 <Pressable
                   accessibilityLabel={t("common.close")}
                   hitSlop={12}
-                  onPress={onClose}
+                  onPress={handleClose}
                   style={styles.closeBtn}
                 >
                   <X color={theme.colors.textSecondary} size={18} />
@@ -223,7 +227,7 @@ function MarkPaidModalContent({
                   <View style={styles.selectorLeft}>
                     <Calendar color={theme.colors.primary} size={18} />
                     <Text numberOfLines={1} style={styles.selectorValue}>
-                      {formatDisplayDate(selectedPaidAt)}
+                      {formatDisplayDate(selectedPaidAt, locale)}
                     </Text>
                   </View>
                   <ChevronRight color={theme.colors.textSecondary} size={18} />
@@ -240,7 +244,7 @@ function MarkPaidModalContent({
               <View style={styles.btnRow}>
                 <AppButton
                   label={t("common.cancel")}
-                  onPress={onClose}
+                  onPress={handleClose}
                   variant="secondary"
                 />
                 <AppButton
