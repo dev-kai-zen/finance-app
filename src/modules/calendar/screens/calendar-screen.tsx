@@ -112,6 +112,17 @@ function CalendarScreenContent() {
     clearError: clearTxError,
   } = useTransactions({ skipQuery: true });
 
+  // Transaction modals state
+  const [inspectedTransaction, setInspectedTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [prefilledTransaction, setPrefilledTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
+  const [pendingDeleteTxId, setPendingDeleteTxId] = useState<string | null>(
+    null,
+  );
+
   const {
     presets,
     loading: presetsLoading,
@@ -127,18 +138,7 @@ function CalendarScreenContent() {
     archivedPresets,
     sortBy: presetSortBy,
     setSortBy: onChangePresetSortBy,
-  } = useTransactionPresets();
-
-  // Transaction modals state
-  const [inspectedTransaction, setInspectedTransaction] =
-    useState<TransactionListItem | null>(null);
-  const [formModalOpen, setFormModalOpen] = useState(false);
-  const [prefilledTransaction, setPrefilledTransaction] =
-    useState<TransactionListItem | null>(null);
-  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
-  const [pendingDeleteTxId, setPendingDeleteTxId] = useState<string | null>(
-    null,
-  );
+  } = useTransactionPresets({ skipQuery: !formModalOpen });
 
   // Schedule action modals state
   const [pendingPostScheduleId, setPendingPostScheduleId] = useState<

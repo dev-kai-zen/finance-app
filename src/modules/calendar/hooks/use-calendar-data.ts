@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeviceEventEmitter } from "react-native";
+import { useFocusEffect } from "expo-router";
 import {
   getBalanceSheet,
   useAccounts,
@@ -52,6 +53,22 @@ export function useCalendarData() {
     year: todayParts.year,
     month: todayParts.month,
   });
+
+  // Compute month start and end dates
+  const monthDateRange = useMemo(() => {
+    const startDate = new Date(activeMonth.year, activeMonth.month, 1, 0, 0, 0, 0);
+    const endDate = new Date(
+      activeMonth.year,
+      activeMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+    return { startDate, endDate };
+  }, [activeMonth]);
+
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
   const [isTabLoading, setIsTabLoading] = useState(false);
@@ -70,33 +87,13 @@ export function useCalendarData() {
 
   const currentMonthKey = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
   const monthCacheRef = useRef<Map<string, TransactionListItem[]>>(new Map());
+  const lastReloadTimestampRef = useRef(0);
 
-  // Initialize with initial month data synchronously, capturing any initial read failure
-  const [initialData] = useState(() => {
-    try {
-      const range = getCalendarGridDateRange(todayParts.year, todayParts.month);
-      const initial = getCalendarMonthTransactions(range.startDate, range.endDate);
-      const key = `${todayParts.year}-${String(todayParts.month + 1).padStart(2, "0")}`;
-      monthCacheRef.current.set(key, initial);
-      return { transactions: initial, error: null };
-    } catch (err) {
-      console.error("[useCalendarData] Failed initial month transactions read:", err);
-      return {
-        transactions: [] as TransactionListItem[],
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to load calendar transactions",
-      };
-    }
-  });
-
-  const [transactions, setTransactions] = useState<TransactionListItem[]>(
-    initialData.transactions,
-  );
-  const [monthError, setMonthError] = useState<string | null>(initialData.error);
-  const [isMonthLoading, setIsMonthLoading] = useState(false);
-  const loadedMonthKeyRef = useRef(initialData.error ? "" : currentMonthKey);
+  // Defer initial month transaction read to scheduleAfterPaint so shell paints immediately on frame 1
+  const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
+  const [monthError, setMonthError] = useState<string | null>(null);
+  const [isMonthLoading, setIsMonthLoading] = useState(true);
+  const loadedMonthKeyRef = useRef("");
 
   // Whenever the active month key does not match the loaded month key in state,
   // indicate loading immediately on render to eliminate any stale data / padding transaction flicker
@@ -155,8 +152,14 @@ export function useCalendarData() {
     };
   }, [activeMonth.year, activeMonth.month, monthError]);
 
-  // Reload month helper for mutations and manual refresh
+  // Reload month helper for mutations and manual refresh (coalesced within 200ms)
   const reloadMonthTransactions = useCallback((force = false) => {
+    const now = Date.now();
+    if (force && now - lastReloadTimestampRef.current < 200) {
+      return;
+    }
+    lastReloadTimestampRef.current = now;
+
     const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
     if (!force && monthCacheRef.current.has(key)) {
       loadedMonthKeyRef.current = key;
@@ -181,11 +184,49 @@ export function useCalendarData() {
     }
   }, [activeMonth.year, activeMonth.month]);
 
-  // Subscribe to transaction mutations across the app
+  const [monthScheduleOccurrences, setMonthScheduleOccurrences] = useState<
+    CalendarScheduleOccurrence[]
+  >([]);
+
+  const reloadSchedulesPreview = useCallback(() => {
+    try {
+      const fresh = getCalendarScheduleOccurrences({
+        startDate: monthDateRange.startDate,
+        endDate: monthDateRange.endDate,
+      });
+      setMonthScheduleOccurrences(fresh);
+    } catch {
+      setMonthScheduleOccurrences([]);
+    }
+  }, [monthDateRange.startDate, monthDateRange.endDate]);
+
+  const isFocusedRef = useRef(true);
+  const isDirtyRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      if (isDirtyRef.current) {
+        isDirtyRef.current = false;
+        monthCacheRef.current.clear();
+        reloadMonthTransactions(true);
+        reloadSchedulesPreview();
+      }
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [reloadMonthTransactions, reloadSchedulesPreview]),
+  );
+
+  // Subscribe to transaction mutations across the app, deferring work when offscreen
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
       "FINANCE_APP_TRANSACTION_MUTATED",
       () => {
+        if (!isFocusedRef.current) {
+          isDirtyRef.current = true;
+          return;
+        }
         monthCacheRef.current.clear();
         reloadMonthTransactions(true);
       },
@@ -203,7 +244,6 @@ export function useCalendarData() {
   } = useAccounts();
   const {
     schedules,
-    occurrences,
     loading: schedulesLoading,
     pending: schedulesPendingAction,
     error: schedulesError,
@@ -211,7 +251,7 @@ export function useCalendarData() {
     refresh: refreshSchedules,
     postOccurrence: rawPostOccurrence,
     skipOccurrence: rawSkipOccurrence,
-  } = useScheduledTransactions();
+  } = useScheduledTransactions({ readOnly: true });
 
   const error =
     monthError || accountsError || categoriesError || schedulesError || null;
@@ -221,15 +261,22 @@ export function useCalendarData() {
       const ok = rawPostOccurrence(id);
       if (ok) {
         refreshAccounts();
+        reloadSchedulesPreview();
       }
       return ok;
     },
-    [rawPostOccurrence, refreshAccounts],
+    [rawPostOccurrence, refreshAccounts, reloadSchedulesPreview],
   );
 
   const skipOccurrence = useCallback(
-    (id: string): boolean => rawSkipOccurrence(id),
-    [rawSkipOccurrence],
+    (id: string): boolean => {
+      const ok = rawSkipOccurrence(id);
+      if (ok) {
+        reloadSchedulesPreview();
+      }
+      return ok;
+    },
+    [rawSkipOccurrence, reloadSchedulesPreview],
   );
 
   const loading =
@@ -239,16 +286,49 @@ export function useCalendarData() {
     isMonthPending ||
     isMonthLoading;
 
-  const exchangeRates = useMemo(() => {
-    if (loading && accounts.length === 0) {
-      return new Map<string, number>();
-    }
-    try {
-      return getExchangeRateMap(DEFAULT_BASE_CURRENCY);
-    } catch {
-      return new Map<string, number>();
-    }
-  }, [accounts, loading]);
+  // Defer exchange rates load to scheduleAfterPaint to avoid render-time DB query
+  const [exchangeRates, setExchangeRates] = useState<Map<string, number>>(
+    () => new Map(),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const cancelPaint = scheduleAfterPaint(() => {
+      if (cancelled) return;
+      try {
+        const rates = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+        if (!cancelled) setExchangeRates(rates);
+      } catch {
+        if (!cancelled) setExchangeRates(new Map());
+      }
+    });
+    return () => {
+      cancelled = true;
+      cancelPaint();
+    };
+  }, [accounts]);
+
+  // Defer schedule occurrences preview to scheduleAfterPaint to avoid render-time DB query
+  useEffect(() => {
+    let cancelled = false;
+    const cancelPaint = scheduleAfterPaint(() => {
+      if (cancelled) return;
+      try {
+        const fresh = getCalendarScheduleOccurrences({
+          startDate: monthDateRange.startDate,
+          endDate: monthDateRange.endDate,
+        });
+        if (!cancelled) setMonthScheduleOccurrences(fresh);
+      } catch {
+        if (!cancelled) setMonthScheduleOccurrences([]);
+      }
+    });
+    return () => {
+      cancelled = true;
+      cancelPaint();
+    };
+  }, [monthDateRange.startDate, monthDateRange.endDate, schedules]);
+
   const accountCurrencyMap = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.currencyCode])),
     [accounts],
@@ -271,40 +351,17 @@ export function useCalendarData() {
     loadedMonthKeyRef.current = "";
     loadedBalanceSheetKeyRef.current = null;
     monthCacheRef.current.clear();
+    lastReloadTimestampRef.current = 0;
     reloadMonthTransactions(true);
+    reloadSchedulesPreview();
     refreshSchedules();
     refreshAccounts();
-  }, [reloadMonthTransactions, refreshSchedules, refreshAccounts]);
-
-  // Compute month start and end dates
-  const monthDateRange = useMemo(() => {
-    const startDate = new Date(activeMonth.year, activeMonth.month, 1, 0, 0, 0, 0);
-    const endDate = new Date(
-      activeMonth.year,
-      activeMonth.month + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
-    return { startDate, endDate };
-  }, [activeMonth]);
-
-  // Compute schedule occurrences for this month
-  const monthScheduleOccurrences = useMemo(() => {
-    if (loading && transactions.length === 0) {
-      return [];
-    }
-    try {
-      return getCalendarScheduleOccurrences({
-        startDate: monthDateRange.startDate,
-        endDate: monthDateRange.endDate,
-      });
-    } catch {
-      return [];
-    }
-  }, [loading, monthDateRange, transactions, schedules, occurrences]);
+  }, [
+    reloadMonthTransactions,
+    reloadSchedulesPreview,
+    refreshSchedules,
+    refreshAccounts,
+  ]);
 
   // Group transactions by dateKey (YYYY-MM-DD)
   const transactionsByDateKey = useMemo(() => {
