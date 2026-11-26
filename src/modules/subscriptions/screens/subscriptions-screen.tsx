@@ -16,6 +16,7 @@ import {
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
+  PageErrorState,
   PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
@@ -84,6 +85,7 @@ function SubscriptionsScreenContent({
     searchQuery,
     setSearchQuery,
     loading,
+    error,
     refresh,
     markPaid,
     changeStatus,
@@ -174,13 +176,13 @@ function SubscriptionsScreenContent({
   });
 
   useEffect(() => {
-    if (!loading && walkthroughIntro.canTrigger) {
+    if (!loading && !error && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
         walkthroughIntro.triggerIfFirstTime();
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
+  }, [error, loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const filterCounts = useMemo<Partial<Record<SubscriptionFilter, number>>>(() => {
     return {
@@ -439,6 +441,14 @@ function SubscriptionsScreenContent({
     );
   }
 
+  if (error && subscriptions.length === 0) {
+    return (
+      <PageContainer>
+        <PageErrorState message={error} onRetry={refresh} />
+      </PageContainer>
+    );
+  }
+
   return (
     <View style={styles.screenWrapper}>
       <PageContainer
@@ -496,6 +506,10 @@ function SubscriptionsScreenContent({
         {/* Subscription Cards List or Empty State */}
         {loading ? (
           <PageLoadingState />
+        ) : error && subscriptions.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <PageErrorState message={error} onRetry={refresh} />
+          </View>
         ) : !hasSubscriptions ? (
           <View style={styles.emptyContainer}>
             <PageEmptyState

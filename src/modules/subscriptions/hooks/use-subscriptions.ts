@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { useFocusEffect } from "expo-router";
 
@@ -26,11 +27,25 @@ import type {
 export function useSubscriptions(options?: { skipQuery?: boolean }) {
   const skipQuery = options?.skipQuery ?? false;
   const cancelPendingRef = useRef<(() => void) | null>(null);
+  const isFocusedRef = useRef(false);
+  const frameIdRef = useRef<number | null>(null);
   const { preferences } = useCurrencyPreferences();
   const [items, setItems] = useState<SubscriptionItem[]>([]);
   const [filter, setFilter] = useState<SubscriptionFilter>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const cancelScheduledRefresh = useCallback(() => {
+    if (frameIdRef.current !== null) {
+      if (typeof cancelAnimationFrame !== "undefined") {
+        cancelAnimationFrame(frameIdRef.current);
+      } else {
+        clearTimeout(frameIdRef.current);
+      }
+      frameIdRef.current = null;
+    }
+  }, []);
 
   const refresh = useCallback(() => {
     cancelPendingRef.current?.();
@@ -39,17 +54,74 @@ export function useSubscriptions(options?: { skipQuery?: boolean }) {
       try {
         const data = listSubscriptions({ includeArchived: true });
         setItems(data);
+        setError(null);
       } catch (err) {
         console.warn("[useSubscriptions] Error reading subscriptions:", err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : typeof err === "object" && err !== null && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load subscriptions";
+        setError(message);
       }
     });
   }, [skipQuery]);
 
+  const scheduleRefresh = useCallback(() => {
+    cancelScheduledRefresh();
+    const schedule =
+      typeof requestAnimationFrame !== "undefined"
+        ? requestAnimationFrame
+        : (cb: () => void) => setTimeout(cb, 0) as unknown as number;
+
+    frameIdRef.current = schedule(() => {
+      frameIdRef.current = null;
+      if (isFocusedRef.current) {
+        refresh();
+      }
+    });
+  }, [cancelScheduledRefresh, refresh]);
+
   useFocusEffect(
     useCallback(() => {
+      isFocusedRef.current = true;
+      if (skipQuery) {
+        return () => {
+          isFocusedRef.current = false;
+          cancelPendingRef.current?.();
+          cancelScheduledRefresh();
+        };
+      }
+
       refresh();
-      return () => cancelPendingRef.current?.();
-    }, [refresh]),
+
+      const txSub = DeviceEventEmitter.addListener(
+        "FINANCE_APP_TRANSACTION_MUTATED",
+        () => {
+          if (isFocusedRef.current) {
+            scheduleRefresh();
+          }
+        },
+      );
+
+      const schedSub = DeviceEventEmitter.addListener(
+        "FINANCE_APP_SCHEDULES_CHANGED",
+        () => {
+          if (isFocusedRef.current) {
+            scheduleRefresh();
+          }
+        },
+      );
+
+      return () => {
+        isFocusedRef.current = false;
+        txSub.remove();
+        schedSub.remove();
+        cancelPendingRef.current?.();
+        cancelScheduledRefresh();
+      };
+    }, [cancelScheduledRefresh, refresh, scheduleRefresh, skipQuery]),
   );
 
   const summary: SubscriptionBurnRateSummary = useMemo(() => {
@@ -159,6 +231,7 @@ export function useSubscriptions(options?: { skipQuery?: boolean }) {
     searchQuery,
     setSearchQuery,
     loading,
+    error,
     refresh,
     markPaid,
     changeStatus,

@@ -153,12 +153,18 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `record-subscription-payment.service.ts`, payments made with the subscription's linked account enforce `paymentAccount.currencyCode`, preventing unexpected FX conversion.
    - Verified via automated regression test `SUB-F04` in `subscription-remediation.test.cjs`. Both manual payment and scheduled auto-post debit exactly `-1500` PHP. All 27 subscription tests and TypeScript typecheck pass.
 
-### SUB-F05 — P2, source-confirmed: read failure has no retry state and external posts do not refresh the focused list
+### SUB-F05 — P2, FIXED: read failure has no retry state and external posts do not refresh the focused list
 
 1. **Problem/evidence:** Hook catches read errors with only `console.warn`; no `error` is returned and screen has no `PageErrorState`. On first failure, empty data can look like no subscriptions. Hook subscribes to neither financial mutation events nor database replacement, so scheduler/Calendar posts can leave count/renewal/summary stale until focus returns.
 2. **Cause/path:** `refresh` deferred callback catches and returns; `useFocusEffect` is its only lifecycle trigger. Mutation wrappers refresh only their own hook instance.
 3. **Smallest fix to review:** Add hook error/retry state and existing shared error presentation; subscribe/coalesce only while focused, cancel on blur/replacement and preserve skeleton/data atomicity. Emit source IDs through existing event ownership where needed; avoid duplicate self-refresh.
 4. **Proof required:** First/warm load failure and retry, external post with screen focused/offscreen, self-payment exactly one refresh, replacement, blur/unmount cancellation, search/filter retention and walkthrough touchability on error.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `use-subscriptions.ts`, added `error: string | null` state and exposed it through the hook's return object. On query failure, the error message is recorded into state rather than swallowed.
+   - In `subscriptions-screen.tsx`, imported `PageErrorState` from `@/components` and rendered `<PageErrorState message={error} onRetry={refresh} />` inside `PageContainer` when `error && subscriptions.length === 0`, preventing the misleading empty state and providing an immediate retry action.
+   - In `subscriptions-screen.tsx`, suppressed walkthrough triggering when an error is present.
+   - In `use-subscriptions.ts`, added focus-scoped event subscriptions to `FINANCE_APP_TRANSACTION_MUTATED` and `FINANCE_APP_SCHEDULES_CHANGED` with `requestAnimationFrame` coalescing. Listeners and pending frames/queries are cleanly detached/cancelled on blur/unmount, strictly adhering to the 60–120fps standard.
+   - Verified via automated regression tests `SUB-F05` in `subscriptions-focus.test.cjs`. All 29 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F06 — P2, source-confirmed: render-time SQL, unbounded hydration and unstable row callbacks
 
@@ -232,7 +238,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 | SUB-V02 | Actual archive→restore/status/delete services; archived flag, valid cursor, paused/ended intent, missing link and failure rollback. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. Verified in `subscription-remediation.test.cjs`. |
-| SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. |
+| SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. Verified in `subscriptions-focus.test.cjs`. |
 | SUB-V06 | SQL statement/row budgets, render/typing SQL zero, bounded archive/list and index plan at scale, cancellation and stable memoized rows. |
 | SUB-V07 | TXT-SUB-01 full native layout matrix, related forms/selectors, long errors, translations, accessibility privacy and close targets. |
 | SUB-V08 | Local reminder payload/failure retry and settings policy; preserved ledger/history through category deletion, backup/restore and permanent-delete cases. |
