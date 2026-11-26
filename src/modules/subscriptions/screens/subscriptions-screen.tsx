@@ -44,7 +44,6 @@ import { SubscriptionCard } from "../components/subscription-card";
 import { SubscriptionFilterTabs } from "../components/subscription-filter-tabs";
 import { SubscriptionFormModal } from "../components/subscription-form-modal";
 import { useSubscriptions } from "../hooks/use-subscriptions";
-import { saveSubscription } from "../services/save-subscription.service";
 import type {
   SaveSubscriptionInput,
   SubscriptionFilter,
@@ -87,6 +86,7 @@ function SubscriptionsScreenContent({
     loading,
     error,
     refresh,
+    save,
     markPaid,
     changeStatus,
     archive,
@@ -114,7 +114,10 @@ function SubscriptionsScreenContent({
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
   // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastFeedback, setToastFeedback] = useState<{
+    message: string;
+    variant: "success" | "error";
+  } | null>(null);
 
   const hasSubscriptions = subscriptions.length > 0;
   const hasSubInList = filteredSubscriptions.length > 0;
@@ -300,24 +303,27 @@ function SubscriptionsScreenContent({
     (input: SaveSubscriptionInput, id?: string) => {
       try {
         const isFirstSub = subscriptions.length === 0 && !id;
-        saveSubscription(input, id);
-        refresh();
+        save(input, id);
         setFormModalVisible(false);
         setEditingSubscription(null);
-        setToastMessage(
-          id
+        setToastFeedback({
+          message: id
             ? t("subscriptions.updatedToast", { defaultValue: "Subscription updated" })
             : t("subscriptions.createdToast", { defaultValue: "Subscription added" }),
-        );
+          variant: "success",
+        });
         if (isFirstSub && !isPromptDismissed("firstSubscriptionCelebrated")) {
           dismissPrompt("firstSubscriptionCelebrated");
           setCongratulationsVisible(true);
         }
       } catch (err: any) {
-        setToastMessage(err?.message || "Failed to save subscription");
+        setToastFeedback({
+          message: err?.message || "Failed to save subscription",
+          variant: "error",
+        });
       }
     },
-    [dismissPrompt, isPromptDismissed, refresh, subscriptions.length, t],
+    [dismissPrompt, isPromptDismissed, save, subscriptions.length, t],
   );
 
   const handleStartCongratulationsTour = () => {
@@ -358,25 +364,30 @@ function SubscriptionsScreenContent({
     if (!deleteTarget) return;
     try {
       const { sub, isArchive } = deleteTarget;
-      setDeleteTarget(null);
-
       if (isArchive) {
         archive(sub.id);
-        setToastMessage(
-          t("subscriptions.archivedToast", {
+        setDeleteTarget(null);
+        setToastFeedback({
+          message: t("subscriptions.archivedToast", {
             defaultValue: "Subscription archived",
           }),
-        );
+          variant: "success",
+        });
       } else {
         remove(sub.id);
-        setToastMessage(
-          t("subscriptions.deletedToast", {
+        setDeleteTarget(null);
+        setToastFeedback({
+          message: t("subscriptions.deletedToast", {
             defaultValue: "Subscription deleted",
           }),
-        );
+          variant: "success",
+        });
       }
     } catch (err: any) {
-      setToastMessage(err?.message || "Failed to process request");
+      setToastFeedback({
+        message: err?.message || "Failed to process request",
+        variant: "error",
+      });
     }
   }, [deleteTarget, archive, remove, t]);
 
@@ -404,15 +415,19 @@ function SubscriptionsScreenContent({
     if (!subToRestore) return;
     try {
       const sub = subToRestore;
-      setSubToRestore(null);
       restore(sub.id);
-      setToastMessage(
-        t("subscriptions.restoredToast", {
+      setSubToRestore(null);
+      setToastFeedback({
+        message: t("subscriptions.restoredToast", {
           defaultValue: "Subscription restored",
         }),
-      );
+        variant: "success",
+      });
     } catch (err: any) {
-      setToastMessage(err?.message || "Failed to restore subscription");
+      setToastFeedback({
+        message: err?.message || "Failed to restore subscription",
+        variant: "error",
+      });
     }
   }, [subToRestore, restore, t]);
 
@@ -425,15 +440,20 @@ function SubscriptionsScreenContent({
       if (!markingPaidSub) return;
       try {
         markPaid(markingPaidSub.id, options);
+        const name = markingPaidSub.name;
         setMarkingPaidSub(null);
-        setToastMessage(
-          t("subscriptions.paymentRecordedToast", {
-            name: markingPaidSub.name,
-            defaultValue: `Recorded payment for ${markingPaidSub.name}`,
+        setToastFeedback({
+          message: t("subscriptions.paymentRecordedToast", {
+            name,
+            defaultValue: `Recorded payment for ${name}`,
           }),
-        );
+          variant: "success",
+        });
       } catch (err: any) {
-        setToastMessage(err?.message || "Failed to record payment");
+        setToastFeedback({
+          message: err?.message || "Failed to record payment",
+          variant: "error",
+        });
       }
     },
     [markingPaidSub, markPaid, t],
@@ -441,13 +461,22 @@ function SubscriptionsScreenContent({
 
   const handleToggleStatus = useCallback(
     (sub: SubscriptionItem) => {
-      const nextStatus = sub.status === "paused" ? "active" : "paused";
-      changeStatus(sub.id, nextStatus);
-      setToastMessage(
-        nextStatus === "paused"
-          ? t("subscriptions.pausedToast", { defaultValue: "Subscription paused" })
-          : t("subscriptions.resumedToast", { defaultValue: "Subscription resumed" }),
-      );
+      try {
+        const nextStatus = sub.status === "paused" ? "active" : "paused";
+        changeStatus(sub.id, nextStatus);
+        setToastFeedback({
+          message:
+            nextStatus === "paused"
+              ? t("subscriptions.pausedToast", { defaultValue: "Subscription paused" })
+              : t("subscriptions.resumedToast", { defaultValue: "Subscription resumed" }),
+          variant: "success",
+        });
+      } catch (err: any) {
+        setToastFeedback({
+          message: err?.message || "Failed to update subscription status",
+          variant: "error",
+        });
+      }
     },
     [changeStatus, t],
   );
@@ -724,11 +753,11 @@ function SubscriptionsScreenContent({
       <AppToast
         duration={2500}
         includeSafeArea
-        message={toastMessage ?? ""}
-        onClose={() => setToastMessage(null)}
+        message={toastFeedback?.message ?? ""}
+        onClose={() => setToastFeedback(null)}
         position="top"
-        variant="success"
-        visible={Boolean(toastMessage)}
+        variant={toastFeedback?.variant ?? "success"}
+        visible={Boolean(toastFeedback)}
       />
     </View>
   );

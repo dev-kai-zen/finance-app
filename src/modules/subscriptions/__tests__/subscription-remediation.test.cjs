@@ -199,6 +199,10 @@ function setupTestDb() {
 
 // Exercise the real subscription repositories, category fallback, ledger writes, and transactions.
 // Scheduling is independent of the cases below (the subscriptions have no linked schedule).
+const schedMockOverrides = {
+  setScheduledTransactionPaused: null,
+  removeScheduledTransaction: null,
+};
 const loadWithNativeMocks = Module._load;
 Module._load = function (request, ...args) {
   if (request === "@/modules/scheduled-transactions") return {
@@ -209,12 +213,20 @@ Module._load = function (request, ...args) {
     saveScheduledTransactionInContext: (...args) => require("../../scheduled-transactions/services/save-scheduled-transaction.service").saveScheduledTransactionInContext(...args),
     resolveScheduleOccurrencePaidInContext: (...args) =>
       require("../../scheduled-transactions/services/resolve-schedule-paid.service").resolveScheduleOccurrencePaidInContext(...args),
-    setScheduledTransactionPaused() {},
+    setScheduledTransactionPaused: (...args) => {
+      if (schedMockOverrides.setScheduledTransactionPaused) {
+        return schedMockOverrides.setScheduledTransactionPaused(...args);
+      }
+    },
     getScheduledTransaction: (...args) => require("../../scheduled-transactions/repositories/scheduled-transactions.repository").findScheduledTransaction(...args),
     restoreScheduledTransaction: (...args) =>
       require("../../scheduled-transactions/services/manage-scheduled-transaction.service").restoreScheduledTransaction(...args),
-    removeScheduledTransaction: (...args) =>
-      require("../../scheduled-transactions/services/manage-scheduled-transaction.service").removeScheduledTransaction(...args),
+    removeScheduledTransaction: (...args) => {
+      if (schedMockOverrides.removeScheduledTransaction) {
+        return schedMockOverrides.removeScheduledTransaction(...args);
+      }
+      return require("../../scheduled-transactions/services/manage-scheduled-transaction.service").removeScheduledTransaction(...args);
+    },
     unlinkScheduledTransactionSubscription: (...args) =>
       require("../../scheduled-transactions/services/manage-scheduled-transaction.service").unlinkScheduledTransactionSubscription(...args),
   };
@@ -888,5 +900,125 @@ test("SUB-F07: text containment, truncation, maxWidth bounds, and modal scroll c
     /hitSlop=\{12\}[\s\S]*?styles\.closeBtn/s.test(modalSrc) ||
       /styles\.closeBtn[\s\S]*?hitSlop=\{12\}/s.test(modalSrc),
     "closeBtn must have hitSlop >= 12 for accessible 44x44+ touch area",
+  );
+});
+
+test("SUB-F08: lifecycle failures propagate through transaction and roll back partial intent", () => {
+  const db = setupTestDb();
+  try {
+    const { setSubscriptionStatusInContext } = require("../services/toggle-subscription-status.service");
+    const { deleteOrArchiveSubscriptionInContext } = require("../services/delete-subscription.service");
+
+    const subId = saveSubscriptionInContext(
+      input({ name: "Sub F08", accountId: "acc_1", categoryId: "cat_dining" }),
+      undefined,
+      db,
+    );
+
+    const initialSub = sqlite.prepare("SELECT * FROM subscriptions WHERE id = ?").get(subId);
+    assert.equal(initialSub.status, "active");
+    assert.ok(initialSub.schedule_id, "Linked schedule must exist");
+
+    // 1. If schedule pause fails on an existing schedule, the error must throw and roll back subscription status
+    schedMockOverrides.setScheduledTransactionPaused = () => {
+      throw new Error("Simulated schedule pause failure");
+    };
+
+    assert.throws(
+      () => {
+        db.transaction((tx) => setSubscriptionStatusInContext(subId, "paused", tx));
+      },
+      /Simulated schedule pause failure/,
+      "Error must propagate out of transaction on schedule pause failure",
+    );
+
+    const afterFailedPause = sqlite.prepare("SELECT status FROM subscriptions WHERE id = ?").get(subId);
+    assert.equal(
+      afterFailedPause.status,
+      "active",
+      "Subscription status must roll back to 'active' after transaction failure",
+    );
+
+    schedMockOverrides.setScheduledTransactionPaused = null;
+
+    // 2. If schedule remove fails on an existing schedule, deleteOrArchive must throw and roll back
+    schedMockOverrides.removeScheduledTransaction = () => {
+      throw new Error("Simulated schedule remove failure");
+    };
+
+    assert.throws(
+      () => {
+        db.transaction((tx) => deleteOrArchiveSubscriptionInContext(subId, tx));
+      },
+      /Simulated schedule remove failure/,
+      "Error must propagate out of transaction on schedule removal failure",
+    );
+
+    const afterFailedDelete = sqlite.prepare("SELECT * FROM subscriptions WHERE id = ?").get(subId);
+    assert.ok(afterFailedDelete, "Subscription must not be deleted if schedule removal failed");
+    assert.equal(afterFailedDelete.archived_at, null, "Subscription must not be archived if schedule removal failed");
+
+    schedMockOverrides.removeScheduledTransaction = null;
+
+    // 3. If schedule link is missing/obsolete (e.g. removed earlier), operations succeed cleanly without throwing
+    sqlite.prepare("DELETE FROM transaction_schedules WHERE id = ?").run(initialSub.schedule_id);
+
+    // Pause with obsolete schedule link succeeds
+    setSubscriptionStatusInContext(subId, "paused", db);
+    const afterMissingPause = sqlite.prepare("SELECT status FROM subscriptions WHERE id = ?").get(subId);
+    assert.equal(afterMissingPause.status, "paused", "Obsolete schedule link must safely succeed");
+
+    // Delete with obsolete schedule link succeeds
+    const deleteResult = deleteOrArchiveSubscriptionInContext(subId, db);
+    assert.equal(deleteResult, "deleted");
+    const afterMissingDelete = sqlite.prepare("SELECT * FROM subscriptions WHERE id = ?").get(subId);
+    assert.equal(afterMissingDelete, undefined, "Subscription must be deleted cleanly");
+  } finally {
+    schedMockOverrides.setScheduledTransactionPaused = null;
+    schedMockOverrides.removeScheduledTransaction = null;
+    sqlite.close();
+  }
+});
+
+test("SUB-F08: hook exposes save and screen maintains confirmation targets until success", () => {
+  const fs = require("fs");
+  const path = require("path");
+
+  // 1. Hook contract
+  const hookSrc = fs.readFileSync(
+    path.resolve(__dirname, "../hooks/use-subscriptions.ts"),
+    "utf8",
+  );
+  assert.ok(
+    /const save = useCallback/s.test(hookSrc) && /return\s*\{[^}]*save/s.test(hookSrc),
+    "useSubscriptions must expose save callback",
+  );
+
+  // 2. Screen calls save from hook and does not import saveSubscription directly
+  const screenSrc = fs.readFileSync(
+    path.resolve(__dirname, "../screens/subscriptions-screen.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    !/import\s*\{[^}]*saveSubscription[^}]*\}\s*from\s*["']\.\.\/services\/save-subscription\.service["']/s.test(screenSrc),
+    "subscriptions-screen must not directly import saveSubscription service",
+  );
+  assert.ok(
+    /save\s*,\s*markPaid/s.test(screenSrc) || /save\s*\(input/s.test(screenSrc),
+    "subscriptions-screen must use save from useSubscriptions hook",
+  );
+
+  // 3. Confirmation targets retained on error
+  assert.ok(
+    /try\s*\{[\s\S]*?archive\(sub\.id\);[\s\S]*?setDeleteTarget\(null\);/s.test(screenSrc),
+    "setDeleteTarget(null) must be called after archive/remove succeeds",
+  );
+  assert.ok(
+    /try\s*\{[\s\S]*?restore\(sub\.id\);[\s\S]*?setSubToRestore\(null\);/s.test(screenSrc),
+    "setSubToRestore(null) must be called after restore succeeds",
+  );
+  assert.ok(
+    /handleToggleStatus[\s\S]*?try\s*\{[\s\S]*?changeStatus/s.test(screenSrc),
+    "handleToggleStatus must handle errors via try/catch",
   );
 });

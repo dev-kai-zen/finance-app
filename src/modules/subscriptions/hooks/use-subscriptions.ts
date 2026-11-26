@@ -16,8 +16,10 @@ import {
   type RemoveSubscriptionResult,
 } from "../services/delete-subscription.service";
 import { recordSubscriptionPayment } from "../services/record-subscription-payment.service";
+import { saveSubscription } from "../services/save-subscription.service";
 import { setSubscriptionStatus } from "../services/toggle-subscription-status.service";
 import type {
+  SaveSubscriptionInput,
   SubscriptionBurnRateSummary,
   SubscriptionFilter,
   SubscriptionItem,
@@ -177,6 +179,15 @@ export function useSubscriptions(options?: { skipQuery?: boolean }) {
     [refresh],
   );
 
+  const save = useCallback(
+    (input: SaveSubscriptionInput, id?: string): string => {
+      const resultId = saveSubscription(input, id);
+      refresh();
+      return resultId;
+    },
+    [refresh],
+  );
+
   const changeStatus = useCallback(
     (subscriptionId: string, newStatus: SubscriptionStatus) => {
       setSubscriptionStatus(subscriptionId, newStatus);
@@ -233,6 +244,7 @@ export function useSubscriptions(options?: { skipQuery?: boolean }) {
     loading,
     error,
     refresh,
+    save,
     markPaid,
     changeStatus,
     archive,

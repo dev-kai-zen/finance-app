@@ -46,10 +46,9 @@ export function archiveSubscriptionInContext(
   if (sub) {
     const schedId = resolveScheduleId(sub, context);
     if (schedId) {
-      try {
+      const sched = getScheduledTransaction(schedId, context);
+      if (sched) {
         removeScheduledTransaction(schedId, context);
-      } catch (err) {
-        console.warn("[archiveSubscriptionInContext] Failed to remove schedule:", err);
       }
     }
   }
@@ -116,13 +115,12 @@ export function permanentlyDeleteSubscriptionInContext(
   if (sub) {
     const schedId = resolveScheduleId(sub, context);
     if (schedId) {
-      try {
+      const sched = getScheduledTransaction(schedId, context);
+      if (sched) {
         const res = removeScheduledTransaction(schedId, context);
         if (res === "archived") {
           unlinkScheduledTransactionSubscription(schedId, context);
         }
-      } catch (err) {
-        console.warn("[permanentlyDeleteSubscriptionInContext] Failed to remove schedule:", err);
       }
     }
   }

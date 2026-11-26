@@ -20,7 +20,7 @@ The [Scheduled Transactions audit](scheduled-transactions-audit-v1.8.0.md) alrea
 | Audit | Complete | Contracts, ownership/actions, independent fixtures, prioritized findings and performance assessment. |
 | Validate | Partial | Existing suites/typecheck pass; four additional SQLite assertions fail against current production paths. Native layout and scale profiling remain open. |
 | Review | Pending | Currency ownership, trials, recurrence edit/restore anchor, lifecycle failure policy, and privacy/accessibility decisions. |
-| Remediate | In progress | SUB-F01, SUB-F02, SUB-F03, SUB-F04, SUB-F05, SUB-F06, and SUB-F07 fixed and verified with durable regressions. |
+| Remediate | In progress | SUB-F01, SUB-F02, SUB-F03, SUB-F04, SUB-F05, SUB-F06, SUB-F07, and SUB-F08 fixed and verified with durable regressions. |
 | Sign off | Blocked by findings | No feature or native layout sign-off claimed. |
 
 ### Evidence executed
@@ -79,8 +79,8 @@ Cross-feature financial writes already use public Transactions/Scheduled Transac
 | Mark Paid | Expense + audit payment + renewal advance + oldest pending schedule resolution are atomic; event emitted after commit without source payload. | Six shared rollback/link tests pass. Missing event subscription on the focused subscription hook leaves external updates stale, F05. |
 | Automatic/Post Now/Calendar post | Scheduler writes expense and calls subscription history/renewal callback. | Shared sign and atomicity regressions pass; trial gating and mixed-currency magnitude do not, F03/F04. |
 | Trial | Form stores trial end; card derives trial countdown from renewal, reminder service uses renewal, schedule maps first billing date without trial end. | Multiple conflicting dates, F03. |
-| Pause/resume/cancel | Lifecycle calls shared pause service in transaction but catches schedule errors; resume also attempts one synchronous due step. | Potential status mismatch and render-blocking work, F06/F08. Cancelled subscriptions still show a pause action; agree desired reactivation behavior. |
-| Delete/archive | Payment existence probe decides archive vs permanent delete. Screen probes during render; clears target before operation. Schedule removal errors are swallowed. | Target recovery, render SQL and partial lifecycle concerns, F06/F08. |
+| Pause/resume/cancel | Lifecycle calls shared pause service in transaction; propagates required schedule errors. Toggle status caught in UI. | F08 FIXED (error propagation, try/catch feedback, target retention). |
+| Delete/archive | Payment existence probe decides archive vs permanent delete; schedule removal errors propagate atomically; modal targets retained until success. | F06 FIXED (render SQL eliminated); F08 FIXED (atomic rollback, modal retry retention). |
 | Restore | Rebuilds/saves existing linked schedule, then clears subscription archive. Does not invoke the imported public schedule restore capability. | Confirmed archived schedule with null cursor, F02. |
 | Reminders | Cancels existing subscription alerts; schedules active/trial next-renewal offsets within 30 days, with English copy. | Trial date mismatch, F03; localization/recovery coverage needed. Subscription scheduling is called independently of the scheduled-transaction reminder toggle; policy unresolved. |
 | Manage online | Opens stored cancellation URL directly. | Validate supported link behavior and surface failure; no native link exercise in this pass. |
@@ -194,12 +194,21 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `mark-paid-modal.tsx`, added `flex: 1, flexShrink: 1` and `numberOfLines={1}` to `selectorValue` in `selectorLeft` (`minWidth: 0`), preventing long account/pocket names from displacing trailing chevron icons; added `flexWrap: "wrap"` to `btnRow` and expanded `closeBtn` hitSlop to 12 (50×50 effective touch target).
    - Verified via automated regression test `SUB-F07` in `subscription-remediation.test.cjs`. All 31 subscription tests and TypeScript typecheck pass.
 
-### SUB-F08 — P2, source-confirmed: lifecycle failures can commit partial intent and lose the confirmation target
+### SUB-F08 — P2, FIXED: lifecycle failures can commit partial intent and lose the confirmation target
 
 1. **Problem/evidence:** Status/archive/delete services catch shared-schedule failures and continue updating subscription state. Screen clears delete/restore target before persistence; status toggle lacks error handling. Save is called directly from screen, bypassing the required hook mutation boundary.
 2. **Cause/path:** `setSubscriptionStatusInContext`, `archiveSubscriptionInContext`, `permanentlyDeleteSubscriptionInContext` swallow required orchestration errors; `handleConfirmDeleteOrArchive`/`handleConfirmRestore` clear target first; `handleToggleStatus` does not catch. Screen error toasts use the same success variant as successful actions.
 3. **Smallest fix to review:** Distinguish explicitly missing/obsolete links from required mutation failures; propagate required failures through the existing transaction. Keep target until success and present retry/error appropriately. Put save wrapper in existing hook. No general command framework.
 4. **Proof required:** Inject each scheduler lifecycle error and verify both subscription and schedule roll back, ledger/history preserved, modal target retained, retry once, no success feedback on error. Test missing links, cancellation, status toggles and Pro restore limits.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `toggle-subscription-status.service.ts` (`setSubscriptionStatusInContext`), verify whether linked schedule exists via `getScheduledTransaction(scheduleId, context)`. If present, allow `setScheduledTransactionPaused` exceptions to throw rather than swallowing errors, ensuring atomic transaction rollback across both subscription and schedule tables. Obsolete/missing schedule links safely succeed without throwing.
+   - In `delete-subscription.service.ts` (`archiveSubscriptionInContext` and `permanentlyDeleteSubscriptionInContext`), verify schedule existence prior to removal and propagate errors from `removeScheduledTransaction` so the transaction rolls back atomically, preventing orphaned active schedules. Obsolete/missing schedule links safely succeed without throwing.
+   - In `use-subscriptions.ts`, exposed `save: (input: SaveSubscriptionInput, id?: string) => string`, restoring the core architectural hook boundary.
+   - In `subscriptions-screen.tsx`, eliminated the direct import of `saveSubscription` service, routing saves strictly through `useSubscriptions().save`.
+   - In `subscriptions-screen.tsx`, updated `handleConfirmDeleteOrArchive` and `handleConfirmRestore` to retain confirmation targets (`deleteTarget`, `subToRestore`) in state until the mutation succeeds; upon error, targets remain intact for user retry.
+   - In `subscriptions-screen.tsx`, wrapped `handleToggleStatus` in `try / catch` with user toast feedback.
+   - In `subscriptions-screen.tsx`, updated toast state to `{ message: string; variant: "success" | "error" }`, displaying operational errors in red error toasts rather than green success toasts.
+   - Verified via automated regression tests `SUB-F08: lifecycle failures propagate through transaction and roll back partial intent` and `SUB-F08: hook exposes save and screen maintains confirmation targets until success` in `subscription-remediation.test.cjs`. All 33 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F09 — P2, source-confirmed: privacy/accessibility and localized presentation gaps
 

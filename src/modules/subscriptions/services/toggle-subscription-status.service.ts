@@ -7,6 +7,7 @@ import {
 import type { SubscriptionStatus } from "../types/subscription.types";
 import {
   getScheduleBySubscriptionId,
+  getScheduledTransaction,
   processDueSchedules,
   setScheduledTransactionPaused,
 } from "@/modules/scheduled-transactions";
@@ -37,11 +38,10 @@ export function setSubscriptionStatusInContext(
 
   const scheduleId = sub.scheduleId ?? getScheduleBySubscriptionId(subscriptionId, context)?.id;
   if (scheduleId) {
-    try {
+    const sched = getScheduledTransaction(scheduleId, context);
+    if (sched) {
       const isPaused = newStatus === "paused" || newStatus === "cancelled";
       setScheduledTransactionPaused(scheduleId, isPaused, context);
-    } catch {
-      // Ignore if schedule record was not found
     }
   }
 

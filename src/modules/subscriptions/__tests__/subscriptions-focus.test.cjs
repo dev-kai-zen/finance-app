@@ -81,6 +81,7 @@ function fixture(skipQuery = false, shouldThrow = false) {
     "../services/calculate-burn-rate.service": { calculateBurnRateSummary: () => ({}) },
     "../services/delete-subscription.service": {},
     "../services/record-subscription-payment.service": {},
+    "../services/save-subscription.service": { saveSubscription: () => "mock_id" },
     "../services/toggle-subscription-status.service": {},
   });
   const hook = hooks.useSubscriptions({ skipQuery });
