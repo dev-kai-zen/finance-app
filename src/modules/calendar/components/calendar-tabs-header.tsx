@@ -36,6 +36,8 @@ export interface CalendarTabsHeaderHandle {
   scrollTabIntoView: (tab: CalendarTab) => void;
 }
 
+export const CALENDAR_TAB_HIT_SLOP = { top: 5, bottom: 5 } as const;
+
 export const CalendarTabsHeader = forwardRef<
   CalendarTabsHeaderHandle,
   CalendarTabsHeaderProps
@@ -113,6 +115,7 @@ export const CalendarTabsHeader = forwardRef<
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "transactions" }}
           collapsable={false}
+          hitSlop={CALENDAR_TAB_HIT_SLOP}
           onLayout={handleTabLayout("transactions")}
           onPress={() => onSelectTab("transactions")}
           ref={transactionsRef}
@@ -153,6 +156,7 @@ export const CalendarTabsHeader = forwardRef<
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "schedules" }}
           collapsable={false}
+          hitSlop={CALENDAR_TAB_HIT_SLOP}
           onLayout={handleTabLayout("schedules")}
           onPress={() => onSelectTab("schedules")}
           ref={schedulesRef}
@@ -193,6 +197,7 @@ export const CalendarTabsHeader = forwardRef<
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "net" }}
           collapsable={false}
+          hitSlop={CALENDAR_TAB_HIT_SLOP}
           onLayout={handleTabLayout("net")}
           onPress={() => onSelectTab("net")}
           ref={netRef}
@@ -222,6 +227,7 @@ export const CalendarTabsHeader = forwardRef<
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "balance_sheet" }}
           collapsable={false}
+          hitSlop={CALENDAR_TAB_HIT_SLOP}
           onLayout={handleTabLayout("balance_sheet")}
           onPress={() => onSelectTab("balance_sheet")}
           ref={balanceSheetRef}

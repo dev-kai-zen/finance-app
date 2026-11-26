@@ -15,6 +15,12 @@ export interface CalendarMonthHeaderProps {
   navControlsRef?: React.Ref<View>;
 }
 
+export const CALENDAR_NAV_HIT_SLOP = {
+  today: { top: 8, bottom: 8, left: 6, right: 6 },
+  prevMonth: { top: 6, bottom: 6, left: 8, right: 2 },
+  nextMonth: { top: 6, bottom: 6, left: 2, right: 8 },
+} as const;
+
 export function CalendarMonthHeader({
   activeMonth,
   onPrevMonth,
@@ -43,6 +49,7 @@ export function CalendarMonthHeader({
           <Pressable
             accessibilityLabel={t("calendar.jumpToToday")}
             accessibilityRole="button"
+            hitSlop={CALENDAR_NAV_HIT_SLOP.today}
             onPress={onToday}
             style={({ pressed }) => [
               styles.todayButton,
@@ -63,6 +70,7 @@ export function CalendarMonthHeader({
         <Pressable
           accessibilityLabel={t("calendar.prevMonth")}
           accessibilityRole="button"
+          hitSlop={CALENDAR_NAV_HIT_SLOP.prevMonth}
           onPress={onPrevMonth}
           style={({ pressed }) => [
             styles.navButton,
@@ -75,6 +83,7 @@ export function CalendarMonthHeader({
         <Pressable
           accessibilityLabel={t("calendar.nextMonth")}
           accessibilityRole="button"
+          hitSlop={CALENDAR_NAV_HIT_SLOP.nextMonth}
           onPress={onNextMonth}
           style={({ pressed }) => [
             styles.navButton,

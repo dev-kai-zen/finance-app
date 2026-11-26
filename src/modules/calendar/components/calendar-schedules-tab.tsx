@@ -25,6 +25,11 @@ export interface CalendarSchedulesTabProps {
   onNavigateToSchedules?: () => void;
 }
 
+export const CALENDAR_SCHEDULE_ACTION_HIT_SLOP = {
+  post: { top: 11, bottom: 11, left: 6, right: 3 },
+  skip: { top: 11, bottom: 11, left: 3, right: 6 },
+} as const;
+
 interface ScheduleDateGroup {
   dateKey: string;
   label: string;
@@ -202,6 +207,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                                 : t("calendar.schedules.postAccessibility")
                             }
                             accessibilityRole="button"
+                            hitSlop={CALENDAR_SCHEDULE_ACTION_HIT_SLOP.post}
                             onPress={() => onPostOccurrence(item.id)}
                             style={({ pressed }) => [
                               styles.postButton,
@@ -224,6 +230,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                           <Pressable
                             accessibilityLabel={t("calendar.schedules.skipAccessibility")}
                             accessibilityRole="button"
+                            hitSlop={CALENDAR_SCHEDULE_ACTION_HIT_SLOP.skip}
                             onPress={() => onSkipOccurrence(item.id)}
                             style={({ pressed }) => [
                               styles.skipButton,
@@ -391,7 +398,7 @@ function createStyles(theme: AppTheme) {
     actionsRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
+      gap: 6,
       marginTop: 2,
     },
     postButton: {
