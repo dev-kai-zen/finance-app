@@ -59,3 +59,37 @@ export function calculateProjectedMonthEndNet(
 
   return monthActualNet + monthPendingNet;
 }
+
+/**
+ * Calculates the gross total bills payable (Total Due) from pending schedule occurrences.
+ * Sums the absolute value of all due/upcoming expense schedules.
+ * Excludes income and transfers so "Total Due" strictly reflects money owed/payable.
+ */
+export function calculateSchedulesTotalDue(
+  occurrences: ForecastScheduleOccurrenceInput[],
+  accountCurrencyMap: Map<string, string>,
+  convertToDefaultCurrency: (amount: number, currency: string) => number,
+): number {
+  let totalDue = 0;
+
+  for (const occ of occurrences) {
+    if (occ.status === "due" || occ.status === "upcoming") {
+      if (occ.transactionType === "transfer" || occ.transactionType === "income") {
+        continue;
+      }
+      if (occ.transactionType === "expense" || occ.amountMinorUnits < 0) {
+        const currency =
+          (occ.accountId ? accountCurrencyMap.get(occ.accountId) : undefined) ??
+          DEFAULT_BASE_CURRENCY;
+        const convertedAmount = convertToDefaultCurrency(
+          Math.abs(occ.amountMinorUnits),
+          currency,
+        );
+        totalDue += convertedAmount;
+      }
+    }
+  }
+
+  return totalDue;
+}
+

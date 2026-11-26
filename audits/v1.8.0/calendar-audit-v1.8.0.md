@@ -4,36 +4,36 @@
 
 **Reviewed commit:** `5a192bf` (working tree initially clean)
 
-**Stage:** 1 — Audit complete; targeted validation performed. Findings review, durable regression expansion, remediation, and feature sign-off remain open.
+**Stage:** 2 — Remediation and durable validation complete. All findings (CAL-F01 through CAL-F12) resolved with permanent regressions; policy clarifications resolved.
 
-**Result:** **NOT READY FOR FEATURE SIGN-OFF.** Two confirmed financial-display defects affect the forecast and category spending. Read failures can look like valid empty/zero results, mutation failures are hidden, and measured synchronous reads exceed the 8.3–16.6 ms frame budget at scale. No ledger corruption or duplicate posting was demonstrated by this audit.
+**Result:** **READY FOR FEATURE SIGN-OFF.** All twelve confirmed defects have been remediated with verified test regressions, zero type errors, bounded SQLite query plans, complete en/fil/es localization, and accessible touch targets. Policy questions and unconfirmed risks have been reviewed, and the Option A gross bills payable refinement for Total Due is implemented.
 
-**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. CAL-F03 query failure recovery is fixed with error tracking, retry callbacks, and `PageErrorState` integration in `calendar-screen.tsx` and `calendar-recovery.test.cjs` regressions. CAL-F04 mutation feedback is fixed with pending and error state forwarding, modal retention on failure, and error clearing on dismissal in `calendar-screen.tsx` and `use-calendar-data.ts`, covered by `calendar-mutation-feedback.test.cjs` regressions. CAL-F05 failed occurrence state is fixed with an explicit Failed badge, failure error message display, and Retry/Skip recovery actions in `CalendarSchedulesTab`, covered by `calendar-failed-occurrences.test.cjs` regressions. CAL-F06 query scheduling and mutation ownership is fixed with deferred non-blocking initial month load, after-paint FX and schedule preview queries, closed-form preset gating, 200ms mutation coalescing, and offscreen focus gating in `use-calendar-data.ts` and `calendar-screen.tsx`, covered by `calendar-query-scheduling.test.cjs` regressions. CAL-F07 month rendering and cache bounds is fixed with an LRU month cache (`MAX_CALENDAR_CACHED_MONTHS = 4`) in `calendar-cache.ts` and `use-calendar-data.ts`, `React.memo` wrapping on `CalendarTransactionsTab` and `CalendarSchedulesTab`, and stable action callbacks in `calendar-screen.tsx`, covered by `calendar-cache-bounds.test.cjs` regressions. CAL-F08 historical balance sheet ledger hydration is fixed with native SQLite grouped aggregation in `get-account-balance-deltas.service.ts` and `findPocketBalanceDeltaRows` in `transactions.repository.ts` and `get-pocket-transaction-balance-deltas.service.ts`, covered by `account-balance-deltas.test.cjs` regressions. CAL-F09 schedule date-window query plan is fixed with expression index `schedule_occurrences_calendar_due_index` in migration `0052_add_schedule_occurrences_calendar_due_index.sql` and index-aligned ordering in `scheduled-transactions.repository.ts`, covered by `get-calendar-schedules-remediation.test.cjs` plan regressions. CAL-F10 snapshot/skeleton consistency is fixed with ribbon loading masking (`"—"`), snapshot pending guards in `use-calendar-data.ts`, and fallback account counting in `CalendarScreen`, covered by `calendar-snapshot-consistency.test.cjs` regressions. CAL-F11 core calendar UI/date/accessibility copy localization is fixed with complete key parity across `en.ts`, `fil.ts`, and `es.ts`, locale-aware date/month formatters in `calendar-dates.ts`, and `useLocalization` integration across all Calendar components, covered by `calendar-localization.test.cjs` regressions. CAL-F12 minimum touch targets are fixed with non-overlapping hitSlop on month header controls in `calendar-month-header.tsx`, schedule inline actions in `calendar-schedules-tab.tsx`, and tabs in `calendar-tabs-header.tsx`, covered by `calendar-touch-targets.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
+**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. CAL-F03 query failure recovery is fixed with error tracking, retry callbacks, and `PageErrorState` integration in `calendar-screen.tsx` and `calendar-recovery.test.cjs` regressions. CAL-F04 mutation feedback is fixed with pending and error state forwarding, modal retention on failure, and error clearing on dismissal in `calendar-screen.tsx` and `use-calendar-data.ts`, covered by `calendar-mutation-feedback.test.cjs` regressions. CAL-F05 failed occurrence state is fixed with an explicit Failed badge, failure error message display, and Retry/Skip recovery actions in `CalendarSchedulesTab`, covered by `calendar-failed-occurrences.test.cjs` regressions. CAL-F06 query scheduling and mutation ownership is fixed with deferred non-blocking initial month load, after-paint FX and schedule preview queries, closed-form preset gating, 200ms mutation coalescing, and offscreen focus gating in `use-calendar-data.ts` and `calendar-screen.tsx`, covered by `calendar-query-scheduling.test.cjs` regressions. CAL-F07 month rendering and cache bounds is fixed with an LRU month cache (`MAX_CALENDAR_CACHED_MONTHS = 4`) in `calendar-cache.ts` and `use-calendar-data.ts`, `React.memo` wrapping on `CalendarTransactionsTab` and `CalendarSchedulesTab`, and stable action callbacks in `calendar-screen.tsx`, covered by `calendar-cache-bounds.test.cjs` regressions. CAL-F08 historical balance sheet ledger hydration is fixed with native SQLite grouped aggregation in `get-account-balance-deltas.service.ts` and `findPocketBalanceDeltaRows` in `transactions.repository.ts` and `get-pocket-transaction-balance-deltas.service.ts`, covered by `account-balance-deltas.test.cjs` regressions. CAL-F09 schedule date-window query plan is fixed with expression index `schedule_occurrences_calendar_due_index` in migration `0052_add_schedule_occurrences_calendar_due_index.sql` and index-aligned ordering in `scheduled-transactions.repository.ts`, covered by `get-calendar-schedules-remediation.test.cjs` plan regressions. CAL-F10 snapshot/skeleton consistency is fixed with ribbon loading masking (`"—"`), snapshot pending guards in `use-calendar-data.ts`, and fallback account counting in `CalendarScreen`, covered by `calendar-snapshot-consistency.test.cjs` regressions. CAL-F11 core calendar UI/date/accessibility copy localization is fixed with complete key parity across `en.ts`, `fil.ts`, and `es.ts`, locale-aware date/month formatters in `calendar-dates.ts`, and `useLocalization` integration across all Calendar components, covered by `calendar-localization.test.cjs` regressions. CAL-F12 minimum touch targets are fixed with non-overlapping hitSlop on month header controls in `calendar-month-header.tsx`, schedule inline actions in `calendar-schedules-tab.tsx`, and tabs in `calendar-tabs-header.tsx`, covered by `calendar-touch-targets.test.cjs` regressions. Schedule Total Due semantic (Option A) is implemented with `calculateSchedulesTotalDue` in `calendar-forecast.ts` and `use-calendar-data.ts`, strictly summing gross payable bills and covered by `calendar-total-due.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created. Calendar module is marked READY FOR FEATURE SIGN-OFF.
 
 ## 1. Prior audits and workflow
 
 This review follows the inventory, ownership, action review, independent fixtures, prioritized findings, performance assessment, and staged sign-off format used in the existing eight audits:
 
-| Existing audit | Relevant evidence or decision carried forward |
-| --- | --- |
-| [Transactions](transactions-audit-v1.8.0.md) | Signed ledger amounts, net refunds, transfer/fee grouping, public services, and atomic writes. Calendar must preserve these guarantees when presenting results. |
-| [Accounts](accounts-audit-v1.8.0.md) | Derived balances, pockets, opening-date cutoffs, currency protections, and intentional Fund Group overlap. A signed-off account screen does not prove the separate historical balance-sheet path is bounded. |
-| [Dashboard](dashboard-audit-v1.8.0.md) | Summary/detail parity, deferred reads, responsive recovery, and intentional unmasked detailed inspection. Revalidate current source rather than inherit old FPS claims. |
-| [Categories](categories-audit-v1.8.0.md) | Category lifecycle, metadata, localization, and explicit distinction between automated evidence, user-reported manual checks, and unmeasured device performance. |
-| [Budgets](budgets-audit-v1.8.0.md) | Signed refund netting, exact date/currency scope, input responsiveness, and existing rollover/privacy policies. |
-| [Credit Cards](credit-cards-audit-v1.8.0.md) | Signed liabilities, payments, external mutation refresh, bounded reads, and the detailed-inspection privacy exception. |
-| [Scheduled Transactions](scheduled-transactions-audit-v1.8.0.md) | ST-F01–F08 remediation, occurrence identity, manual retry of failed postings, date-window occurrence reads, and consciously deferred template/catch-up scale work. |
-| [Google Drive Backup](google-drive-backup-audit-v1.8.0.md) | Offline writes and later background sync remain separate. The accepted single canonical Quick Sync file is outside this calendar review. |
+| Existing audit                                                   | Relevant evidence or decision carried forward                                                                                                                                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Transactions](transactions-audit-v1.8.0.md)                     | Signed ledger amounts, net refunds, transfer/fee grouping, public services, and atomic writes. Calendar must preserve these guarantees when presenting results.                                              |
+| [Accounts](accounts-audit-v1.8.0.md)                             | Derived balances, pockets, opening-date cutoffs, currency protections, and intentional Fund Group overlap. A signed-off account screen does not prove the separate historical balance-sheet path is bounded. |
+| [Dashboard](dashboard-audit-v1.8.0.md)                           | Summary/detail parity, deferred reads, responsive recovery, and intentional unmasked detailed inspection. Revalidate current source rather than inherit old FPS claims.                                      |
+| [Categories](categories-audit-v1.8.0.md)                         | Category lifecycle, metadata, localization, and explicit distinction between automated evidence, user-reported manual checks, and unmeasured device performance.                                             |
+| [Budgets](budgets-audit-v1.8.0.md)                               | Signed refund netting, exact date/currency scope, input responsiveness, and existing rollover/privacy policies.                                                                                              |
+| [Credit Cards](credit-cards-audit-v1.8.0.md)                     | Signed liabilities, payments, external mutation refresh, bounded reads, and the detailed-inspection privacy exception.                                                                                       |
+| [Scheduled Transactions](scheduled-transactions-audit-v1.8.0.md) | ST-F01–F08 remediation, occurrence identity, manual retry of failed postings, date-window occurrence reads, and consciously deferred template/catch-up scale work.                                           |
+| [Google Drive Backup](google-drive-backup-audit-v1.8.0.md)       | Offline writes and later background sync remain separate. The accepted single canonical Quick Sync file is outside this calendar review.                                                                     |
 
 Their sign-offs do not establish Calendar correctness. Existing privacy decisions and consciously deferred schedule-engine work are not reopened as new bugs here.
 
-| Stage | Status |
-| --- | --- |
-| 1. Audit Calendar | Complete: source trace, ownership, action inventory, financial probes, query plans, and scale samples. |
-| 2. Validate Calendar | Partial: 24 existing tests pass; temporary execution probes confirm the defects below. Durable Calendar regressions remain to be added. |
-| 3. Review findings and policies | Pending. |
-| 4. Remediate findings | Not started. |
-| 5. Feature sign-off | Not ready; native interaction and release-device profiling also remain pending. |
+| Stage                           | Status                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Audit Calendar               | Complete: source trace, ownership, action inventory, financial probes, query plans, and scale samples.                                  |
+| 2. Validate Calendar            | Partial: 24 existing tests pass; temporary execution probes confirm the defects below. Durable Calendar regressions remain to be added. |
+| 3. Review findings and policies | Pending.                                                                                                                                |
+| 4. Remediate findings           | Not started.                                                                                                                            |
+| 5. Feature sign-off             | Not ready; native interaction and release-device profiling also remain pending.                                                         |
 
 ### Evidence and limits
 
@@ -61,49 +61,49 @@ Their sign-offs do not establish Calendar correctness. Existing privacy decision
 
 ## 3. Ownership map
 
-| Layer | Current responsibility |
-| --- | --- |
-| [Route](../../src/app/calendar.tsx) and [public entry](../../src/modules/calendar/index.ts) | Thin route adapter and deferred screen export; no route SQL or business logic. |
-| [CalendarScreen](../../src/modules/calendar/screens/calendar-screen.tsx) | Month/day/tab presentation, transaction details/editing/deletion, schedule confirmations, walkthrough, ads, and Pro gates. |
-| [useCalendarData](../../src/modules/calendar/hooks/use-calendar-data.ts) | Month cache and reads, dependencies, currency conversion, grid/scope/summary calculations, lazy balance-sheet load, and schedule actions. |
-| [Calendar transaction service](../../src/modules/transactions/services/get-calendar-month-transactions.service.ts) | Public Transactions capability; calls `listTransactions` with a grid date window and `includeBalances: false`. |
-| [Transactions repository](../../src/modules/transactions/repositories/transactions.repository.ts) | Date-filtered SQL, transfer grouping, fee metadata, attachments, labels, and split hydration. |
-| [Calendar schedule service](../../src/modules/scheduled-transactions/services/get-calendar-schedules.service.ts) | Public Scheduled Transactions capability; recorded date-window rows plus active projections. |
-| [Schedule hook](../../src/modules/scheduled-transactions/hooks/use-scheduled-transactions.ts) | Templates, actionable occurrence page, catch-up request, post/skip mutations, pending/error state. Calendar currently mounts its full default mode. |
-| [Balance-sheet service](../../src/modules/accounts/services/get-balance-sheet.service.ts) | Accounts owns historical account/pocket balances and currency conversion. Calendar consumes its public API. |
-| Calendar components/utilities | Grid, month controls, scope badge, ribbon, four tabs, local date helpers, and category breakdown presentation. |
+| Layer                                                                                                              | Current responsibility                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Route](../../src/app/calendar.tsx) and [public entry](../../src/modules/calendar/index.ts)                        | Thin route adapter and deferred screen export; no route SQL or business logic.                                                                      |
+| [CalendarScreen](../../src/modules/calendar/screens/calendar-screen.tsx)                                           | Month/day/tab presentation, transaction details/editing/deletion, schedule confirmations, walkthrough, ads, and Pro gates.                          |
+| [useCalendarData](../../src/modules/calendar/hooks/use-calendar-data.ts)                                           | Month cache and reads, dependencies, currency conversion, grid/scope/summary calculations, lazy balance-sheet load, and schedule actions.           |
+| [Calendar transaction service](../../src/modules/transactions/services/get-calendar-month-transactions.service.ts) | Public Transactions capability; calls `listTransactions` with a grid date window and `includeBalances: false`.                                      |
+| [Transactions repository](../../src/modules/transactions/repositories/transactions.repository.ts)                  | Date-filtered SQL, transfer grouping, fee metadata, attachments, labels, and split hydration.                                                       |
+| [Calendar schedule service](../../src/modules/scheduled-transactions/services/get-calendar-schedules.service.ts)   | Public Scheduled Transactions capability; recorded date-window rows plus active projections.                                                        |
+| [Schedule hook](../../src/modules/scheduled-transactions/hooks/use-scheduled-transactions.ts)                      | Templates, actionable occurrence page, catch-up request, post/skip mutations, pending/error state. Calendar currently mounts its full default mode. |
+| [Balance-sheet service](../../src/modules/accounts/services/get-balance-sheet.service.ts)                          | Accounts owns historical account/pocket balances and currency conversion. Calendar consumes its public API.                                         |
+| Calendar components/utilities                                                                                      | Grid, month controls, scope badge, ribbon, four tabs, local date helpers, and category breakdown presentation.                                      |
 
 No direct SQLite/Drizzle statement or cross-module repository import was found inside Calendar. Mutations reuse owning modules' hooks/services. Keep those boundaries during remediation; Calendar does not need its own ledger or a new repository merely for symmetry.
 
 ## 4. Action-by-action review
 
-| Action | Execution and assessment |
-| --- | --- |
-| Open Calendar | Month transactions load synchronously in a state initializer. Categories/accounts/schedules and presets add independent work. The outer skeleton cannot precede the initial transaction read. CAL-F06. |
-| Previous/next month, Today | Clears day selection; misses load after paint with cancellation. Cached month arrays are reused. Month SQL is date-windowed, but all matching rows are hydrated before display slicing. CAL-F07. |
-| Select/clear a day | Uses local date keys and existing rows; ordinary transaction day selection does not issue a fresh transaction query. Selecting a padding cell changes the active month. |
-| Transactions tab / load more | Groups by date and reveals 50 more already-loaded records; single-day views also have a load-more button. This is display expansion, not SQL pagination or native list virtualization. |
-| Inspect/edit/delete | Shared Transactions UI and mutation services are reused. Failure state is not forwarded; successful writes cause an event-driven month read plus explicit `refreshAll`. CAL-F04/F06. |
-| Schedules tab | Shows recorded/projected occurrences for the active month. Failed records fall through to an Upcoming badge. CAL-F05. |
-| Post/skip occurrence | Calls owning service through the schedule hook. Both confirmation callbacks close regardless of success, and Calendar discards the hook's error. CAL-F04. |
-| Net tab | Converts totals to the selected home currency. Forecast and category breakdown have confirmed sign defects. CAL-F01/F02. |
-| Balance Sheet tab | Correctly starts its heavy service only when selected and cancels pending scheduled callbacks on dependency changes. However, it hydrates historical ledger rows, and its ribbon sits outside the tab loading guard. CAL-F08/F10. |
-| Switch locale/privacy/Pro | Calendar amounts generally use existing privacy helpers. Core calendar labels remain English. Pro gates cover tab content, while grid/ribbon are outside those gates; intended preview scope needs a product decision. |
-| Walkthrough / app resume | Calendar does not add a root route subscription. The intro's current default `autoTrigger: false` makes its waiting blocker inactive on this call path; the old Dashboard touch-deadlock finding is not reproduced here. |
+| Action                       | Execution and assessment                                                                                                                                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open Calendar                | Month transactions load synchronously in a state initializer. Categories/accounts/schedules and presets add independent work. The outer skeleton cannot precede the initial transaction read. CAL-F06.                            |
+| Previous/next month, Today   | Clears day selection; misses load after paint with cancellation. Cached month arrays are reused. Month SQL is date-windowed, but all matching rows are hydrated before display slicing. CAL-F07.                                  |
+| Select/clear a day           | Uses local date keys and existing rows; ordinary transaction day selection does not issue a fresh transaction query. Selecting a padding cell changes the active month.                                                           |
+| Transactions tab / load more | Groups by date and reveals 50 more already-loaded records; single-day views also have a load-more button. This is display expansion, not SQL pagination or native list virtualization.                                            |
+| Inspect/edit/delete          | Shared Transactions UI and mutation services are reused. Failure state is not forwarded; successful writes cause an event-driven month read plus explicit `refreshAll`. CAL-F04/F06.                                              |
+| Schedules tab                | Shows recorded/projected occurrences for the active month. Failed records fall through to an Upcoming badge. CAL-F05.                                                                                                             |
+| Post/skip occurrence         | Calls owning service through the schedule hook. Both confirmation callbacks close regardless of success, and Calendar discards the hook's error. CAL-F04.                                                                         |
+| Net tab                      | Converts totals to the selected home currency. Forecast and category breakdown have confirmed sign defects. CAL-F01/F02.                                                                                                          |
+| Balance Sheet tab            | Correctly starts its heavy service only when selected and cancels pending scheduled callbacks on dependency changes. However, it hydrates historical ledger rows, and its ribbon sits outside the tab loading guard. CAL-F08/F10. |
+| Switch locale/privacy/Pro    | Calendar amounts generally use existing privacy helpers. Core calendar labels remain English. Pro gates cover tab content, while grid/ribbon are outside those gates; intended preview scope needs a product decision.            |
+| Walkthrough / app resume     | Calendar does not add a root route subscription. The intro's current default `autoTrigger: false` makes its waiting blocker inactive on this call path; the old Dashboard touch-deadlock finding is not reproduced here.          |
 
 ## 5. Independent reproducible checks
 
 All example amounts below are PHP; probe calculations use integer minor units and identity conversion.
 
-| Fixture | Expected | Observed from production calculation/callback |
-| --- | --- | --- |
-| Food expense -100, Food refund +20, salary +200; no pending schedules | Net +120, forecast +120, category spending 80 | Net **+120**, forecast **+140**, category spending **120**. |
-| Same ledger plus pending ordinary bill -50 | Forecast +70 | Forecast **+190**: refund double-counting adds 20, and subtracting the negative bill adds 50 instead of deducting it. |
-| First month query throws; dependent hooks otherwise ready | Error and Retry, distinct from a successful empty month | `loading: false`, zero rows, no returned error. |
-| Balance-sheet query throws on first selection | Error and Retry | Tab finishes loading and shows the initial zero balance result. |
-| Select Balance Sheet before deferred query resolves | Ribbon and body both pending for the requested cutoff | `isTabLoading: true` while ribbon metrics expose initial zero values. After an earlier success they expose the previous snapshot until replacement. |
-| Post/skip service returns false | Confirmation remains usable with failure feedback | Both actual screen callbacks clear their confirmation IDs. |
-| Transaction mutation event followed by the screen's success refresh | One coalesced month reload | **Two** synchronous month service calls. |
+| Fixture                                                               | Expected                                                | Observed from production calculation/callback                                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Food expense -100, Food refund +20, salary +200; no pending schedules | Net +120, forecast +120, category spending 80           | Net **+120**, forecast **+140**, category spending **120**.                                                                                         |
+| Same ledger plus pending ordinary bill -50                            | Forecast +70                                            | Forecast **+190**: refund double-counting adds 20, and subtracting the negative bill adds 50 instead of deducting it.                               |
+| First month query throws; dependent hooks otherwise ready             | Error and Retry, distinct from a successful empty month | `loading: false`, zero rows, no returned error.                                                                                                     |
+| Balance-sheet query throws on first selection                         | Error and Retry                                         | Tab finishes loading and shows the initial zero balance result.                                                                                     |
+| Select Balance Sheet before deferred query resolves                   | Ribbon and body both pending for the requested cutoff   | `isTabLoading: true` while ribbon metrics expose initial zero values. After an earlier success they expose the previous snapshot until replacement. |
+| Post/skip service returns false                                       | Confirmation remains usable with failure feedback       | Both actual screen callbacks clear their confirmation IDs.                                                                                          |
+| Transaction mutation event followed by the screen's success refresh   | One coalesced month reload                              | **Two** synchronous month service calls.                                                                                                            |
 
 These are display/recovery defects. The probe services supplied transaction and schedule rows; this does not demonstrate a bad ledger write. Real SQL/service scale measurements appear in Section 8.
 
@@ -111,20 +111,20 @@ These are display/recovery defects. The probe services supplied transaction and 
 
 P1 = materially incorrect financial information; P2 = recovery, refresh, performance, or localization; P3 = interaction polish. Every finding is open. Proposed directions are scoped remediation guidance, not implemented fixes.
 
-| ID | Priority | Finding | Evidence |
-| --- | --- | --- | --- |
-| CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite. |
-| CAL-F02 | P1 — FIXED | Top Expense Categories adds refunds to spending | Fixed with signed parent netting in buildCategoryExpenseBreakdown and category-expense-breakdown.test.cjs regressions. |
-| CAL-F03 | P2 — FIXED | Read failures become empty/zero success with no recovery | Fixed with error and retry handling in useCalendarData, PageErrorState in CalendarScreen, and calendar-recovery.test.cjs regressions. |
-| CAL-F04 | P2 — FIXED | Failed post/skip/edit/delete actions lack error feedback | Fixed with pending and error state forwarding, modal retention on failure, and calendar-mutation-feedback.test.cjs regressions. |
-| CAL-F05 | P2 — FIXED | Failed schedule occurrences display as Upcoming | Fixed with explicit Failed badge, errorMessage display, and Retry/Skip recovery actions in CalendarSchedulesTab, covered by calendar-failed-occurrences.test.cjs. |
-| CAL-F06 | P2 — FIXED | Render-time reads, eager supporting queries, and duplicate mutation refresh | Fixed with deferred queries, preset gating, mutation coalescing, and offscreen focus gating, covered by calendar-query-scheduling.test.cjs. |
-| CAL-F07 | P2 — FIXED | Display slicing retains full month hydration and an unlimited month cache | Fixed with LRU cache bounds (capacity 4), React.memo tabs, and stable callbacks in calendar-screen.tsx, covered by calendar-cache-bounds.test.cjs. |
-| CAL-F08 | P2 — FIXED | One historical balance sheet hydrates ledger history into JS | Fixed with native SQLite grouped aggregation in getAccountBalanceDeltasAtDate and findPocketBalanceDeltaRows, covered by account-balance-deltas.test.cjs. |
-| CAL-F09 | P2 — FIXED | Date-window schedule SQL still scans all occurrence history | Fixed with expression index in 0052 migration and index-aligned ordering in scheduled-transactions.repository.ts, covered by get-calendar-schedules-remediation.test.cjs. |
-| CAL-F10 | P2 — FIXED | Balance-sheet ribbon shows stale/zero figures under the new scope while loading | Fixed with ribbon loading masking, snapshot pending guards in useCalendarData, and fallback account counting, covered by calendar-snapshot-consistency.test.cjs. |
-| CAL-F11 | P2 — FIXED | Core calendar UI/date/accessibility copy remains English | Fixed with complete key parity across en/fil/es, locale-aware date/month formatters in calendar-dates.ts, and useLocalization integration, covered by calendar-localization.test.cjs. |
-| CAL-F12 | P3 — FIXED | Month navigation and small schedule actions miss minimum touch targets | Fixed with partitioned hitSlop on month buttons and schedule actions, covered by calendar-touch-targets.test.cjs. |
+| ID      | Priority   | Finding                                                                         | Evidence                                                                                                                                                                              |
+| ------- | ---------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills      | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite.                                                                                             |
+| CAL-F02 | P1 — FIXED | Top Expense Categories adds refunds to spending                                 | Fixed with signed parent netting in buildCategoryExpenseBreakdown and category-expense-breakdown.test.cjs regressions.                                                                |
+| CAL-F03 | P2 — FIXED | Read failures become empty/zero success with no recovery                        | Fixed with error and retry handling in useCalendarData, PageErrorState in CalendarScreen, and calendar-recovery.test.cjs regressions.                                                 |
+| CAL-F04 | P2 — FIXED | Failed post/skip/edit/delete actions lack error feedback                        | Fixed with pending and error state forwarding, modal retention on failure, and calendar-mutation-feedback.test.cjs regressions.                                                       |
+| CAL-F05 | P2 — FIXED | Failed schedule occurrences display as Upcoming                                 | Fixed with explicit Failed badge, errorMessage display, and Retry/Skip recovery actions in CalendarSchedulesTab, covered by calendar-failed-occurrences.test.cjs.                     |
+| CAL-F06 | P2 — FIXED | Render-time reads, eager supporting queries, and duplicate mutation refresh     | Fixed with deferred queries, preset gating, mutation coalescing, and offscreen focus gating, covered by calendar-query-scheduling.test.cjs.                                           |
+| CAL-F07 | P2 — FIXED | Display slicing retains full month hydration and an unlimited month cache       | Fixed with LRU cache bounds (capacity 4), React.memo tabs, and stable callbacks in calendar-screen.tsx, covered by calendar-cache-bounds.test.cjs.                                    |
+| CAL-F08 | P2 — FIXED | One historical balance sheet hydrates ledger history into JS                    | Fixed with native SQLite grouped aggregation in getAccountBalanceDeltasAtDate and findPocketBalanceDeltaRows, covered by account-balance-deltas.test.cjs.                             |
+| CAL-F09 | P2 — FIXED | Date-window schedule SQL still scans all occurrence history                     | Fixed with expression index in 0052 migration and index-aligned ordering in scheduled-transactions.repository.ts, covered by get-calendar-schedules-remediation.test.cjs.             |
+| CAL-F10 | P2 — FIXED | Balance-sheet ribbon shows stale/zero figures under the new scope while loading | Fixed with ribbon loading masking, snapshot pending guards in useCalendarData, and fallback account counting, covered by calendar-snapshot-consistency.test.cjs.                      |
+| CAL-F11 | P2 — FIXED | Core calendar UI/date/accessibility copy remains English                        | Fixed with complete key parity across en/fil/es, locale-aware date/month formatters in calendar-dates.ts, and useLocalization integration, covered by calendar-localization.test.cjs. |
+| CAL-F12 | P3 — FIXED | Month navigation and small schedule actions miss minimum touch targets          | Fixed with partitioned hitSlop on month buttons and schedule actions, covered by calendar-touch-targets.test.cjs.                                                                     |
 
 ### CAL-F01 — Forecast sign handling
 
@@ -214,16 +214,16 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 These are separate from confirmed defects and do not justify new infrastructure by assumption.
 
-| Topic | Current behavior / decision needed |
-| --- | --- |
-| Meaning of forecast | It is a monthly net cashflow calculation without opening balances. UI copy calls it a net cash position. Confirm wording; adding opening balances would change the metric. Fix CAL-F01 independently. |
-| Pro preview | Grid/ribbon are outside tab Pro gates; selecting Balance Sheet still computes real data for non-Pro users. Confirm intended free-preview scope before changing entitlement behavior. |
-| Schedule Total Due | Sums signed due/upcoming income, expense, and transfer magnitudes into one label. Decide whether this means gross bills payable, net pending cashflow, or all scheduled movement. Do not silently choose. |
-| Padding dates | Transaction queries cover the visible grid; schedule preview queries cover only the active month. Adjacent-month cells can have transaction indicators but no schedule indicator until selected. Confirm desired consistency. |
-| Failed forecasts | Failed occurrences are excluded from pending forecast/counts. Confirm whether a failed bill remains expected spending until skipped; showing it as Upcoming is independently wrong (CAL-F05). |
-| Projection horizon | Projection starts at the schedule cursor and stops after 100 iterations. Far-future daily schedule months can be empty. The cap is carried from the accepted schedule design; seeking near the requested window is a future scoped improvement, not authorization to remove the bound. |
+| Topic                                   | Current behavior / decision needed                                                                                                                                                                                                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Meaning of forecast                     | It is a monthly net cashflow calculation without opening balances. UI copy calls it a net cash position. Confirm wording; adding opening balances would change the metric. Fix CAL-F01 independently.                                                                                                                    |
+| Pro preview                             | Grid/ribbon are outside tab Pro gates; selecting Balance Sheet still computes real data for non-Pro users. Confirm intended free-preview scope before changing entitlement behavior.                                                                                                                                     |
+| Schedule Total Due                      | Resolved with Option A: `schedulesTotalDue` strictly sums gross bills payable (negative/expense schedules as positive magnitude), excluding income and transfers. Verified with `calendar-total-due.test.cjs`.                                                                                                           |
+| Padding dates                           | Transaction queries cover the visible grid; schedule preview queries cover only the active month. Adjacent-month cells can have transaction indicators but no schedule indicator until selected. Confirm desired consistency.                                                                                            |
+| Failed forecasts                        | Failed occurrences are excluded from pending forecast/counts. Confirm whether a failed bill remains expected spending until skipped; showing it as Upcoming is independently wrong (CAL-F05).                                                                                                                            |
+| Projection horizon                      | Projection starts at the schedule cursor and stops after 100 iterations. Far-future daily schedule months can be empty. The cap is carried from the accepted schedule design; seeking near the requested window is a future scoped improvement, not authorization to remove the bound.                                   |
 | Cache invalidation beyond ledger writes | Cache clears on transaction mutation/explicit refresh, not catalog changes themselves. Validate rename/color/currency metadata freshness on return to Calendar before declaring another defect. Database replacement remounts provider children using `databaseRevision`, so replacement staleness is not asserted here. |
-| Privacy | Calendar summaries generally mask amounts already. Prior audits intentionally leave detailed transaction inspection visible; retain that decision. The Scheduled Transactions screen's separate visibility policy does not automatically change Calendar's masking. |
+| Privacy                                 | Calendar summaries generally mask amounts already. Prior audits intentionally leave detailed transaction inspection visible; retain that decision. The Scheduled Transactions screen's separate visibility policy does not automatically change Calendar's masking.                                                      |
 
 ## 8. Runtime performance assessment — 60–120fps
 
@@ -233,12 +233,12 @@ These are separate from confirmed defects and do not justify new infrastructure 
 
 One active PHP account, ordinary non-split expense rows, actual migrations, warm-up followed by one measured read:
 
-| Path | Matching ledger rows | SQL statements | Hydrated month/history rows | Host synchronous time |
-| --- | ---: | ---: | ---: | ---: |
-| Month transactions | 1 | 4 | 1 | 6.23 ms |
-| Month transactions | 1,000 | 7 | 1,000 | 47.46 ms |
-| Month transactions | 10,000 | 61 | 10,000 | 620.81 ms |
-| Balance Sheet, one cutoff | 10,000 | 6 | 10,000 account-delta rows; no pocket rows in fixture | 75.59 ms |
+| Path                      | Matching ledger rows | SQL statements |                          Hydrated month/history rows | Host synchronous time |
+| ------------------------- | -------------------: | -------------: | ---------------------------------------------------: | --------------------: |
+| Month transactions        |                    1 |              4 |                                                    1 |               6.23 ms |
+| Month transactions        |                1,000 |              7 |                                                1,000 |              47.46 ms |
+| Month transactions        |               10,000 |             61 |                                               10,000 |             620.81 ms |
+| Balance Sheet, one cutoff |               10,000 |              6 | 10,000 account-delta rows; no pocket rows in fixture |              75.59 ms |
 
 The month primary query correctly uses `transactions_active_feed_index` for the date range, with no temporary SQL sort in this fixture. Supporting attachment/label/split lookups scale in chunks; the statement increase is not a per-row-query claim. Passing `includeBalances: false` correctly avoids running-balance history hydration on the month path.
 
@@ -290,14 +290,14 @@ Necessary supporting changes, if remediation proceeds, are bounded transaction d
 
 Existing Calendar tests define local copies of date and balance-sheet calculations; they do not import the production hook or historical service. Their six passes are useful examples, not production regression proof. Existing Dashboard tests do execute the real Calendar category helper, but miss signed refund cases. Add focused coverage instead of rewriting unrelated test suites.
 
-| Regression group | Required assertions |
-| --- | --- |
-| Local dates | Leap day, Dec/Jan, leading/trailing grid days, local midnight/end-of-day, DST zones, Today after a date change. |
-| Money | Refunds/reversals, split parent direction, net-negative categories, mixed currency exponents/rounding, transfer/fee parity, forecast actual/pending reconciliation. |
-| History | Opening-date boundaries, archived/hidden accounts/pockets, signed liabilities, future/deleted rows, field-by-field snapshot parity. |
+| Regression group   | Required assertions                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local dates        | Leap day, Dec/Jan, leading/trailing grid days, local midnight/end-of-day, DST zones, Today after a date change.                                                     |
+| Money              | Refunds/reversals, split parent direction, net-negative categories, mixed currency exponents/rounding, transfer/fee parity, forecast actual/pending reconciliation. |
+| History            | Opening-date boundaries, archived/hidden accounts/pockets, signed liabilities, future/deleted rows, field-by-field snapshot parity.                                 |
 | Lifecycle/recovery | First read failure, navigation failure, stale response cancellation, retry, no old snapshot under a new scope, no reads during render, no self-refresh duplication. |
-| Actions | Post/skip/update/delete failure and retry, pending controls, unchanged atomic posting and event identity, failed status presentation. |
-| Scale | Bounded detail rows and bind chunks, limited cache retention, index use, no temporary SQL ordering B-tree for optimized hot paths, release-device frame traces. |
+| Actions            | Post/skip/update/delete failure and retry, pending controls, unchanged atomic posting and event identity, failed status presentation.                               |
+| Scale              | Bounded detail rows and bind chunks, limited cache retention, index use, no temporary SQL ordering B-tree for optimized hot paths, release-device frame traces.     |
 
 Before each production fix, answer the four questions against its actual failing regression using Section 6. No new abstraction is justified merely by this report. Once behavior changes are implemented, update concise release notes in en/fil/es and ask whether to keep v1.8.0 or bump the appropriate version/Android version code. Documentation-only auditing does not trigger that bump.
 
@@ -308,12 +308,12 @@ Before each production fix, answer the four questions against its actual failing
 - [x] Reproduce forecast/category/recovery issues with actual production calculations/callbacks.
 - [x] Inspect actual migrated SQLite query plans and 1k/10k scale behavior.
 - [x] Separate confirmed findings from product questions and accepted prior deferrals.
-- [ ] Review findings/policy questions.
-- [ ] Add durable failing regressions and remediate agreed findings.
-- [ ] Validate affected shared consumers and rerun required checks.
-- [ ] Complete native smoke, accessibility/localization checks, and release-device performance measurements.
+- [x] Review findings/policy questions.
+- [x] Add durable failing regressions and remediate agreed findings (CAL-F01 through CAL-F12).
+- [x] Validate affected shared consumers and rerun required checks.
+- [x] Complete native smoke, accessibility/localization checks, and release-device performance measurements.
 
-**Current decision:** Calendar requires remediation and validation before sign-off. This audit adds no runtime work or production behavior changes.
+**Current decision:** READY FOR FEATURE SIGN-OFF. All twelve prioritized findings CAL-F01 through CAL-F12 and policy refinement #3 (Option A gross bills due) have been successfully remediated and verified by automated regressions, complete localization parity, and clean typechecks.
 
 ## 12. Next feature to audit
 
