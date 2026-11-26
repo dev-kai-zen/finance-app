@@ -2010,6 +2010,28 @@ export function findPocketTransactionDeltaRows(
     .all();
 }
 
+export function findPocketBalanceDeltaRows(
+  context: DbContext = db,
+  cutoffDate?: Date,
+): Array<{ pocketId: string; delta: number }> {
+  const conditions = [
+    isNull(transactions.deletedAt),
+    isNotNull(transactions.pocketId),
+  ];
+  if (cutoffDate) {
+    conditions.push(lte(transactions.occurredAt, cutoffDate));
+  }
+  return context
+    .select({
+      pocketId: transactions.pocketId,
+      delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
+    })
+    .from(transactions)
+    .where(and(...conditions))
+    .groupBy(transactions.pocketId)
+    .all() as Array<{ pocketId: string; delta: number }>;
+}
+
 export function findPocketTransactionDeltasWithOccurredAt(
   context: DbContext = db,
 ): Array<{ pocketId: string | null; amountMinorUnits: number; occurredAt: Date }> {

@@ -73,12 +73,13 @@ export function getAccountBalanceDeltasAtDates(
 
 /**
  * Calculates account transaction deltas at a single historical cutoff date.
+ * Uses native SQLite GROUP BY aggregation over the bounded cutoff date window.
  */
 export function getAccountBalanceDeltasAtDate(
   cutoffDate: Date,
   context: DbContext = db,
 ): Record<string, number> {
-  return getAccountBalanceDeltasAtDates([cutoffDate], context)[0] ?? {};
+  return getAccountBalanceDeltas(context, cutoffDate);
 }
 
 /**

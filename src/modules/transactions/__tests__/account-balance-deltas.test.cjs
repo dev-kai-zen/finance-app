@@ -129,6 +129,10 @@ const {
   getAccountBalanceDeltasAtDate,
   getAccountTransactionDelta,
 } = require("../services/get-account-balance-deltas.service");
+const {
+  getPocketBalanceDeltasAtDate,
+  getPocketTransactionBalanceDeltas,
+} = require("../services/get-pocket-transaction-balance-deltas.service");
 
 function setupTestDb() {
   sqlite = new DatabaseSync(":memory:");
@@ -307,4 +311,84 @@ test("getAccountTransactionDelta: computes native aggregate delta with optional 
 
   // 5. Net sum for acc_2 is isolated: 99999
   assert.equal(getAccountTransactionDelta("acc_2", db), 99999);
+});
+
+test("CAL-F08: getAccountBalanceDeltasAtDate single-cutoff native SQLite grouping and bounds", () => {
+  const db = setupTestDb();
+  const insert = sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at, deleted_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const tBefore = new Date(2026, 9, 15).getTime(); // Oct 15
+  const tCutoff = new Date(2026, 9, 31).getTime(); // Oct 31
+  const tAfter = new Date(2026, 10, 5).getTime();  // Nov 5
+
+  // Account 1 transactions
+  insert.run("tx_1", "acc_1", "income", 50000, tBefore, tBefore, tBefore, null);
+  insert.run("tx_2", "acc_1", "expense", -15000, tCutoff, tCutoff, tCutoff, null);
+  insert.run("tx_3_future", "acc_1", "expense", -10000, tAfter, tAfter, tAfter, null); // After cutoff
+  insert.run("tx_4_del", "acc_1", "income", 90000, tBefore, tBefore, tBefore, tBefore); // Deleted
+
+  // Account 2 transactions
+  insert.run("tx_5", "acc_2", "expense", -5000, tBefore, tBefore, tBefore, null);
+  insert.run("tx_6_future", "acc_2", "income", 100000, tAfter, tAfter, tAfter, null); // After cutoff
+
+  const cutoff = new Date(2026, 9, 31);
+  const deltas = getAccountBalanceDeltasAtDate(cutoff, db);
+
+  // Assert exact arithmetic totals
+  assert.equal(deltas.acc_1, 35000); // 50000 - 15000 (excluding future -10000 and deleted 90000)
+  assert.equal(deltas.acc_2, -5000); // -5000 (excluding future 100000)
+  assert.equal(Object.keys(deltas).length, 2, "Result should be bounded to distinct accounts, not rows");
+
+  // Mathematical parity assertion against multi-cutoff chart function
+  const multiCutoffResult = getAccountBalanceDeltasAtDates([cutoff], db)[0] ?? {};
+  assert.deepEqual(deltas, multiCutoffResult);
+});
+
+test("CAL-F08: getPocketBalanceDeltasAtDate single-cutoff native SQLite grouping and bounds", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+  sqlite.exec(`
+    INSERT INTO pockets (id, account_id, name, is_archived, sort_order, created_at, updated_at)
+    VALUES ('pock_1', 'acc_1', 'Savings Pocket', 0, 0, ${now}, ${now}),
+           ('pock_2', 'acc_2', 'Emergency Pocket', 0, 0, ${now}, ${now});
+  `);
+
+  const insert = sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, pocket_id, type, amount_minor_units, occurred_at, created_at, updated_at, deleted_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const tBefore = new Date(2026, 9, 10).getTime();
+  const tCutoff = new Date(2026, 9, 31).getTime();
+  const tAfter = new Date(2026, 10, 2).getTime();
+
+  // Pocket 1 transactions
+  insert.run("ptx_1", "acc_1", "pock_1", "income", 15000, tBefore, tBefore, tBefore, null);
+  insert.run("ptx_2", "acc_1", "pock_1", "expense", -3000, tCutoff, tCutoff, tCutoff, null);
+  insert.run("ptx_3_future", "acc_1", "pock_1", "expense", -5000, tAfter, tAfter, tAfter, null); // Future
+  insert.run("ptx_4_del", "acc_1", "pock_1", "income", 20000, tBefore, tBefore, tBefore, tBefore); // Deleted
+
+  // Pocket 2 transactions (under acc_2)
+  insert.run("ptx_5", "acc_2", "pock_2", "expense", -4000, tBefore, tBefore, tBefore, null);
+  insert.run("ptx_6_future", "acc_2", "pock_2", "income", 50000, tAfter, tAfter, tAfter, null); // Future
+
+  // Transaction with no pocketId (null pocket)
+  insert.run("ptx_nopock", "acc_1", null, "income", 99999, tBefore, tBefore, tBefore, null);
+
+  const cutoff = new Date(2026, 9, 31);
+  const pocketDeltas = getPocketBalanceDeltasAtDate(cutoff, db);
+
+  // Assert exact arithmetic totals
+  assert.equal(pocketDeltas.pock_1, 12000); // 15000 - 3000
+  assert.equal(pocketDeltas.pock_2, -4000); // -4000
+  assert.equal(pocketDeltas.null, undefined);
+  assert.equal(Object.keys(pocketDeltas).length, 2, "Result should be bounded to distinct pockets, not rows");
+
+  // Undated pocket balance deltas include all non-deleted transactions across all dates
+  const allPocketDeltas = getPocketTransactionBalanceDeltas(db);
+  assert.equal(allPocketDeltas.pock_1, 7000); // 15000 - 3000 - 5000
+  assert.equal(allPocketDeltas.pock_2, 46000); // -4000 + 50000
 });
