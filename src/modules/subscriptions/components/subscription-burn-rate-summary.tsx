@@ -61,7 +61,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
         </View>
 
         <View style={styles.amountContainer}>
-          <Text style={styles.mainAmount}>{displayMonthly}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.mainAmount}>{displayMonthly}</Text>
           <Text style={styles.perMonthLabel}>
             {t("subscriptions.perMonth", { defaultValue: "/ month" })}
           </Text>
@@ -119,8 +119,10 @@ function createStyles(theme: AppTheme) {
     },
     headerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
+      gap: theme.spacing.xs,
       marginBottom: theme.spacing.xs,
     },
     titleWithIcon: {
@@ -154,6 +156,7 @@ function createStyles(theme: AppTheme) {
     },
     amountContainer: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "baseline",
       marginTop: theme.spacing.xs,
       marginBottom: theme.spacing.sm,
@@ -177,8 +180,10 @@ function createStyles(theme: AppTheme) {
     },
     footerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
+      gap: theme.spacing.xs,
     },
     statColumn: {
       flexDirection: "column",

@@ -198,10 +198,17 @@ export const SubscriptionCard = memo(function SubscriptionCard({
         </View>
 
         <View style={styles.amountCol}>
-          <Text style={styles.amountText}>{displayAmount}</Text>
-          <Text style={styles.cycleText}>{cycleLabel}</Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
+            style={styles.amountText}
+          >
+            {displayAmount}
+          </Text>
+          <Text numberOfLines={1} style={styles.cycleText}>{cycleLabel}</Text>
           {subscription.billingCycle !== "monthly" && (
-            <Text style={styles.normalizedText}>
+            <Text numberOfLines={1} style={styles.normalizedText}>
               ({displayMonthlyBurn}/mo)
             </Text>
           )}
@@ -450,6 +457,7 @@ function createStyles(theme: AppTheme) {
     },
     actionRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.sm,

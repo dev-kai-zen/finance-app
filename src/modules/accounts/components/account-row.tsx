@@ -59,7 +59,7 @@ export const AccountRow = memo(function AccountRow({
           </Text>
           <View style={styles.metaRow}>
             <View style={styles.typeTag}>
-              <Text style={styles.typeTagText}>
+              <Text numberOfLines={1} style={styles.typeTagText}>
                 {account.accountType?.name ?? "Account"}
               </Text>
             </View>
@@ -81,6 +81,9 @@ export const AccountRow = memo(function AccountRow({
 
       <View style={styles.rightCol}>
         <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          numberOfLines={1}
           style={[
             styles.amountText,
             isLiability &&
@@ -143,6 +146,7 @@ function createStyles(theme: AppTheme) {
     typeTag: {
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: 4,
+      maxWidth: 120,
       paddingHorizontal: 6,
       paddingVertical: 1,
     },
@@ -167,6 +171,8 @@ function createStyles(theme: AppTheme) {
     },
     rightCol: {
       alignItems: "flex-end",
+      flexShrink: 1,
+      maxWidth: "42%",
     },
     amountText: {
       color: theme.colors.textPrimary,

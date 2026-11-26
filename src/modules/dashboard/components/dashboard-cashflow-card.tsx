@@ -59,7 +59,7 @@ export function DashboardCashflowCard({
         {inflow > 0 ? (
           <View style={styles.savingsPill}>
             <Sparkles color={theme.colors.primary} size={12} />
-            <Text style={styles.savingsPillText}>
+            <Text numberOfLines={1} style={styles.savingsPillText}>
               {t("dashboard.savingsRateBadge", {
                 rate: cashflow.savingsRatePercentage,
               })}
@@ -231,7 +231,8 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
     },
     savingsPill: {
-      flexShrink: 0,
+      flexShrink: 1,
+      maxWidth: "50%",
       alignItems: "center",
       backgroundColor: theme.colors.controlSecondary,
       borderRadius: theme.borderRadius.round,
@@ -261,6 +262,7 @@ function createStyles(theme: AppTheme) {
     netRow: {
       alignItems: "baseline",
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-between",
       gap: theme.spacing.sm,
     },

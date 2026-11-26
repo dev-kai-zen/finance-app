@@ -398,6 +398,8 @@ export const TransactionRow = memo(function TransactionRow({
 
                 <View style={styles.compactRightCol}>
                   <Text
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
                     numberOfLines={1}
                     style={[styles.compactAmountText, { color: amountColor }]}
                   >
@@ -698,7 +700,8 @@ function createStyles(theme: AppTheme) {
     },
     compactRightCol: {
       alignItems: "flex-end",
-      flexShrink: 0,
+      flexShrink: 1,
+      maxWidth: "45%",
       gap: 2,
       justifyContent: "center",
     },

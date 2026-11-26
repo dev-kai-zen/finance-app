@@ -634,6 +634,9 @@ function ActivityRow({
       </View>
       <View style={styles.activityAmountColumn}>
         <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          numberOfLines={1}
           style={[
             styles.activityAmount,
             isCredit && styles.activityCreditAmount,
@@ -936,7 +939,7 @@ function createStyles(theme: AppTheme) {
     },
     activityAmountColumn: {
       alignItems: "flex-end",
-      flexShrink: 0,
+      flexShrink: 1,
     },
     activityAmount: {
       color: theme.colors.textPrimary,

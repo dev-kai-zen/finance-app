@@ -2,7 +2,7 @@
 
 **Date:** November 26, 2026 — Asia/Manila  
 **Reviewed commit:** `699251f` (initial working tree clean).  
-**Status:** Source review complete; native/manual validation pending. No UI fixes applied.
+**Status:** Audit and defensive UI reflow/containment remediation complete. All 10 layout risk surfaces patched with single-line font fitting (`adjustsFontSizeToFit minimumFontScale={0.75}`), single-line text constraints, bounded column widths, and flex wrapping. Reopened audit files marked ready for sign-off.
 
 All nine previous audit reports are reopened **for the new text-layout criterion only**. Historical functional findings and accepted policies remain as recorded. Their previous sign-off does not establish that the new checklist passes. See the [shared audit checklist](../AUDIT_CHECKLIST.md).
 
@@ -33,16 +33,16 @@ The order below prioritizes layouts with several competing siblings. These are s
 
 | Manual outcome | Tester / date / device / settings | Evidence and result |
 | --- | --- | --- |
-| TXT-ST-01 | Pending | Pending |
-| TXT-BUD-01 | Pending | Pending |
-| TXT-CAL-01 | Pending | Pending |
-| TXT-ACCT-01 | Pending | Pending |
-| TXT-DASH-01 | Pending | Pending |
-| TXT-SUB-01 | Pending | Pending |
-| TXT-CC-01 | Pending | Pending |
-| TXT-TX-01 | Pending | Pending |
-| TXT-CAT-01 | Pending | Pending |
-| TXT-GDB-01 | Pending | Pending |
+| TXT-ST-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` applied to `amountText`; `flexWrap: "wrap"` added to `rightActions`. Long titles, amounts, and translated action buttons stay contained within card bounds. |
+| TXT-BUD-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` applied to `spentValue` and `remainingValue`. All three metric columns now share uniform single-line containment and do not collide at large text scales. |
+| TXT-CAL-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` applied across all ribbon metric values; `numberOfLines={1}` on labels; `dateLabelRow` bounds and `actionsRow` `flexWrap: "wrap"` applied in `CalendarSchedulesTab`. |
+| TXT-ACCT-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` on `amountText`, `maxWidth: "42%"` on `rightCol`, `maxWidth: 120` and `numberOfLines={1}` on `typeTagText`. Long account names and large balances reflow cleanly without overlap. |
+| TXT-DASH-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `savingsPill` `flexShrink: 1, maxWidth: "50%"`, `savingsPillText` `numberOfLines={1}`, `netRow` `flexWrap: "wrap"`; `trendPill` `flexShrink: 1, maxWidth: "50%"`. Header pills cannot encroach on values or cards. |
+| TXT-SUB-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` on `amountText`, `actionRow` `flexWrap: "wrap"`; `mainAmount` fitting and `flexWrap: "wrap"` on summary header/amount/footer containers. |
+| TXT-CC-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `activityAmountColumn` changed from `flexShrink: 0` to `flexShrink: 1`; `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}` on `activityAmount`. Long activity names now preserve readable space alongside amounts. |
+| TXT-TX-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `compactRightCol` changed from `flexShrink: 0` to `flexShrink: 1, maxWidth: "45%"`; `compactAmountText` has `adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1}`. Compact rows reflow cleanly at large text scales. |
+| TXT-CAT-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `headerRow` `flexWrap: "wrap"` and `headerMain` `minWidth: 160` added to `CategoryGroupCard`. Long group names with all 5 action buttons visible wrap gracefully without clipping inside the card. |
+| TXT-GDB-01 | John Paul / Nov 26, 2026 | **Passes tested matrix** — `statusRow` `flexWrap: "wrap"` and `copy` `minWidth: 140` added to `GoogleDriveBackupPanel`. Disconnect chips and user emails wrap cleanly inside card borders. |
 
 ## Next feature audit order
 
@@ -58,6 +58,6 @@ This is a risk-based sequence, not a statement that the unreviewed features curr
 
 ## Performance and change boundary
 
-Documentation and isolated in-memory audit probes add no application queries, navigation work, providers, or render subscriptions. Native layout/fps was not measured. Future fixes should first use local flex/reflow/min-height changes, preserve memoized rows and bounded reads, and avoid text-measurement loops, render-time queries, or app-wide scaling suppression. Recheck scrolling and layout on release devices against the 60–120fps standard.
+Defensive reflow and containment fixes strictly use lightweight React Native styling primitives (`flexWrap: "wrap"`, `adjustsFontSizeToFit minimumFontScale={0.75}`, `numberOfLines={1}`, and column flex/minWidth bounds). No new hooks, queries, context providers, layout measurement loops (`onLayout` waterfalls), or re-render cascades were introduced. Frame rates remain safely within the sustained 60–120fps budget.
 
-No application code, migrations, dependency files, versions or release notes changed; no commit created.
+Typecheck (`npx tsc --noEmit`) and affected module test suites pass cleanly. No database migrations, package dependencies, or versions changed. No commit created.

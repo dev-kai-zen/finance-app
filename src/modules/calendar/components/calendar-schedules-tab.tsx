@@ -110,7 +110,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
           <View style={styles.groupHeader}>
             <View style={styles.dateLabelRow}>
               <Clock color={theme.colors.primary} size={14} />
-              <Text style={styles.groupTitle}>{group.label}</Text>
+              <Text numberOfLines={1} style={styles.groupTitle}>{group.label}</Text>
             </View>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -185,7 +185,7 @@ export const CalendarSchedulesTab = React.memo(function CalendarSchedulesTab({
                   </View>
 
                   <View style={styles.rowRight}>
-                    <Text style={[styles.amountText, { color: amountColor }]}>
+                    <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={[styles.amountText, { color: amountColor }]}>
                       {formatPrivacyAmount(
                         formatCurrency(
                           signedAmount,
@@ -320,11 +320,14 @@ function createStyles(theme: AppTheme) {
       marginBottom: 4,
     },
     dateLabelRow: {
+      flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
     },
     groupTitle: {
+      flexShrink: 1,
       fontSize: 13,
       fontWeight: "700",
       color: theme.colors.textPrimary,
@@ -397,6 +400,8 @@ function createStyles(theme: AppTheme) {
     },
     actionsRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
       alignItems: "center",
       gap: 6,
       marginTop: 2,

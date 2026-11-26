@@ -62,6 +62,9 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
             <Text style={styles.metricLabel}>{t("calendar.metrics.inflow")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -85,9 +88,12 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>{t("calendar.metrics.outflow")}</Text>
+            <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.outflow")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -111,9 +117,12 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>{t("calendar.metrics.net")}</Text>
+            <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.net")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -152,6 +161,9 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
             <Text style={styles.metricLabel}>{t("calendar.metrics.assets")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -177,9 +189,12 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>{t("calendar.metrics.liabilities")}</Text>
+            <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.liabilities")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -203,9 +218,12 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
               }
               size={13}
             />
-            <Text style={styles.metricLabel}>{t("calendar.metrics.netWorth")}</Text>
+            <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.netWorth")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -228,9 +246,12 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
         <View style={styles.metricItem}>
           <View style={styles.metricLabelRow}>
             <Clock color={theme.colors.warning ?? "#f59e0b"} size={13} />
-            <Text style={styles.metricLabel}>{t("calendar.metrics.totalDue")}</Text>
+            <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.totalDue")}</Text>
           </View>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.metricValue,
               preferences.colorAmounts && {
@@ -245,8 +266,8 @@ export const CalendarSummaryRibbon = React.memo(function CalendarSummaryRibbon({
         <View style={styles.separator} />
 
         <View style={styles.metricItem}>
-          <Text style={styles.metricLabel}>{t("calendar.metrics.upcoming")}</Text>
-          <Text style={styles.metricValue}>
+          <Text numberOfLines={1} style={styles.metricLabel}>{t("calendar.metrics.upcoming")}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.metricValue}>
             {isLoading
               ? "—"
               : t("calendar.metrics.itemCount", {

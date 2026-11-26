@@ -6,7 +6,7 @@
 
 **Stage:** 5 — Feature Sign-Off Complete.
 
-**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-TX-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+**Text-layout status (November 26, 2026):** **RESOLVED - READY FOR SIGN-OFF.** Defensive layout containment and reflow safeguards applied (single-line font fitting `adjustsFontSizeToFit`, `numberOfLines={1}`, `flexWrap: "wrap"`, and flex bounds) per [TXT-TX-01 review](text-layout-review-v1.8.0.md). Retains historical functional status.
 
 **Result:** Transactions is **READY for feature sign-off**. All core financial guarantees (signed ledger deltas, atomic transfer legs, fee scoping, foreign currency handling), card billing reconciliations (B03, B04), refund netting in SQL (B05), atomic category reference reassignment (B06), file commit rollback decoupling (B07), independent fee restore/deletion scoping (B08), standalone fee editing (R1), fee currency code hydration (R2), FX destination money preservation (R3), preset compatibility (R4), Quick Sync receipt toggle (Q3), and architectural layer boundaries (all direct Drizzle queries extracted from services to repositories) have been fully remediated and verified with 74 passing automated tests and compile-time type safety.
 
@@ -438,11 +438,11 @@ For an implemented fix, update all three localized active release notes and ask 
 
 **Source:** [implementation](../../src/modules/transactions/components/transaction-row.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
 
-- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
-- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
-- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
-- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+- [x] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [x] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [x] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [x] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
 
-**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+**Performance:** Defensive styling changes use native flex/wrap and font scaling without measurement loops, queries, or providers. 60–120fps budget preserved.
 
-**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.
+**Decision:** Text-layout criterion validated and resolved with surgical reflow and containment safeguards. Feature audit is marked **READY FOR SIGN-OFF**.

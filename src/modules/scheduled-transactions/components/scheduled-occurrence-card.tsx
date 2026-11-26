@@ -119,6 +119,9 @@ export function ScheduledOccurrenceCard({
         </View>
 
         <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          numberOfLines={1}
           style={[
             styles.amountText,
             isTransfer
@@ -317,7 +320,9 @@ function createStyles(theme: AppTheme) {
     rightActions: {
       alignItems: "center",
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: theme.spacing.sm,
+      justifyContent: "flex-end",
       marginLeft: "auto",
     },
   });

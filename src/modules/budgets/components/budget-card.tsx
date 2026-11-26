@@ -163,6 +163,9 @@ export const BudgetCard = memo(function BudgetCard({
         <View style={styles.spentGroup}>
           <Text style={styles.metricLabel}>{t("budgets.metrics.spent")}</Text>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.spentValue,
               {
@@ -188,6 +191,9 @@ export const BudgetCard = memo(function BudgetCard({
             {isExceeded ? t("budgets.metrics.overBy") : t("budgets.metrics.remaining")}
           </Text>
           <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+            numberOfLines={1}
             style={[
               styles.remainingValue,
               {

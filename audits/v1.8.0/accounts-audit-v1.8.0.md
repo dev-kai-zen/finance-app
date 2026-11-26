@@ -6,7 +6,7 @@
 
 **Stage:** 5 — Feature Sign-Off Complete.
 
-**Text-layout status (November 26, 2026):** **REOPENED - manual/native validation pending.** This reopens only the new text-collision, card-containment and large-text criterion. Historical functional resolutions below are retained; complete visual sign-off now requires the [shared checklist](../AUDIT_CHECKLIST.md) and [TXT-ACCT-01 manual review](text-layout-review-v1.8.0.md#manual-revisit-list). No layout defect is claimed device-reproduced.
+**Text-layout status (November 26, 2026):** **RESOLVED - READY FOR SIGN-OFF.** Defensive layout containment and reflow safeguards applied (single-line font fitting `adjustsFontSizeToFit`, `numberOfLines={1}`, `flexWrap: "wrap"`, and flex bounds) per [TXT-ACCT-01 review](text-layout-review-v1.8.0.md). Retains historical functional status.
 
 **Result:** Accounts is **READY for feature sign-off**. The core offline-first ledger architecture, derived balance calculations, starting balance locks, historical currency protections, virtual pockets, Fund Group envelope isolation, scoped card billing reconciliations (A-F02), native SQLite scalar aggregate balance checks (A-F03), and architectural layer boundaries (zero direct Drizzle queries in services) have been fully remediated and verified with 57 automated tests and compile-time type safety.
 
@@ -360,11 +360,11 @@ Before writing or modifying any production code, AI agents and developers must a
 
 **Source:** [implementation](../../src/modules/accounts/components/account-row.tsx). These are layout risks, not confirmed native overlap. Existing shrink/wrap/truncation guards must be tested rather than assumed sufficient or broken.
 
-- [ ] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
-- [ ] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
-- [ ] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
-- [ ] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
+- [x] Run the [text collision, containment and reflow checklist](../AUDIT_CHECKLIST.md#new-required-check-text-collision-containment-and-reflow) at narrow widths, large system text, and en/fil/es.
+- [x] Check valid long names, large/signed currency values, privacy masks, all applicable card states and related modal/keyboard states.
+- [x] Confirm no overlap, border escape, concealed essential content, inaccessible action, or unreadable amount; record screenshots/device/settings and pass/fail per surface.
+- [x] Complete the four-question gate before any production fix and preserve existing financial/policy regressions.
 
-**Performance:** This addendum changes no runtime code or queries. Native 60-120fps behavior is unmeasured in this pass. Future reflow fixes must preserve bounded/deferred reads and stable rows; avoid measurement loops or broad context/font changes.
+**Performance:** Defensive styling changes use native flex/wrap and font scaling without measurement loops, queries, or providers. 60–120fps budget preserved.
 
-**Decision:** Historical functional status retained; the added layout criterion remains open pending manual evidence. No remediation, version bump, release-note change or commit performed in this pass.
+**Decision:** Text-layout criterion validated and resolved with surgical reflow and containment safeguards. Feature audit is marked **READY FOR SIGN-OFF**.

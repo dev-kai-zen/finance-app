@@ -520,6 +520,7 @@ function createStyles(theme: AppTheme) {
     statusRow: {
       alignItems: "center",
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: theme.spacing.md,
       minHeight: 72,
       paddingHorizontal: theme.spacing.lg,
@@ -535,6 +536,7 @@ function createStyles(theme: AppTheme) {
     },
     copy: {
       flex: 1,
+      minWidth: 140,
       gap: 2,
     },
     disconnectChip: {

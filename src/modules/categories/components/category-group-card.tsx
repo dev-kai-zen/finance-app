@@ -224,6 +224,7 @@ function createStyles(theme: AppTheme) {
     headerRow: {
       alignItems: "center",
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingTop: theme.spacing.md,
@@ -233,7 +234,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       flexDirection: "row",
       gap: theme.spacing.md,
-      minWidth: 0,
+      minWidth: 160,
     },
     groupIconBadge: {
       alignItems: "center",
