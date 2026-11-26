@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import {
   ConfirmModal,
   PageContainer,
+  PageErrorState,
   PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
@@ -72,6 +73,9 @@ function CalendarScreenContent() {
     selectedDay,
     activeTab,
     loading,
+    error: calendarError,
+    balanceSheetError,
+    retryBalanceSheet,
     isTabLoading,
     gridCells,
     scopedTransactions,
@@ -359,6 +363,8 @@ function CalendarScreenContent() {
 
         {loading ? (
           <PageLoadingState message="Loading calendar..." variant="grid" />
+        ) : calendarError ? (
+          <PageErrorState message={calendarError} onRetry={refreshAll} />
         ) : (
           <>
             {/* 2. Calendar Grid */}
@@ -416,6 +422,11 @@ function CalendarScreenContent() {
                     ? "cards"
                     : "list"
                 }
+              />
+            ) : activeTab === "balance_sheet" && balanceSheetError ? (
+              <PageErrorState
+                message={balanceSheetError}
+                onRetry={retryBalanceSheet}
               />
             ) : (
               <>

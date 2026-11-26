@@ -71,21 +71,32 @@ export function useCalendarData() {
   const currentMonthKey = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
   const monthCacheRef = useRef<Map<string, TransactionListItem[]>>(new Map());
 
-  // Initialize with initial month data synchronously
-  const [transactions, setTransactions] = useState<TransactionListItem[]>(() => {
+  // Initialize with initial month data synchronously, capturing any initial read failure
+  const [initialData] = useState(() => {
     try {
       const range = getCalendarGridDateRange(todayParts.year, todayParts.month);
       const initial = getCalendarMonthTransactions(range.startDate, range.endDate);
       const key = `${todayParts.year}-${String(todayParts.month + 1).padStart(2, "0")}`;
       monthCacheRef.current.set(key, initial);
-      return initial;
-    } catch {
-      return [];
+      return { transactions: initial, error: null };
+    } catch (err) {
+      console.error("[useCalendarData] Failed initial month transactions read:", err);
+      return {
+        transactions: [] as TransactionListItem[],
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to load calendar transactions",
+      };
     }
   });
 
+  const [transactions, setTransactions] = useState<TransactionListItem[]>(
+    initialData.transactions,
+  );
+  const [monthError, setMonthError] = useState<string | null>(initialData.error);
   const [isMonthLoading, setIsMonthLoading] = useState(false);
-  const loadedMonthKeyRef = useRef(currentMonthKey);
+  const loadedMonthKeyRef = useRef(initialData.error ? "" : currentMonthKey);
 
   // Whenever the active month key does not match the loaded month key in state,
   // indicate loading immediately on render to eliminate any stale data / padding transaction flicker
@@ -94,7 +105,7 @@ export function useCalendarData() {
   useEffect(() => {
     const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
 
-    if (loadedMonthKeyRef.current === key) {
+    if (loadedMonthKeyRef.current === key && !monthError) {
       setIsMonthLoading(false);
       return;
     }
@@ -108,6 +119,7 @@ export function useCalendarData() {
       if (monthCacheRef.current.has(key)) {
         const cached = monthCacheRef.current.get(key)!;
         loadedMonthKeyRef.current = key;
+        setMonthError(null);
         setTransactions(cached);
         setIsMonthLoading(false);
         return;
@@ -119,10 +131,17 @@ export function useCalendarData() {
         if (cancelled) return;
         monthCacheRef.current.set(key, fresh);
         loadedMonthKeyRef.current = key;
+        setMonthError(null);
         setTransactions(fresh);
       } catch (err) {
         console.error("[useCalendarData] Failed to load month transactions:", err);
-        loadedMonthKeyRef.current = key;
+        if (!cancelled) {
+          setMonthError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load month transactions",
+          );
+        }
       } finally {
         if (!cancelled) {
           setIsMonthLoading(false);
@@ -134,13 +153,14 @@ export function useCalendarData() {
       cancelled = true;
       cancelPaint();
     };
-  }, [activeMonth.year, activeMonth.month]);
+  }, [activeMonth.year, activeMonth.month, monthError]);
 
   // Reload month helper for mutations and manual refresh
   const reloadMonthTransactions = useCallback((force = false) => {
     const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
     if (!force && monthCacheRef.current.has(key)) {
       loadedMonthKeyRef.current = key;
+      setMonthError(null);
       setTransactions(monthCacheRef.current.get(key)!);
       return;
     }
@@ -149,9 +169,15 @@ export function useCalendarData() {
       const fresh = getCalendarMonthTransactions(range.startDate, range.endDate);
       monthCacheRef.current.set(key, fresh);
       loadedMonthKeyRef.current = key;
+      setMonthError(null);
       setTransactions(fresh);
     } catch (err) {
       console.error("[useCalendarData] Failed to reload month transactions:", err);
+      setMonthError(
+        err instanceof Error
+          ? err.message
+          : "Failed to reload month transactions",
+      );
     }
   }, [activeMonth.year, activeMonth.month]);
 
@@ -167,21 +193,26 @@ export function useCalendarData() {
     return () => sub.remove();
   }, [reloadMonthTransactions]);
 
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const {
     accounts,
     pockets,
     loading: accountsLoading,
+    error: accountsError,
     refresh: refreshAccounts,
   } = useAccounts();
   const {
     schedules,
     occurrences,
     loading: schedulesLoading,
+    error: schedulesError,
     refresh: refreshSchedules,
     postOccurrence: rawPostOccurrence,
     skipOccurrence: rawSkipOccurrence,
   } = useScheduledTransactions();
+
+  const error =
+    monthError || accountsError || categoriesError || schedulesError || null;
 
   const postOccurrence = useCallback(
     (id: string): boolean => {
@@ -233,6 +264,10 @@ export function useCalendarData() {
   );
 
   const refreshAll = useCallback(() => {
+    setMonthError(null);
+    setBalanceSheetError(null);
+    loadedMonthKeyRef.current = "";
+    loadedBalanceSheetKeyRef.current = null;
     monthCacheRef.current.clear();
     reloadMonthTransactions(true);
     refreshSchedules();
@@ -404,6 +439,7 @@ export function useCalendarData() {
     liabilities: { totalMinorUnits: 0, accountTypes: [] },
     netWorthMinorUnits: 0,
   }));
+  const [balanceSheetError, setBalanceSheetError] = useState<string | null>(null);
   const [isBalanceSheetLoading, setIsBalanceSheetLoading] = useState(false);
   const loadedBalanceSheetKeyRef = useRef<string | null>(null);
   const balanceSheetTargetKey = `${balanceSheetCutoffDate.getTime()}-${preferences.defaultCurrency}`;
@@ -425,11 +461,18 @@ export function useCalendarData() {
         const fresh = getBalanceSheet(balanceSheetCutoffDate);
         if (!cancelled) {
           loadedBalanceSheetKeyRef.current = balanceSheetTargetKey;
+          setBalanceSheetError(null);
           setBalanceSheetData(fresh);
         }
       } catch (err) {
         console.error("[useCalendarData] Failed to compute balance sheet:", err);
-        loadedBalanceSheetKeyRef.current = balanceSheetTargetKey;
+        if (!cancelled) {
+          setBalanceSheetError(
+            err instanceof Error
+              ? err.message
+              : "Failed to compute balance sheet",
+          );
+        }
       } finally {
         if (!cancelled) {
           setIsBalanceSheetLoading(false);
@@ -450,6 +493,28 @@ export function useCalendarData() {
     pockets,
     preferences.defaultCurrency,
   ]);
+
+  const retryBalanceSheet = useCallback(() => {
+    loadedBalanceSheetKeyRef.current = null;
+    setBalanceSheetError(null);
+    setIsBalanceSheetLoading(true);
+    scheduleAfterPaint(() => {
+      try {
+        const fresh = getBalanceSheet(balanceSheetCutoffDate);
+        loadedBalanceSheetKeyRef.current = balanceSheetTargetKey;
+        setBalanceSheetData(fresh);
+      } catch (err) {
+        console.error("[useCalendarData] Failed to retry balance sheet:", err);
+        setBalanceSheetError(
+          err instanceof Error
+            ? err.message
+            : "Failed to compute balance sheet",
+        );
+      } finally {
+        setIsBalanceSheetLoading(false);
+      }
+    });
+  }, [balanceSheetCutoffDate, balanceSheetTargetKey]);
 
   // Projected Month-End Net (only recomputes when month transactions or schedules change, NOT on daily date taps)
   const projectedMonthEndNet = useMemo(() => {
@@ -622,6 +687,9 @@ export function useCalendarData() {
     loading,
     isTabLoading:
       isTabLoading || isBalanceSheetPending || isBalanceSheetLoading,
+    error,
+    balanceSheetError,
+    retryBalanceSheet,
     gridCells,
     scopedTransactions,
     scopedSchedules,

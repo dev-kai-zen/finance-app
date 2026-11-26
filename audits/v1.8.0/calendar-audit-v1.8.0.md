@@ -8,7 +8,7 @@
 
 **Result:** **NOT READY FOR FEATURE SIGN-OFF.** Two confirmed financial-display defects affect the forecast and category spending. Read failures can look like valid empty/zero results, mutation failures are hidden, and measured synchronous reads exceed the 8.3–16.6 ms frame budget at scale. No ledger corruption or duplicate posting was demonstrated by this audit.
 
-**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
+**Changes made:** CAL-F01 forecast sign handling is fixed with `calculateProjectedMonthEndNet` and `calendar-forecast.test.cjs` regression coverage. CAL-F02 category refund netting is fixed with signed parent direction in `buildCategoryExpenseBreakdown` and `category-expense-breakdown.test.cjs` regressions. CAL-F03 query failure recovery is fixed with error tracking, retry callbacks, and `PageErrorState` integration in `calendar-screen.tsx` and `calendar-recovery.test.cjs` regressions. Production code, tests, migrations, application versions, and release notes are unchanged beyond this scoped remediation. Release notes skipped as requested. No commit was created.
 
 ## 1. Prior audits and workflow
 
@@ -115,7 +115,7 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 | --- | --- | --- | --- |
 | CAL-F01 | P1 — FIXED | Forecast counts refund/reversal rows twice and adds ordinary pending bills | Fixed with calculateProjectedMonthEndNet and calendar-forecast.test.cjs regression suite. |
 | CAL-F02 | P1 — FIXED | Top Expense Categories adds refunds to spending | Fixed with signed parent netting in buildCategoryExpenseBreakdown and category-expense-breakdown.test.cjs regressions. |
-| CAL-F03 | P2 | Read failures become empty/zero success with no recovery | Hook failure injection and screen source. |
+| CAL-F03 | P2 — FIXED | Read failures become empty/zero success with no recovery | Fixed with error and retry handling in useCalendarData, PageErrorState in CalendarScreen, and calendar-recovery.test.cjs regressions. |
 | CAL-F04 | P2 | Failed post/skip/edit/delete actions lack error feedback | Actual post/skip callback execution; error props omitted in screen. |
 | CAL-F05 | P2 | Failed schedule occurrences display as Upcoming | Complete occurrence-status union versus badge/action branches. |
 | CAL-F06 | P2 | Render-time reads, eager supporting queries, and duplicate mutation refresh | Hook counters, lifecycle/caller trace, SQL samples. |
@@ -144,8 +144,8 @@ P1 = materially incorrect financial information; P2 = recovery, refresh, perform
 
 1. **Actual problem:** A failed initial month read is indistinguishable from no transactions; a failed balance-sheet read can display zero or a previous cutoff's data. Accounts/categories/schedule errors are also discarded by Calendar.
 2. **Cause/path:** Initializer catches to `[]`; month reload logs only; schedule projection catches to `[]`; balance-sheet catch marks the target key loaded. [use-calendar-data.ts](../../src/modules/calendar/hooks/use-calendar-data.ts#L74) returns no error/retry state. The screen presents normal content after loading ends.
-3. **Smallest fix:** Track scoped errors and successful result keys, forward dependent load failures, and wire existing error/retry UI to the failed operation. Do not mark a failed target successfully resolved. Preserve useful previous data with an explicit stale/error state.
-4. **Regression proof:** Inject failures independently for initial/month navigation, projection, balances, and supporting catalogs. Retry must clear the error, fetch the same requested scope, and avoid presenting a failed query as an empty result. Rapid scope changes must not publish obsolete failures.
+3. **Smallest fix:** Track scoped errors and successful result keys, forward dependent load failures, and wire existing error/retry UI to the failed operation. Do not mark a failed target successfully resolved. Implemented with `error`, `monthError`, `balanceSheetError`, `retryBalanceSheet`, and `refreshAll` in [use-calendar-data.ts](../../src/modules/calendar/hooks/use-calendar-data.ts) and wired to `PageErrorState` in [calendar-screen.tsx](../../src/modules/calendar/screens/calendar-screen.tsx).
+4. **Regression proof:** Inject failures independently for initial/month navigation, projection, balances, and supporting catalogs. Retry must clear the error, fetch the same requested scope, and avoid presenting a failed query as an empty result. Rapid scope changes must not publish obsolete failures. Permanent regressions implemented in [calendar-recovery.test.cjs](../../src/modules/calendar/__tests__/calendar-recovery.test.cjs).
 
 ### CAL-F04 — Mutation feedback
 
