@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import type { NewSubscriptionRecord } from "@/infrastructure/database/schema";
 import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
@@ -202,7 +203,7 @@ export function saveSubscription(
 ): string {
   const result = db.transaction((tx) => saveSubscriptionInContext(input, id, tx));
   try {
-    processDueSchedules(new Date(), 1);
+    DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED");
   } catch {
     // Ignore
   }

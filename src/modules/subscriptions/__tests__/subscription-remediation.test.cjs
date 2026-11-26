@@ -771,3 +771,35 @@ test("SUB-F04: subscription linked to account inherits account currency; manual 
     );
   } finally { sqlite.close(); }
 });
+
+test("SUB-F06: hasSubscriptionPayments executes a bounded LIMIT 1 existence query and returns correct boolean", () => {
+  const db = setupTestDb();
+  try {
+    const { hasSubscriptionPayments } = require("../repositories/subscriptions.repository");
+    const subId = saveSubscriptionInContext(
+      input({ accountId: "acc_1", categoryId: "cat_dining" }),
+      undefined,
+      db,
+    );
+
+    // Initial state: no payments
+    queries = [];
+    const hasNone = hasSubscriptionPayments(subId, db);
+    assert.equal(hasNone, false);
+    assert.ok(
+      queries.some(q => /limit\s+(\?|1)/i.test(q)),
+      "Existence check must contain explicit LIMIT 1 to prevent unbounded scans",
+    );
+
+    // Record an actual payment
+    recordSubscriptionPayment(subId);
+
+    queries = [];
+    const hasOne = hasSubscriptionPayments(subId, db);
+    assert.equal(hasOne, true);
+    assert.ok(
+      queries.some(q => /limit\s+(\?|1)/i.test(q)),
+      "Existence check must contain explicit LIMIT 1",
+    );
+  } finally { sqlite.close(); }
+});

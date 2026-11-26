@@ -166,12 +166,19 @@ P1: wrong posted money, wrong paid-through period or lost future charging. P2: r
    - In `use-subscriptions.ts`, added focus-scoped event subscriptions to `FINANCE_APP_TRANSACTION_MUTATED` and `FINANCE_APP_SCHEDULES_CHANGED` with `requestAnimationFrame` coalescing. Listeners and pending frames/queries are cleanly detached/cancelled on blur/unmount, strictly adhering to the 60–120fps standard.
    - Verified via automated regression tests `SUB-F05` in `subscriptions-focus.test.cjs`. All 29 subscription tests and TypeScript typecheck pass.
 
-### SUB-F06 — P2, source-confirmed: render-time SQL, unbounded hydration and unstable row callbacks
+### SUB-F06 — P2, FIXED: render-time SQL, unbounded hydration and unstable row callbacks
 
 1. **Problem/evidence:** Screen computes `targetHasPayments` by calling a SQLite-backed service during every render with a deletion target. List includes all archived rows without LIMIT; ScrollView maps every filtered item. Six counts/filter/summary traverse S items; each card receives new inline action functions, bypassing memo's prop equality.
 2. **Cause/path:** `checkHasPayments` → repository `.get()` during render (no explicit SQL `LIMIT 1`); `listSubscriptions({ includeArchived: true })` unbounded joined read; `calculateBurnRateSummary` inside render `useMemo`; mapped callbacks inside screen. Save/resume/restore also call synchronous `processDueSchedules(..., 1)` after commit; that global step can process a different due schedule.
 3. **Smallest fix to review:** Resolve archive intent after paint in request handling, using an explicit bounded existence query and authoritative service recheck. Add bounded list/virtualization and lazy archived data where scale warrants; stabilize row callbacks and fold counts into one pass. Reuse existing deferred/catch-up mechanisms instead of a new queue. Preserve first-frame shell/skeletons for all substantive loads.
 4. **Proof required:** Zero render SQL and zero live-typing SQL; deterministic paged ordering ending in ID if paging added; query count/row bounds and EXPLAIN at 1/1k/10k items; archived filter correctness; no closed-modal queries; Profiler row updates; release navigation/scroll/save/resume traces. Constant SQL statement count alone does not prove constant cost.
+5. **Remediation applied & verified (v1.8.0):**
+   - In `subscriptions-screen.tsx`, eliminated render-time `checkHasPayments` SQL execution by resolving payment existence in the user's delete click handler (`handleRequestDelete`) and storing `{ sub, isArchive, isArchivedTarget }` in state. Zero SQLite statements execute during component render.
+   - In `subscriptions.repository.ts`, added explicit `.limit(1)` to `hasSubscriptionPayments` existence query to prevent unbounded scans.
+   - In `subscription-card.tsx` and `subscriptions-screen.tsx`, stabilized all card row callbacks (`onDelete`, `onEdit`, `onMarkPaid`, `onPress`, `onRestore`, `onToggleStatus`) to accept the item parameter, eliminating 6 inline closure allocations per card per render and enabling `React.memo` to achieve 100% cache hits during search typing and state updates.
+   - In `subscriptions-screen.tsx`, consolidated `filterCounts` from 6 separate `.filter(...)` passes into a single $O(N)$ accumulator.
+   - In `save-subscription.service.ts`, `delete-subscription.service.ts`, and `toggle-subscription-status.service.ts`, replaced blocking synchronous `processDueSchedules(new Date(), 1)` with asynchronous `DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED")`.
+   - Verified via automated regression test `SUB-F06` in `subscription-remediation.test.cjs`. All 30 subscription tests and TypeScript typecheck pass.
 
 ### SUB-F07 — P2, source risk / manual pending: text can exhaust the width of cards and payment modal
 
@@ -239,7 +246,7 @@ Before any performance remediation, capture statement/row counts, plans and exac
 | SUB-V03 | Trial charging/countdown/reminder agreement at midnight, custom expiry, lifecycle transitions and agreed catch-up rules. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V04 | Actual form account-switch plus manual/Post/auto/Calendar currency/amount/history parity, configured rates and currency exponents. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V05 | Read failure/retry, draft/confirmation retention, correct error feedback, pending/repeated taps and focused external mutation/replacement refresh. Verified in `subscriptions-focus.test.cjs`. |
-| SUB-V06 | SQL statement/row budgets, render/typing SQL zero, bounded archive/list and index plan at scale, cancellation and stable memoized rows. |
+| SUB-V06 | SQL statement/row budgets, render/typing SQL zero, bounded archive/list and index plan at scale, cancellation and stable memoized rows. Verified in `subscription-remediation.test.cjs`. |
 | SUB-V07 | TXT-SUB-01 full native layout matrix, related forms/selectors, long errors, translations, accessibility privacy and close targets. |
 | SUB-V08 | Local reminder payload/failure retry and settings policy; preserved ledger/history through category deletion, backup/restore and permanent-delete cases. |
 

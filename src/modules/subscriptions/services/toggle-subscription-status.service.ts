@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   findSubscriptionById,
@@ -17,7 +18,7 @@ export function setSubscriptionStatus(
   db.transaction((tx) => setSubscriptionStatusInContext(subscriptionId, newStatus, tx));
   if (newStatus === "active" || newStatus === "trial") {
     try {
-      processDueSchedules(new Date(), 1);
+      DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED");
     } catch {
       // Ignore
     }

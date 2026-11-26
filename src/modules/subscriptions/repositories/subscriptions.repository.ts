@@ -228,6 +228,7 @@ export function hasSubscriptionPayments(
     .select({ id: subscriptionPayments.id })
     .from(subscriptionPayments)
     .where(eq(subscriptionPayments.subscriptionId, subscriptionId))
+    .limit(1)
     .get();
   return Boolean(row);
 }

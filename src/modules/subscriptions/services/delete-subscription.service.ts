@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   archiveSubscriptionRecord,
@@ -58,7 +59,7 @@ export function archiveSubscriptionInContext(
 export function restoreSubscription(subscriptionId: string): void {
   db.transaction((tx) => restoreSubscriptionInContext(subscriptionId, tx));
   try {
-    processDueSchedules(new Date(), 1);
+    DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED");
   } catch {
     // Ignore if processing encounters an issue
   }

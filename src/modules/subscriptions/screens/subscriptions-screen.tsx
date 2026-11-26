@@ -105,7 +105,11 @@ function SubscriptionsScreenContent({
     useState<SubscriptionItem | null>(null);
   const [markingPaidSub, setMarkingPaidSub] =
     useState<SubscriptionItem | null>(null);
-  const [subToDelete, setSubToDelete] = useState<SubscriptionItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    sub: SubscriptionItem;
+    isArchive: boolean;
+    isArchivedTarget: boolean;
+  } | null>(null);
   const [subToRestore, setSubToRestore] = useState<SubscriptionItem | null>(null);
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
@@ -185,14 +189,27 @@ function SubscriptionsScreenContent({
   }, [error, loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const filterCounts = useMemo<Partial<Record<SubscriptionFilter, number>>>(() => {
-    return {
-      all: subscriptions.filter((s) => !s.archivedAt).length,
-      active: subscriptions.filter((s) => !s.archivedAt && s.status === "active").length,
-      trial: subscriptions.filter((s) => !s.archivedAt && s.status === "trial").length,
-      paused: subscriptions.filter((s) => !s.archivedAt && s.status === "paused").length,
-      cancelled: subscriptions.filter((s) => !s.archivedAt && s.status === "cancelled").length,
-      archived: subscriptions.filter((s) => Boolean(s.archivedAt)).length,
+    const counts: Record<SubscriptionFilter, number> = {
+      all: 0,
+      active: 0,
+      trial: 0,
+      paused: 0,
+      cancelled: 0,
+      archived: 0,
     };
+    for (let i = 0; i < subscriptions.length; i++) {
+      const s = subscriptions[i];
+      if (s.archivedAt) {
+        counts.archived += 1;
+      } else {
+        counts.all += 1;
+        if (s.status === "active") counts.active += 1;
+        else if (s.status === "trial") counts.trial += 1;
+        else if (s.status === "paused") counts.paused += 1;
+        else if (s.status === "cancelled") counts.cancelled += 1;
+      }
+    }
+    return counts;
   }, [subscriptions]);
 
   const handleOpenCreate = useCallback(() => {
@@ -315,9 +332,15 @@ function SubscriptionsScreenContent({
     setCongratulationsVisible(false);
   };
 
-  const handleRequestDelete = useCallback((sub: SubscriptionItem) => {
-    setSubToDelete(sub);
-  }, []);
+  const handleRequestDelete = useCallback(
+    (sub: SubscriptionItem) => {
+      const isArchivedTarget = Boolean(sub.archivedAt);
+      const targetHasPayments = checkHasPayments(sub.id);
+      const isArchive = targetHasPayments && !isArchivedTarget;
+      setDeleteTarget({ sub, isArchive, isArchivedTarget });
+    },
+    [checkHasPayments],
+  );
 
   const handleFormDelete = useCallback(
     (id: string) => {
@@ -325,23 +348,19 @@ function SubscriptionsScreenContent({
       if (target) {
         setFormModalVisible(false);
         setEditingSubscription(null);
-        setSubToDelete(target);
+        handleRequestDelete(target);
       }
     },
-    [subscriptions],
+    [handleRequestDelete, subscriptions],
   );
 
-  const isArchivedTarget = Boolean(subToDelete?.archivedAt);
-  const targetHasPayments = subToDelete ? checkHasPayments(subToDelete.id) : false;
-  const isArchiveOperation = targetHasPayments && !isArchivedTarget;
-
   const handleConfirmDeleteOrArchive = useCallback(() => {
-    if (!subToDelete) return;
+    if (!deleteTarget) return;
     try {
-      const sub = subToDelete;
-      setSubToDelete(null);
+      const { sub, isArchive } = deleteTarget;
+      setDeleteTarget(null);
 
-      if (isArchiveOperation) {
+      if (isArchive) {
         archive(sub.id);
         setToastMessage(
           t("subscriptions.archivedToast", {
@@ -359,7 +378,7 @@ function SubscriptionsScreenContent({
     } catch (err: any) {
       setToastMessage(err?.message || "Failed to process request");
     }
-  }, [subToDelete, isArchiveOperation, archive, remove, t]);
+  }, [deleteTarget, archive, remove, t]);
 
   const handleRequestRestore = useCallback(
     (sub: SubscriptionItem) => {
@@ -553,12 +572,12 @@ function SubscriptionsScreenContent({
                 <SubscriptionCard
                   key={sub.id}
                   cardRef={index === 0 ? firstItemRef : undefined}
-                  onDelete={() => handleRequestDelete(sub)}
-                  onEdit={() => handleOpenEdit(sub)}
-                  onMarkPaid={() => setMarkingPaidSub(sub)}
-                  onPress={() => handleOpenEdit(sub)}
-                  onRestore={() => handleRequestRestore(sub)}
-                  onToggleStatus={() => handleToggleStatus(sub)}
+                  onDelete={handleRequestDelete}
+                  onEdit={handleOpenEdit}
+                  onMarkPaid={setMarkingPaidSub}
+                  onPress={handleOpenEdit}
+                  onRestore={handleRequestRestore}
+                  onToggleStatus={handleToggleStatus}
                   subscription={sub}
                 />
               ))}
@@ -584,33 +603,33 @@ function SubscriptionsScreenContent({
         />
 
         {/* Delete / Archive Confirmation Modal */}
-        {subToDelete ? (
+        {deleteTarget ? (
           <ConfirmModal
             cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
             confirmLabel={
-              isArchiveOperation
+              deleteTarget.isArchive
                 ? t("subscriptions.filterArchived", { defaultValue: "Archive" })
-                : isArchivedTarget
+                : deleteTarget.isArchivedTarget
                   ? t("subscriptions.deletePermanently", {
                       defaultValue: "Delete Permanently",
                     })
                   : t("common.delete", { defaultValue: "Delete" })
             }
             message={
-              isArchiveOperation
+              deleteTarget.isArchive
                 ? t("subscriptions.archiveConfirmMessage", {
-                    name: subToDelete.name,
-                    defaultValue: `"${subToDelete.name}" has recorded payments in your ledger. It will be moved to Archived to preserve your transaction history and stop all upcoming reminders. You can restore it anytime.`,
+                    name: deleteTarget.sub.name,
+                    defaultValue: `"${deleteTarget.sub.name}" has recorded payments in your ledger. It will be moved to Archived to preserve your transaction history and stop all upcoming reminders. You can restore it anytime.`,
                   })
                 : t("subscriptions.deleteConfirmMessage", {
-                    name: subToDelete.name,
-                    defaultValue: `Are you sure you want to permanently delete "${subToDelete.name}"? Past expense transactions in your accounts will not be deleted.`,
+                    name: deleteTarget.sub.name,
+                    defaultValue: `Are you sure you want to permanently delete "${deleteTarget.sub.name}"? Past expense transactions in your accounts will not be deleted.`,
                   })
             }
-            onCancel={() => setSubToDelete(null)}
+            onCancel={() => setDeleteTarget(null)}
             onConfirm={handleConfirmDeleteOrArchive}
             title={
-              isArchiveOperation
+              deleteTarget.isArchive
                 ? t("subscriptions.archiveConfirmTitle", {
                     defaultValue: "Archive Subscription",
                   })
@@ -618,8 +637,8 @@ function SubscriptionsScreenContent({
                     defaultValue: "Delete Subscription",
                   })
             }
-            variant={isArchiveOperation ? "primary" : "destructive"}
-            visible={Boolean(subToDelete)}
+            variant={deleteTarget.isArchive ? "primary" : "destructive"}
+            visible={Boolean(deleteTarget)}
           />
         ) : null}
 

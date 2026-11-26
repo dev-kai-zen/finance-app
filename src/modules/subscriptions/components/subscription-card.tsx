@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import {
   Linking,
   Pressable,
@@ -27,12 +27,12 @@ import type { SubscriptionItem } from "../types/subscription.types";
 
 export interface SubscriptionCardProps {
   subscription: SubscriptionItem;
-  onPress?: () => void;
-  onEdit?: () => void;
-  onMarkPaid?: () => void;
-  onToggleStatus?: () => void;
-  onRestore?: () => void;
-  onDelete?: () => void;
+  onPress?: ((sub: SubscriptionItem) => void) | (() => void);
+  onEdit?: ((sub: SubscriptionItem) => void) | (() => void);
+  onMarkPaid?: ((sub: SubscriptionItem) => void) | (() => void);
+  onToggleStatus?: ((sub: SubscriptionItem) => void) | (() => void);
+  onRestore?: ((sub: SubscriptionItem) => void) | (() => void);
+  onDelete?: ((sub: SubscriptionItem) => void) | (() => void);
   cardRef?: React.Ref<View>;
 }
 
@@ -145,6 +145,31 @@ export const SubscriptionCard = memo(function SubscriptionCard({
     }
   };
 
+  const handlePress = useCallback(() => {
+    if (onPress) onPress(subscription);
+    else if (onEdit) onEdit(subscription);
+  }, [onPress, onEdit, subscription]);
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(subscription);
+  }, [onEdit, subscription]);
+
+  const handleMarkPaid = useCallback(() => {
+    onMarkPaid?.(subscription);
+  }, [onMarkPaid, subscription]);
+
+  const handleToggleStatus = useCallback(() => {
+    onToggleStatus?.(subscription);
+  }, [onToggleStatus, subscription]);
+
+  const handleRestore = useCallback(() => {
+    onRestore?.(subscription);
+  }, [onRestore, subscription]);
+
+  const handleDelete = useCallback(() => {
+    onDelete?.(subscription);
+  }, [onDelete, subscription]);
+
   const iconName = subscription.icon || subscription.categoryIcon || "repeat";
   const iconBg = subscription.color || theme.colors.primary;
 
@@ -154,7 +179,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
       collapsable={false}
       accessibilityLabel={`${subscription.name}, ${formattedAmount} ${cycleLabel}, ${countdownText}`}
       accessibilityRole="button"
-      onPress={onPress || onEdit}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.card,
         (isPaused || isArchived) && styles.cardDimmed,
@@ -224,7 +249,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             })}
             accessibilityRole="button"
             hitSlop={6}
-            onPress={onRestore}
+            onPress={handleRestore}
             style={({ pressed }) => [
               styles.restoreBtn,
               pressed && { opacity: 0.8 },
@@ -244,7 +269,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             })}
             accessibilityRole="button"
             hitSlop={6}
-            onPress={onMarkPaid}
+            onPress={handleMarkPaid}
             style={({ pressed }) => [
               styles.markPaidBtn,
               pressed && { opacity: 0.8 },
@@ -288,7 +313,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             }
             accessibilityRole="button"
             hitSlop={8}
-            onPress={onToggleStatus}
+            onPress={handleToggleStatus}
             style={styles.iconActionBtn}
           >
             {isPaused ? (
@@ -306,7 +331,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             })}
             accessibilityRole="button"
             hitSlop={8}
-            onPress={onEdit}
+            onPress={handleEdit}
             style={styles.iconActionBtn}
           >
             <SquarePen color={theme.colors.textSecondary} size={15} />
@@ -318,7 +343,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
             accessibilityLabel={t("common.delete", { defaultValue: "Delete" })}
             accessibilityRole="button"
             hitSlop={8}
-            onPress={onDelete}
+            onPress={handleDelete}
             style={styles.iconActionBtn}
           >
             <Trash2 color={theme.colors.danger} size={15} />
