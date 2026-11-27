@@ -41,6 +41,10 @@ export function listGoals(context: DbContext = db): Goal[] {
     .orderBy(asc(goals.sortOrder), desc(goals.createdAt))
     .all();
 
+  if (goalRows.length === 0) {
+    return [];
+  }
+
   const goalAccountRows = context.select().from(goalAccounts).all();
   const goalPocketRows = context.select().from(goalPockets).all();
 

@@ -43,6 +43,70 @@ import { GoalSummaryHeader } from "../components/goal-summary-header";
 import { useGoals, type GoalFilter } from "../hooks/use-goals";
 import type { GoalInput, GoalStatus, GoalWithProgress } from "../types/goal.types";
 
+interface GoalListItemProps {
+  goal: GoalWithProgress;
+  isFirst: boolean;
+  markCompleteRef?: React.Ref<View>;
+  onDeleteGoal: (goal: GoalWithProgress) => void;
+  onEditGoal: (goal: GoalWithProgress) => void;
+  onToggleGoalStatus: (goalId: string, status: GoalStatus) => void;
+  setFundingDestinationGoal?: (goal: GoalWithProgress | null) => void;
+}
+
+const GoalListItem = React.memo(function GoalListItem({
+  goal,
+  isFirst,
+  markCompleteRef,
+  onDeleteGoal,
+  onEditGoal,
+  onToggleGoalStatus,
+  setFundingDestinationGoal,
+}: GoalListItemProps) {
+  const router = useRouter();
+  const handleDelete = useCallback(() => onDeleteGoal(goal), [onDeleteGoal, goal]);
+  const handleEdit = useCallback(() => onEditGoal(goal), [onEditGoal, goal]);
+  const handleToggle = useCallback(
+    (status: GoalStatus) => onToggleGoalStatus(goal.id, status),
+    [onToggleGoalStatus, goal.id],
+  );
+
+  return (
+    <GoalCard
+      goal={goal}
+      markCompleteRef={isFirst ? markCompleteRef : undefined}
+      onDelete={handleDelete}
+      onAddFunds={() => {
+        const accounts = goal.linkedAccounts ?? [];
+        const pockets = goal.linkedPockets ?? [];
+        const total = accounts.length + pockets.length;
+        if (total > 1 && typeof setFundingDestinationGoal === "function") {
+          setFundingDestinationGoal(goal);
+          return;
+        }
+        const hasAccount = accounts.length > 0;
+        const targetAccountId = hasAccount
+          ? accounts[0].id
+          : pockets[0]?.accountId;
+        const targetPocketId = hasAccount
+          ? undefined
+          : pockets[0]?.id;
+
+        const queryParts = ["action=new", "type=income"];
+        if (targetAccountId) {
+          queryParts.push(`accountId=${encodeURIComponent(targetAccountId)}`);
+        }
+        if (targetPocketId) {
+          queryParts.push(`pocketId=${encodeURIComponent(targetPocketId)}`);
+        }
+        router.push(`/transactions?${queryParts.join("&")}` as any);
+      }}
+      onEdit={handleEdit}
+      onPress={handleEdit}
+      onToggleStatus={handleToggle}
+    />
+  );
+});
+
 const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "all", label: "All Goals" },
   { key: "in_progress", label: "In Progress" },
@@ -222,10 +286,15 @@ function GoalsScreenContent({
     }
   }, [goals, initialGoalId, loading, router]);
 
-  const handleOpenEdit = (goal: GoalWithProgress) => {
+  const handleOpenEdit = useCallback((goal: GoalWithProgress) => {
     setGoalToEdit(goal);
     setIsFormOpen(true);
-  };
+  }, []);
+
+  const handleDeleteGoal = useCallback((goal: GoalWithProgress) => {
+    setDeleteError(null);
+    setGoalToDelete(goal);
+  }, []);
 
   const handleSaveGoal = async (input: GoalInput, existingId?: string | null) => {
     const isFirstGoal = goals.length === 0 && !existingId;
@@ -263,21 +332,18 @@ function GoalsScreenContent({
     }
   };
 
-  const handleToggleGoalStatus = async (
-    goalId: string,
-    newStatus: GoalStatus,
-  ) => {
-    try {
-      setActionError(null);
-      await toggleStatus(goalId, newStatus);
-    } catch (err: any) {
-      setActionError(err?.message ?? "Failed to update goal status.");
-    }
-  };
+  const handleToggleGoalStatus = useCallback(
+    async (goalId: string, newStatus: GoalStatus) => {
+      try {
+        setActionError(null);
+        await toggleStatus(goalId, newStatus);
+      } catch (err: any) {
+        setActionError(err?.message ?? "Failed to update goal status.");
+      }
+    },
+    [toggleStatus],
+  );
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
   const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
   return (
@@ -287,7 +353,7 @@ function GoalsScreenContent({
         scrollContentRef={scrollContentRef}
         refreshing={isPullRefreshing}
         onRefresh={handlePullRefresh}
-        contentContainerStyle={contentSpacing}
+        contentContainerStyle={styles.pageContentContainer}
         scrollEnabled={
           walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
         }
@@ -448,44 +514,15 @@ function GoalsScreenContent({
             </View>
           )}
           {filteredGoals.map((goal, index) => (
-            <GoalCard
+            <GoalListItem
               key={goal.id}
               goal={goal}
-              markCompleteRef={index === 0 ? markCompleteRef : undefined}
-              onDelete={() => {
-                setDeleteError(null);
-                setGoalToDelete(goal);
-              }}
-              onAddFunds={() => {
-                const accounts = goal.linkedAccounts ?? [];
-                const pockets = goal.linkedPockets ?? [];
-                const total = accounts.length + pockets.length;
-                if (total > 1 && typeof setFundingDestinationGoal === "function") {
-                  setFundingDestinationGoal(goal);
-                  return;
-                }
-                const hasAccount = accounts.length > 0;
-                const targetAccountId = hasAccount
-                  ? accounts[0].id
-                  : pockets[0]?.accountId;
-                const targetPocketId = hasAccount
-                  ? undefined
-                  : pockets[0]?.id;
-
-                const queryParts = ["action=new", "type=income"];
-                if (targetAccountId) {
-                  queryParts.push(`accountId=${encodeURIComponent(targetAccountId)}`);
-                }
-                if (targetPocketId) {
-                  queryParts.push(`pocketId=${encodeURIComponent(targetPocketId)}`);
-                }
-                router.push(`/transactions?${queryParts.join("&")}` as any);
-              }}
-              onEdit={() => handleOpenEdit(goal)}
-              onPress={() => handleOpenEdit(goal)}
-              onToggleStatus={(newStatus: GoalStatus) =>
-                handleToggleGoalStatus(goal.id, newStatus)
-              }
+              isFirst={index === 0}
+              markCompleteRef={markCompleteRef}
+              onDeleteGoal={handleDeleteGoal}
+              onEditGoal={handleOpenEdit}
+              onToggleGoalStatus={handleToggleGoalStatus}
+              setFundingDestinationGoal={setFundingDestinationGoal}
             />
           ))}
         </View>
@@ -641,6 +678,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
       flex: 1,
+    },
+    pageContentContainer: {
+      paddingTop: theme.spacing.lg,
     },
     fabAboveAdDock: {
       bottom: 16,

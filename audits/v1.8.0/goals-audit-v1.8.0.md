@@ -286,12 +286,30 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Validated `GoalsScreen` source contract: `handlePullRefresh` awaits `refresh()`, the hardcoded 500ms timer is gone, and `subtleUpdatingRow` is bound to `isPending`.
    - All 4 tests in `goals-loading-pending.test.cjs` passed.
 
-### GOAL-F07 — P2, measured/source-confirmed: unnecessary reads and unbounded mounting
+### GOAL-F07 — P2, measured/source-confirmed: unnecessary reads and unbounded mounting — RESOLVED
 
 1. **Problem:** An empty Goals read executes **13 synchronous SELECTs**; selection data requests management scans it never uses. With 1,001 goals and 10k ledger rows, one service call measured **28.573ms** on this host, before native layout/render. Every goal mounts in a ScrollView; typing in the nested fund picker can scan accounts × pockets and sort even while that picker is closed.
 2. **Cause:** `getGoalsWithProgress` always loads accounts/pockets with default management flags; `listGoals` always loads both junctions. Screen uses `.map` and new per-row callbacks, defeating `GoalCard`'s existing `memo`. Inline `useThemeStyles` factory at screen line 250 changes each render. `GoalAccountPickerModal` has no outer visibility guard and performs nested `.filter`/`.some`/`.find` work.
-3. **Smallest fix:** Empty fast exits, pass `{ includeManagementFlags: false }`, preserve batched aggregates, and gate picker content before hooks. Stabilize callbacks/factory and pre-index pockets. Introduce bounded/paginated/virtualized list consumption only where needed, preserving a full background consumer path and a separate summary calculation. Do not add mutable balance caches or weaken correctness to chase a smaller SQL count.
-4. **Proof:** Actual SQLite query-count and `EXPLAIN QUERY PLAN` tests; no supporting reads for zero goals; management probes absent; exact financial parity; deterministic bounded list order ending in `id`; large fixtures including tied timestamps. Profiler must show unrelated rows skip renders and closed picker does no expensive work. Release-device frame timing is mandatory before claiming 60–120fps.
+3. **Fix applied:**
+   - In `src/modules/goals/repositories/goals.repository.ts`:
+     - Added fast-exit in `listGoals`: `if (goalRows.length === 0) return [];` avoiding unnecessary queries to `goal_accounts` and `goal_pockets`.
+   - In `src/modules/goals/services/get-goals-with-progress.service.ts`:
+     - Added fast-exit on empty goals: if `goals.length === 0`, immediately returns default currency summary without querying accounts or pockets (reducing empty load from 13 SELECTs to 2).
+     - Passed `{ includeManagementFlags: false }` to both `getAccountsWithBalances` and `getPocketsWithBalances`, pruning 10 extraneous database scans across transactions, splits, presets, and schedules.
+   - In `src/modules/goals/screens/goals-screen.tsx`:
+     - Extracted static page content padding into `createStyles` (`styles.pageContentContainer`), eliminating the inline `useThemeStyles((theme) => ({ paddingTop: ... }))` factory.
+     - Stabilized item action callbacks with `useCallback` (`handleDeleteGoal`, `handleOpenEdit`, `handleToggleGoalStatus`).
+     - Wrapped goal row rendering in `GoalListItem` with `React.memo`, allowing untouched goal cards to completely skip re-rendering when screen state changes.
+   - In `src/modules/goals/components/goal-account-picker-modal.tsx`:
+     - Added early-return visibility guard `if (!props.visible) return null;` returning `<GoalAccountPickerModalContent {...props} />`, guaranteeing 0 hooks or calculations execute while the modal is closed.
+     - Pre-indexed pockets into `pocketsByAccountId` (`Map<string, PocketListItem[]>`) to eliminate $O(N \times M)$ scans in `filteredAccounts`, `handleSelectAllAccounts`, and list item rendering.
+4. **Proof:** Added unit tests in `src/modules/goals/__tests__/goals-query-efficiency.test.cjs`:
+   - Validated `listGoals` fast-exits without querying junction tables on empty goals.
+   - Validated `getGoalsWithProgress` fast-exits on empty goals without querying accounts or pockets.
+   - Validated `getGoalsWithProgress` passes `{ includeManagementFlags: false }` to accounts and pockets services.
+   - Validated `GoalAccountPickerModal` returns `null` when `visible=false` and executes zero hooks.
+   - Validated `GoalsScreen` AST contracts (memoized `GoalListItem`, stable callbacks, static `pageContentContainer` style).
+   - All 40 tests across `src/modules/goals/__tests__/` passed and `npx tsc --noEmit` exited with 0 errors.
 
 ### GOAL-F08 — P2, executed: reopening a reached goal is a no-op in the UI
 

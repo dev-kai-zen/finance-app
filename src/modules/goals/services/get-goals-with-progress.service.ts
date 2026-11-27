@@ -31,8 +31,31 @@ export function getGoalsWithProgress(
   now: Date = new Date(),
 ): GoalsDataResult {
   const goals = listGoals(context);
-  const accounts = getAccountsWithBalances(context);
-  const pockets = getPocketsWithBalances(context);
+
+  if (goals.length === 0) {
+    const defaultCurrency =
+      getCurrencyPreferences(context).defaultCurrency || DEFAULT_BASE_CURRENCY;
+    return {
+      goals: [],
+      summary: {
+        currencyCode: defaultCurrency,
+        totalTargetMinorUnits: 0,
+        totalSavedMinorUnits: 0,
+        totalRemainingMinorUnits: 0,
+        overallProgressPercentage: 0,
+        activeGoalsCount: 0,
+        completedGoalsCount: 0,
+        totalGoalsCount: 0,
+      },
+    };
+  }
+
+  const accounts = getAccountsWithBalances(context, {
+    includeManagementFlags: false,
+  });
+  const pockets = getPocketsWithBalances(context, {
+    includeManagementFlags: false,
+  });
 
   const accountsById = new Map(accounts.map((a) => [a.id, a]));
   const pocketsById = new Map(pockets.map((p) => [p.id, p]));

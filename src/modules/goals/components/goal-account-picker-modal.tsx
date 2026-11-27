@@ -42,7 +42,14 @@ export interface GoalAccountPickerModalProps {
   onConfirm: (accountIds: string[], pocketIds: string[]) => void;
 }
 
-export function GoalAccountPickerModal({
+export function GoalAccountPickerModal(props: GoalAccountPickerModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <GoalAccountPickerModalContent {...props} />;
+}
+
+function GoalAccountPickerModalContent({
   visible,
   onClose,
   accounts,
@@ -61,6 +68,16 @@ export function GoalAccountPickerModal({
     useState<string[]>(selectedAccountIds);
   const [localSelectedPocketIds, setLocalSelectedPocketIds] =
     useState<string[]>(selectedPocketIds);
+
+  const pocketsByAccountId = useMemo(() => {
+    const map = new Map<string, PocketListItem[]>();
+    for (const pocket of pockets) {
+      const list = map.get(pocket.accountId) ?? [];
+      list.push(pocket);
+      map.set(pocket.accountId, list);
+    }
+    return map;
+  }, [pockets]);
 
   // Sync with props when opened
   React.useEffect(() => {
@@ -86,13 +103,15 @@ export function GoalAccountPickerModal({
   const handleSelectAllAccounts = () => {
     // Only select accounts whose pockets are not currently selected
     const accountsWithoutSelectedPockets = accounts
-      .filter((account) =>
-        !account.isArchived &&
-        (!currencyCode || account.currencyCode === currencyCode) &&
-        !pockets.some(
-          (p) => p.accountId === account.id && localSelectedPocketIds.includes(p.id),
-        ),
-      )
+      .filter((account) => {
+        if (account.isArchived) return false;
+        if (currencyCode && account.currencyCode !== currencyCode) return false;
+        const accountPockets = pocketsByAccountId.get(account.id);
+        const hasSelectedPocket = accountPockets?.some((p) =>
+          localSelectedPocketIds.includes(p.id),
+        );
+        return !hasSelectedPocket;
+      })
       .map((a) => a.id);
     setLocalSelectedAccountIds(accountsWithoutSelectedPockets);
   };
@@ -122,14 +141,13 @@ export function GoalAccountPickerModal({
       (acc) =>
         acc.name.toLowerCase().includes(query) ||
         acc.accountType?.name?.toLowerCase().includes(query) ||
-        pockets.some(
+        pocketsByAccountId.get(acc.id)?.some(
           (pocket) =>
-            pocket.accountId === acc.id &&
             !pocket.isArchived &&
             pocket.name.toLowerCase().includes(query),
         ),
     );
-  }, [accounts, currencyCode, pockets, searchQuery]);
+  }, [accounts, currencyCode, pocketsByAccountId, searchQuery]);
 
   // Group accounts by accountType exactly like AccountPickerModal
   const groupedAccounts = useMemo(() => {
@@ -365,9 +383,9 @@ export function GoalAccountPickerModal({
                         localSelectedAccountIds.includes(account.id);
 
                       // Check for pockets of this account
-                      const accountPockets = pockets.filter(
-                        (p) => p.accountId === account.id && !p.isArchived,
-                      );
+                      const accountPockets = (
+                        pocketsByAccountId.get(account.id) ?? []
+                      ).filter((p) => !p.isArchived);
 
                       const selectedChildPockets = accountPockets.filter((p) =>
                         localSelectedPocketIds.includes(p.id),
