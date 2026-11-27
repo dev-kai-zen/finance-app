@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { PageErrorState, PageLoadingState } from "@/components/page-container";
+import { useLocalization } from "@/infrastructure/localization";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useIncomeExpenseReport } from "../../hooks/use-income-expense-report";
 import { CategoryBreakdownTable } from "./category-breakdown-table";
@@ -8,6 +9,7 @@ import { CategoryDonutChart } from "./category-donut-chart";
 import { IncomeExpenseFilterBar } from "./income-expense-filter-bar";
 
 export function IncomeExpenseReport() {
+  const { t } = useLocalization();
   const {
     mode,
     setMode,
@@ -51,7 +53,7 @@ export function IncomeExpenseReport() {
       {error ? (
         <PageErrorState message={error} onRetry={refresh} />
       ) : reportLoading ? (
-        <PageLoadingState message="Loading report..." variant="cards" />
+        <PageLoadingState message={t("reports.loading")} variant="cards" />
       ) : (
         <>
       <WalkthroughTarget id="reportsChart">

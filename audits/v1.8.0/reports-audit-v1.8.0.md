@@ -235,6 +235,13 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 2. **Cause:** [Report constants](../../src/modules/reports/constants/reports.constants.ts), report components, [date helpers](../../src/modules/reports/utils/reports-dates.ts), and financial period labels hardcode text/`en-US`. [PresetPickerModal](../../src/modules/reports/components/balance-sheet/preset-picker-modal.tsx#L255) and [IncomeExpenseFilterBar](../../src/modules/reports/components/income-expense/income-expense-filter-bar.tsx#L359) show the target sizes. Report close paths do not explicitly dismiss the keyboard; these filters contain no direct text entry, so first-tap keyboard failure is not claimed as reproduced.
 3. **Smallest fix:** Localize within existing en/fil/es dictionaries and locale-aware formatting conventions. Give close/navigation controls at least 44×44 effective targets and use existing dismiss paths. Avoid global font overrides or replacing the UI framework during remediation.
 4. **Proof:** All three languages, plurals/period interpolation, locale-dependent chart month labels, screen-reader roles/selection, native close/backdrop/Back/nested picker, and keyboard-open entry where reachable. Check that expanded hit areas do not overlap neighboring controls.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Implemented complete multilingual localization and touch ergonomics across all report components:
+   - Added comprehensive `reports` translation catalog in `en.ts`, `fil.ts`, and `es.ts` covering tab pills, comparison presets, date labels, empty/loading states, table headers, and accessibility hints.
+   - Updated `ReportsTabBar` to dynamically resolve translated tab labels via `useLocalization()`.
+   - Updated `BalanceSheetFilterBar`, `PresetPickerModal`, `ExpandCollapseModal`, `IncomeExpenseFilterBar`, `CashFlowFilterBar`, `NetWorthFilterBar`, `CashFlowBarChart`, and `BalanceSheetTable` to consume `useLocalization()`.
+   - Updated `formatShortDate` and `formatMonthYear` in `reports-dates.ts` to accept an optional `locale?: string` parameter, defaulting cleanly without forcing `"en-US"`.
+   - Enhanced touch ergonomics: configured `hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}` on all modal close buttons and Month-over-Month navigation chevrons, expanding effective touch targets to $\ge 44\times 44\text{px}$.
+   - Verified with automated tests in `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
 ### REP-F12 — P2, source risk / needs native validation: Essential text has narrow containment paths
 

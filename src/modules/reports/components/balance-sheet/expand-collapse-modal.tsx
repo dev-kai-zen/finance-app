@@ -15,6 +15,7 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { CollapseLevel, ExpandLevel } from "../../types/reports.types";
 
 interface ExpandCollapseModalProps {
@@ -31,6 +32,7 @@ export function ExpandCollapseModal({
   onCollapseAll,
 }: ExpandCollapseModalProps) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   return (
     <Modal
@@ -42,10 +44,11 @@ export function ExpandCollapseModal({
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
-            <Text style={styles.title}>Display Hierarchy</Text>
+            <Text style={styles.title}>{t("reports.common.expandCollapseTitle")}</Text>
             <Pressable
-              accessibilityLabel="Close"
+              accessibilityLabel={t("reports.common.close")}
               accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               onPress={onClose}
               style={styles.closeButton}
             >

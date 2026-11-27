@@ -1,12 +1,14 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { PageErrorState, PageLoadingState } from "@/components/page-container";
+import { useLocalization } from "@/infrastructure/localization";
 import { useLabelsSummaryReport } from "../../hooks/use-labels-summary-report";
 import { IncomeExpenseFilterBar } from "../income-expense/income-expense-filter-bar";
 import { LabelsSummaryDonutChart } from "./labels-summary-donut-chart";
 import { LabelsSummaryTable } from "./labels-summary-table";
 
 export function LabelsSummaryReport(props?: { skipQuery?: boolean }) {
+  const { t } = useLocalization();
   const {
     mode,
     setMode,
@@ -48,7 +50,7 @@ export function LabelsSummaryReport(props?: { skipQuery?: boolean }) {
       {error ? (
         <PageErrorState message={error} onRetry={refresh} />
       ) : reportLoading ? (
-        <PageLoadingState message="Loading report..." variant="cards" />
+        <PageLoadingState message={t("reports.loading")} variant="cards" />
       ) : (
         <>
           <LabelsSummaryDonutChart

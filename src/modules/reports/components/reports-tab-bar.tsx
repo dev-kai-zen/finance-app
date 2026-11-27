@@ -9,6 +9,7 @@ import { Crown } from "lucide-react-native";
 import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useProStatus } from "@/modules/pro";
 import { REPORT_TABS } from "../constants/reports.constants";
 import type { ReportTabKey } from "../types/reports.types";
@@ -26,6 +27,24 @@ export function ReportsTabBar({
 }: ReportsTabBarProps) {
   const styles = useThemeStyles(createStyles);
   const { isPro } = useProStatus();
+  const { t } = useLocalization();
+
+  const getTabLabel = (tabKey: ReportTabKey, defaultLabel: string): string => {
+    switch (tabKey) {
+      case "income-expense":
+        return t("reports.tabs.incomeExpense");
+      case "balance-sheet":
+        return t("reports.tabs.balanceSheet");
+      case "cash-flow":
+        return t("reports.tabs.cashFlow");
+      case "net-worth":
+        return t("reports.tabs.netWorth");
+      case "labels-summary":
+        return t("reports.tabs.labelsSummary");
+      default:
+        return defaultLabel;
+    }
+  };
 
   return (
     <View collapsable={false} ref={tabBarRef} style={styles.container}>
@@ -62,7 +81,7 @@ export function ReportsTabBar({
                   !tab.isAvailable && styles.disabledTabLabel,
                 ]}
               >
-                {tab.label}
+                {getTabLabel(tab.key, tab.label)}
               </Text>
               {showProBadge ? (
                 <View style={styles.proChip}>

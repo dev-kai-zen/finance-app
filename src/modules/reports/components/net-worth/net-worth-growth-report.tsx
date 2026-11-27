@@ -53,7 +53,7 @@ export function NetWorthGrowthReport(props?: { skipQuery?: boolean }) {
       {error ? (
         <PageErrorState message={error} onRetry={refresh} />
       ) : reportLoading ? (
-        <PageLoadingState message="Loading report..." variant="cards" />
+        <PageLoadingState message={t("reports.loading")} variant="cards" />
       ) : (
         <>
           <NetWorthSummaryCards

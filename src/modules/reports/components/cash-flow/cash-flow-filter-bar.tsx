@@ -1,16 +1,11 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Calendar, Check, ChevronDown, X } from "lucide-react-native";
 import { HorizontalScrollView } from "@/components";
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type {
   CashFlowDateRange,
   CashFlowPeriodPreset,
@@ -34,8 +29,16 @@ const CASH_FLOW_PRESETS: Array<{
 }> = [
   { key: "6m", label: "Last 6 Months", desc: "Past 6 calendar months" },
   { key: "12m", label: "Last 12 Months", desc: "Full past 12 calendar months" },
-  { key: "ytd", label: "Year-to-Date (YTD)", desc: "From January 1st to today" },
-  { key: "custom", label: "Custom Date Range", desc: "Select custom start and end dates" },
+  {
+    key: "ytd",
+    label: "Year-to-Date (YTD)",
+    desc: "From January 1st to today",
+  },
+  {
+    key: "custom",
+    label: "Custom Date Range",
+    desc: "Select custom start and end dates",
+  },
 ];
 
 export function CashFlowFilterBar({
@@ -48,16 +51,17 @@ export function CashFlowFilterBar({
   onChangeCustomDateB,
 }: CashFlowFilterBarProps) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [modalVisible, setModalVisible] = useState(false);
-  const [datePickerTarget, setDatePickerTarget] = useState<"A" | "B" | null>(null);
+  const [datePickerTarget, setDatePickerTarget] = useState<"A" | "B" | null>(
+    null,
+  );
 
   const activePreset = CASH_FLOW_PRESETS.find((p) => p.key === preset);
 
   return (
     <View style={styles.container}>
-      <HorizontalScrollView
-        contentContainerStyle={styles.scrollContent}
-      >
+      <HorizontalScrollView contentContainerStyle={styles.scrollContent}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Period: ${range.label}. Tap to change period.`}
@@ -88,10 +92,13 @@ export function CashFlowFilterBar({
         >
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Cash Flow Period</Text>
+              <Text style={styles.modalTitle}>
+                {t("reports.common.selectPeriod")}
+              </Text>
               <Pressable
-                accessibilityLabel="Close"
+                accessibilityLabel={t("reports.common.close")}
                 accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={() => setModalVisible(false)}
                 style={styles.closeButton}
               >

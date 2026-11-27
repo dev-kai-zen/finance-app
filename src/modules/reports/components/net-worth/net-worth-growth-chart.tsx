@@ -72,7 +72,9 @@ export function NetWorthGrowthChart({
   if (points.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No historical data available.</Text>
+        <Text style={styles.emptyText}>
+          {t("reports.empty.noHistoricalData")}
+        </Text>
       </View>
     );
   }

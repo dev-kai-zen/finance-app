@@ -18,6 +18,7 @@ import {
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type {
   IncomeExpenseDateRange,
   IncomeExpenseMode,
@@ -57,6 +58,7 @@ export function IncomeExpenseFilterBar({
   onChangeCustomDateB,
 }: IncomeExpenseFilterBarProps) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [periodModalVisible, setPeriodModalVisible] = useState(false);
   const [datePickerTarget, setDatePickerTarget] = useState<"A" | "B" | null>(null);
 
@@ -145,10 +147,11 @@ export function IncomeExpenseFilterBar({
         >
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Period</Text>
+              <Text style={styles.modalTitle}>{t("reports.common.selectPeriod")}</Text>
               <Pressable
-                accessibilityLabel="Close"
+                accessibilityLabel={t("reports.common.close")}
                 accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={() => setPeriodModalVisible(false)}
                 style={styles.closeButton}
               >

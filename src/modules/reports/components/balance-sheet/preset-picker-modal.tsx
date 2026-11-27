@@ -16,6 +16,7 @@ import {
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { COMPARISON_PRESETS } from "../../constants/reports.constants";
 import type { ComparisonPreset } from "../../types/reports.types";
 import {
@@ -52,6 +53,34 @@ export function PresetPickerModal({
   onChangeCustomDateB,
 }: PresetPickerModalProps) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+
+  const getPresetInfo = (key: ComparisonPreset, defaultLabel: string, defaultDesc: string) => {
+    switch (key) {
+      case "prev-vs-today":
+        return {
+          label: t("reports.presets.prevVsToday"),
+          description: t("reports.presets.prevVsTodayDesc"),
+        };
+      case "mom":
+        return {
+          label: t("reports.presets.mom"),
+          description: t("reports.presets.momDesc"),
+        };
+      case "ytd":
+        return {
+          label: t("reports.presets.ytd"),
+          description: t("reports.presets.ytdDesc"),
+        };
+      case "custom":
+        return {
+          label: t("reports.presets.custom"),
+          description: t("reports.presets.customDesc"),
+        };
+      default:
+        return { label: defaultLabel, description: defaultDesc };
+    }
+  };
 
   const [datePickerTarget, setDatePickerTarget] = useState<"A" | "B" | null>(null);
 
@@ -82,10 +111,11 @@ export function PresetPickerModal({
         <Pressable style={styles.backdrop} onPress={onClose}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.header}>
-              <Text style={styles.title}>Comparison Period</Text>
+              <Text style={styles.title}>{t("reports.common.comparisonPreset")}</Text>
               <Pressable
-                accessibilityLabel="Close"
+                accessibilityLabel={t("reports.common.close")}
                 accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={onClose}
                 style={styles.closeButton}
               >
@@ -96,6 +126,7 @@ export function PresetPickerModal({
             <View style={styles.presetList}>
               {COMPARISON_PRESETS.map((item) => {
                 const isSelected = item.key === preset;
+                const info = getPresetInfo(item.key, item.label, item.description);
                 return (
                   <Pressable
                     key={item.key}
@@ -119,10 +150,10 @@ export function PresetPickerModal({
                           isSelected && styles.selectedPresetLabel,
                         ]}
                       >
-                        {item.label}
+                        {info.label}
                       </Text>
                       <Text style={styles.presetDescription}>
-                        {item.description}
+                        {info.description}
                       </Text>
                     </View>
                   </Pressable>
@@ -136,7 +167,8 @@ export function PresetPickerModal({
                 <Text style={styles.subConfigLabel}>Selected Month:</Text>
                 <View style={styles.monthNavigator}>
                   <Pressable
-                    accessibilityLabel="Previous month"
+                    accessibilityLabel={t("reports.common.previousMonth")}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     onPress={handlePrevMonth}
                     style={styles.navArrow}
                   >
@@ -146,7 +178,8 @@ export function PresetPickerModal({
                     {formatMonthYear(momYear, momMonth)}
                   </Text>
                   <Pressable
-                    accessibilityLabel="Next month"
+                    accessibilityLabel={t("reports.common.nextMonth")}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     onPress={handleNextMonth}
                     style={styles.navArrow}
                   >

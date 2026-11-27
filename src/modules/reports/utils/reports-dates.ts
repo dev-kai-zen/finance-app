@@ -1,16 +1,16 @@
 import type { ComparisonDateRange, ComparisonPreset } from "../types/reports.types";
 
-export function formatShortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+export function formatShortDate(date: Date, locale?: string): string {
+  return date.toLocaleDateString(locale || "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-export function formatMonthYear(year: number, month: number): string {
+export function formatMonthYear(year: number, month: number, locale?: string): string {
   const date = new Date(year, month, 1);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(locale || "en-US", {
     month: "long",
     year: "numeric",
   });

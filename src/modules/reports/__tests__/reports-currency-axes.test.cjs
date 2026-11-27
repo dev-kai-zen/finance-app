@@ -246,3 +246,73 @@ test("REP-F10: Balance Sheet Group and Account Type accessibilityLabels respect 
     "AccountTypeSection accessibilityLabel must wrap formatCurrency with formatPrivacyAmount",
   );
 });
+
+test("REP-F11: Complete localization across en, fil, es and touch ergonomics hitSlop", () => {
+  const enTranslations = require("../../../infrastructure/localization/translations/en.ts").en;
+  const filTranslations = require("../../../infrastructure/localization/translations/fil.ts").fil;
+  const esTranslations = require("../../../infrastructure/localization/translations/es.ts").es;
+
+  // Assert reports catalog exists in all 3 languages
+  assert.ok(enTranslations.reports, "English must have reports catalog");
+  assert.ok(filTranslations.reports, "Filipino must have reports catalog");
+  assert.ok(esTranslations.reports, "Spanish must have reports catalog");
+
+  // Assert tabs exist and are translated
+  const expectedTabs = ["incomeExpense", "balanceSheet", "cashFlow", "netWorth", "labelsSummary"];
+  for (const tabKey of expectedTabs) {
+    assert.ok(enTranslations.reports.tabs[tabKey], `en.reports.tabs.${tabKey} must exist`);
+    assert.ok(filTranslations.reports.tabs[tabKey], `fil.reports.tabs.${tabKey} must exist`);
+    assert.ok(esTranslations.reports.tabs[tabKey], `es.reports.tabs.${tabKey} must exist`);
+  }
+
+  // Assert presets exist and are translated
+  const expectedPresets = ["prevVsToday", "mom", "ytd", "custom", "last6m", "last12m", "thisMonth", "lastMonth", "last3m", "last2y"];
+  for (const pKey of expectedPresets) {
+    assert.ok(enTranslations.reports.presets[pKey], `en.reports.presets.${pKey} must exist`);
+    assert.ok(filTranslations.reports.presets[pKey], `fil.reports.presets.${pKey} must exist`);
+    assert.ok(esTranslations.reports.presets[pKey], `es.reports.presets.${pKey} must exist`);
+  }
+
+  // Assert common and empty messages exist
+  assert.ok(filTranslations.reports.common.close, "fil.reports.common.close must exist");
+  assert.ok(esTranslations.reports.common.close, "es.reports.common.close must exist");
+  assert.ok(filTranslations.reports.empty.noCashFlow, "fil.reports.empty.noCashFlow must exist");
+  assert.ok(esTranslations.reports.empty.noCashFlow, "es.reports.empty.noCashFlow must exist");
+
+  // Verify date helpers support custom locale
+  const { formatShortDate, formatMonthYear } = require("../utils/reports-dates.ts");
+  const sampleDate = new Date(2026, 10, 27); // Nov 27, 2026
+  assert.ok(formatShortDate(sampleDate, "es-ES"), "formatShortDate should format in Spanish");
+  assert.ok(formatMonthYear(2026, 10, "es-ES"), "formatMonthYear should format in Spanish");
+
+  // Verify touch ergonomics: hitSlop present on close buttons and nav chevrons
+  const presetModalSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/balance-sheet/preset-picker-modal.tsx"),
+    "utf8",
+  );
+  assert.match(
+    presetModalSource,
+    /hitSlop=\{\{\s*top:\s*8,\s*bottom:\s*8,\s*left:\s*8,\s*right:\s*8\s*\}\}/,
+    "PresetPickerModal must provide hitSlop for touch ergonomics",
+  );
+
+  const expandModalSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/balance-sheet/expand-collapse-modal.tsx"),
+    "utf8",
+  );
+  assert.match(
+    expandModalSource,
+    /hitSlop=\{\{\s*top:\s*8,\s*bottom:\s*8,\s*left:\s*8,\s*right:\s*8\s*\}\}/,
+    "ExpandCollapseModal must provide hitSlop on close button",
+  );
+
+  const incomeFilterSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/income-expense/income-expense-filter-bar.tsx"),
+    "utf8",
+  );
+  assert.match(
+    incomeFilterSource,
+    /hitSlop=\{\{\s*top:\s*8,\s*bottom:\s*8,\s*left:\s*8,\s*right:\s*8\s*\}\}/,
+    "IncomeExpenseFilterBar must provide hitSlop on close button",
+  );
+});

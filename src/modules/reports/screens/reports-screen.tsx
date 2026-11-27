@@ -141,7 +141,10 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
 
         {!isReady ? (
           <View style={styles.skeletonWrapper}>
-            <PageLoadingState message="Loading reports..." variant="cards" />
+            <PageLoadingState
+              message={t("reports.loadingReports")}
+              variant="cards"
+            />
           </View>
         ) : (
           <>

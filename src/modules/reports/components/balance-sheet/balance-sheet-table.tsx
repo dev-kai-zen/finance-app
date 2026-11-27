@@ -16,6 +16,7 @@ import {
 import { HorizontalScrollView, IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -42,6 +43,7 @@ export function BalanceSheetTable({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+  const { t } = useLocalization();
   const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
@@ -51,7 +53,7 @@ export function BalanceSheetTable({
       {isNarrow ? (
         <View style={styles.scrollHint}>
           <Text style={styles.scrollHintText}>
-            ⇄ Scroll horizontally to view all columns
+            {t("reports.common.scrollHorizontallyHint")}
           </Text>
         </View>
       ) : null}
@@ -64,7 +66,9 @@ export function BalanceSheetTable({
           {/* Header Row */}
           <View style={styles.headerRow}>
             <View style={[styles.colAccount, styles.headerCol]}>
-              <Text style={styles.headerText}>ACCOUNT / HIERARCHY</Text>
+              <Text style={styles.headerText}>
+                {t("reports.common.accountHierarchy")}
+              </Text>
             </View>
             <View style={[styles.colNumeric, styles.headerCol]}>
               <Text numberOfLines={1} style={styles.headerText}>
@@ -77,7 +81,9 @@ export function BalanceSheetTable({
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.headerCol]}>
-              <Text style={styles.headerText}>DIFFERENCE</Text>
+              <Text style={styles.headerText}>
+                {t("reports.common.difference")}
+              </Text>
             </View>
           </View>
 
@@ -100,7 +106,9 @@ export function BalanceSheetTable({
           {/* Net Worth Summary Row */}
           <View style={styles.netWorthRow}>
             <View style={[styles.colAccount, styles.netWorthCol]}>
-              <Text style={styles.netWorthTitle}>NET WORTH</Text>
+              <Text style={styles.netWorthTitle}>
+                {t("reports.common.netWorth")}
+              </Text>
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
               <Text numberOfLines={1} style={styles.netWorthAmount}>
@@ -142,6 +150,7 @@ function GroupSection({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+  const { t } = useLocalization();
   const currencyCode = preferences.defaultCurrency;
   const expanded = isExpanded(groupKey);
 
@@ -204,7 +213,9 @@ function GroupSection({
           ))
         ) : (
           <View style={styles.emptyGroupRow}>
-            <Text style={styles.emptyText}>No active accounts found in this category.</Text>
+            <Text style={styles.emptyText}>
+              {t("reports.empty.noAccountsFound")}
+            </Text>
           </View>
         )
       ) : null}
@@ -224,6 +235,7 @@ function AccountTypeSection({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+  const { t } = useLocalization();
   const currencyCode = preferences.defaultCurrency;
   const typeKey = `type:${typeNode.id}`;
   const expanded = isExpanded(typeKey);

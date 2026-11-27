@@ -11,6 +11,7 @@ import { HorizontalScrollView } from "@/components";
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type {
   NetWorthGrowthDateRange,
   NetWorthGrowthPreset,
@@ -48,6 +49,7 @@ export function NetWorthFilterBar({
   onChangeCustomDateB,
 }: NetWorthFilterBarProps) {
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [modalVisible, setModalVisible] = useState(false);
   const [datePickerTarget, setDatePickerTarget] = useState<"A" | "B" | null>(null);
 
@@ -88,10 +90,11 @@ export function NetWorthFilterBar({
         >
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Net Worth Period</Text>
+              <Text style={styles.modalTitle}>{t("reports.common.selectPeriod")}</Text>
               <Pressable
-                accessibilityLabel="Close"
+                accessibilityLabel={t("reports.common.close")}
                 accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={() => setModalVisible(false)}
                 style={styles.closeButton}
               >

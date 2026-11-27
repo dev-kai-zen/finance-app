@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { PageErrorState, PageLoadingState } from "@/components/page-container";
+import { useLocalization } from "@/infrastructure/localization";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useCashFlowReport } from "../../hooks/use-cash-flow-report";
 import { CashFlowBarChart } from "./cash-flow-bar-chart";
@@ -9,6 +10,7 @@ import { CashFlowSummaryCards } from "./cash-flow-summary-cards";
 import { CashFlowTable } from "./cash-flow-table";
 
 export function CashFlowReport(props?: { skipQuery?: boolean }) {
+  const { t } = useLocalization();
   const {
     preset,
     setPreset,
@@ -45,7 +47,7 @@ export function CashFlowReport(props?: { skipQuery?: boolean }) {
       {error ? (
         <PageErrorState message={error} onRetry={refresh} />
       ) : reportLoading ? (
-        <PageLoadingState message="Loading report..." variant="cards" />
+        <PageLoadingState message={t("reports.loading")} variant="cards" />
       ) : (
         <>
           <CashFlowSummaryCards

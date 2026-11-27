@@ -1,11 +1,13 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { PageErrorState, PageLoadingState } from "@/components/page-container";
+import { useLocalization } from "@/infrastructure/localization";
 import { useBalanceSheetReport } from "../../hooks/use-balance-sheet-report";
 import { BalanceSheetFilterBar } from "./balance-sheet-filter-bar";
 import { BalanceSheetTable } from "./balance-sheet-table";
 
 export function BalanceSheetReport(props?: { skipQuery?: boolean }) {
+  const { t } = useLocalization();
   const {
     preset,
     setPreset,
@@ -53,7 +55,7 @@ export function BalanceSheetReport(props?: { skipQuery?: boolean }) {
       {error ? (
         <PageErrorState message={error} onRetry={refresh} />
       ) : reportLoading ? (
-        <PageLoadingState message="Loading report..." variant="cards" />
+        <PageLoadingState message={t("reports.loading")} variant="cards" />
       ) : (
         <BalanceSheetTable
           data={data}

@@ -9,6 +9,7 @@ import {
 import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -35,6 +36,7 @@ export function CashFlowBarChart({
 }: CashFlowBarChartProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { isPrivate } = usePrivacyMode();
   const { preferences } = useCurrencyPreferences();
   const [containerWidth, setContainerWidth] = useState(0);
@@ -55,7 +57,7 @@ export function CashFlowBarChart({
   if (periods.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No cash flow data available for this range.</Text>
+        <Text style={styles.emptyText}>{t("reports.empty.noCashFlow")}</Text>
       </View>
     );
   }
@@ -85,11 +87,11 @@ export function CashFlowBarChart({
         <View style={styles.legendLeft}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, styles.inflowDot]} />
-            <Text style={styles.legendLabel}>Inflow</Text>
+            <Text style={styles.legendLabel}>{t("reports.common.inflow")}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, styles.outflowDot]} />
-            <Text style={styles.legendLabel}>Outflow</Text>
+            <Text style={styles.legendLabel}>{t("reports.common.outflow")}</Text>
           </View>
         </View>
 
@@ -104,7 +106,7 @@ export function CashFlowBarChart({
             </Text>
           </Text>
         ) : (
-          <Text style={styles.hintText}>Tap a month to inspect</Text>
+          <Text style={styles.hintText}>{t("reports.common.tapMonthToInspect")}</Text>
         )}
       </View>
 
