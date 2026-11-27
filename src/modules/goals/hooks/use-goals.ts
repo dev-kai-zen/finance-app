@@ -1,5 +1,7 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, DeviceEventEmitter } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { goalErrorMessage } from "../schemas/goal.schema";
 import { deleteGoal as deleteGoalService } from "../services/delete-goal.service";
@@ -33,7 +35,22 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
 
+  const isFocusedRef = useRef(false);
+  const frameIdRef = useRef<number | null>(null);
+  const lastEvaluatedDateRef = useRef<string>(new Date().toDateString());
   const cancelPendingRef = useRef<(() => void) | null>(null);
+
+  const cancelScheduledRefresh = useCallback(() => {
+    if (frameIdRef.current !== null) {
+      if (typeof cancelAnimationFrame !== "undefined") {
+        cancelAnimationFrame(frameIdRef.current);
+      } else {
+        clearTimeout(frameIdRef.current);
+      }
+      frameIdRef.current = null;
+    }
+  }, []);
+
   const refresh = useCallback(() => {
     cancelPendingRef.current?.();
     if (skipQuery) return;
@@ -58,12 +75,82 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     );
   }, [skipQuery]);
 
+  const scheduleRefresh = useCallback(() => {
+    cancelScheduledRefresh();
+    const schedule =
+      typeof requestAnimationFrame !== "undefined"
+        ? requestAnimationFrame
+        : (cb: () => void) => setTimeout(cb, 0) as unknown as number;
+
+    frameIdRef.current = schedule(() => {
+      frameIdRef.current = null;
+      if (isFocusedRef.current) {
+        refresh();
+      }
+    });
+  }, [cancelScheduledRefresh, refresh]);
+
   useFocusEffect(
     useCallback(() => {
-      refresh();
-      return () => cancelPendingRef.current?.();
-    }, [refresh]),
+      isFocusedRef.current = true;
+      lastEvaluatedDateRef.current = new Date().toDateString();
+
+      if (skipQuery) {
+        return () => {
+          isFocusedRef.current = false;
+          cancelPendingRef.current?.();
+          cancelScheduledRefresh();
+        };
+      }
+
+      scheduleRefresh();
+
+      const txSub = DeviceEventEmitter.addListener(
+        "FINANCE_APP_TRANSACTION_MUTATED",
+        () => {
+          if (isFocusedRef.current) {
+            scheduleRefresh();
+          }
+        },
+      );
+
+      const schedSub = DeviceEventEmitter.addListener(
+        "FINANCE_APP_SCHEDULES_CHANGED",
+        () => {
+          if (isFocusedRef.current) {
+            scheduleRefresh();
+          }
+        },
+      );
+
+      const appStateSub = AppState.addEventListener("change", (nextState) => {
+        if (nextState === "active" && isFocusedRef.current) {
+          const today = new Date().toDateString();
+          if (today !== lastEvaluatedDateRef.current) {
+            lastEvaluatedDateRef.current = today;
+            scheduleRefresh();
+          }
+        }
+      });
+
+      return () => {
+        isFocusedRef.current = false;
+        txSub.remove();
+        schedSub.remove();
+        appStateSub.remove();
+        cancelPendingRef.current?.();
+        cancelScheduledRefresh();
+      };
+    }, [cancelScheduledRefresh, refresh, scheduleRefresh, skipQuery]),
   );
+
+  useEffect(() => {
+    return subscribeToDatabaseReplacement(() => {
+      if (isFocusedRef.current) {
+        scheduleRefresh();
+      }
+    });
+  }, [scheduleRefresh]);
 
   const handleSaveGoal = useCallback(
     (input: GoalInput, existingId?: string | null) => {

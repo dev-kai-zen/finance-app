@@ -222,12 +222,27 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Exact parity assertion proves `calculateLinkedFundsBalance` matches `getGoalsWithProgress` returned balance for normal links, parent+child conflicts, and currency mismatch exclusions.
    - All 20 tests in `src/modules/goals/__tests__/` passed.
 
-### GOAL-F04 — P2, source-confirmed: focused progress misses external writes
+### GOAL-F04 — P2, source-confirmed: focused progress misses external writes — RESOLVED
 
 1. **Problem:** A Global Quick Entry save while Goals remains focused leaves amounts and completion stale until pull refresh or navigation/focus. Focused midnight rollover similarly has no deadline invalidation. Native interaction not executed.
 2. **Cause:** `useGoals` refreshes on focus and its own configuration mutations. It has no transaction event subscription or other live balance invalidation. Transaction hosts emit `FINANCE_APP_TRANSACTION_MUTATED`; a modal closing does not inherently refocus its underlying route.
-3. **Smallest fix:** Subscribe at the focused feature hook, coalesce/cancel deferred work, and preserve existing source ownership so consumers do not emit duplicate ledger events. Define day-change/resume refresh without per-second polling. Database replacement already remounts the tree; reuse it.
-4. **Proof:** Actual hook tests with event emitter and controllable focus: external save refreshes exactly once, hidden screen does no read, blur/unmount cancels, refocus resolves current balances, and multiple rapid mutations coalesce. Native Global Quick Entry, scheduler/background write and day rollover acceptance remain required.
+3. **Fix applied:**
+   - In `src/modules/goals/hooks/use-goals.ts`:
+     - Added `isFocusedRef` to track screen focus state.
+     - Added `scheduleRefresh` with frame coalescing (`requestAnimationFrame` / `setTimeout(0)`) to merge rapid transaction notifications.
+     - In `useFocusEffect`, subscribed to `FINANCE_APP_TRANSACTION_MUTATED` and `FINANCE_APP_SCHEDULES_CHANGED` while focused.
+     - Added `AppState` change listener: when returning to `"active"` status across midnight (date change detected via `new Date().toDateString()`), triggers a coalesced refresh to recalculate deadline countdowns and monthly savings pace without running continuous polling intervals.
+     - Subscribed to `subscribeToDatabaseReplacement` so full database restores cleanly refresh active goal progress.
+     - Properly cleaned up subscriptions, frame requests, and pending sync queries on blur/unmount, guaranteeing zero SQLite queries when Goals is unfocused or in the background.
+4. **Proof:** Added unit test suite in `src/modules/goals/__tests__/goals-focus-events.test.cjs`:
+   - Proved `useGoals` performs 0 reads while unfocused.
+   - Proved initial focus performs exactly 1 read.
+   - Proved emitting `FINANCE_APP_TRANSACTION_MUTATED` while focused triggers live progress refresh.
+   - Proved emitting `FINANCE_APP_TRANSACTION_MUTATED` while blurred/unmounted triggers 0 reads, and listeners detach cleanly.
+   - Proved 10 rapid mutations coalesce into a single refresh execution.
+   - Proved `AppState` active resume evaluates date change without redundant reads.
+   - Proved `subscribeToDatabaseReplacement` triggers refresh while focused.
+   - All 7 tests in `goals-focus-events.test.cjs` passed.
 
 ### GOAL-F05 — P2, executed hook + source-confirmed UI: failures are hidden or escape handlers
 
@@ -357,7 +372,7 @@ Preserve useful existing complexity: derived balances from Accounts, signed tran
 
 1. [x] Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations. (Resolved)
 2. [x] Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership. (Resolved)
-3. Address refresh, recovery and honest loading (GOAL-F04–F06), then query/render bounding and native profiling (GOAL-F07).
+3. Address refresh, recovery and honest loading (GOAL-F04 resolved, GOAL-F05–F06 pending), then query/render bounding and native profiling (GOAL-F07).
 4. Settle completion/privacy/reminder policies; address GOAL-F08/F12, localization, touch and layout (GOAL-F09–F11).
 5. Re-run related suites with the budget harness issue separately resolved/tracked, typecheck, and capture native matrix/performance evidence before final sign-off.
 
