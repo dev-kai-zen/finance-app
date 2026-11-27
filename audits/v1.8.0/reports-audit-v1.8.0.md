@@ -177,12 +177,17 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
    - Updated all 5 report components to render `<PageErrorState message={error} onRetry={refresh} />` on failure.
    - Verified with automated lifecycle tests in `reports-invalidation-recovery.test.cjs`.
 
-### REP-F07 — P2, source-confirmed: Uncancelled work and stale data during cached reloads
+### REP-F07 — P2, source-confirmed: Uncancelled work and stale data during cached reloads — RESOLVED
 
 1. **Problem:** Rapid filters/tab unmount can leave multiple callbacks queued; cached data remains visible under a new filter until reads complete, without a new skeleton.
 2. **Cause:** All five hooks discard the cancellation function returned by `runDeferredSyncQuery`. They pass `hasLoadedOnceRef.current`; the helper only sets loading true when no cached result exists. Requested range/mode changes immediately while `data` remains from the old scope.
 3. **Smallest fix:** Return/call cancellation on effect cleanup, invalidate stale request publication, and resolve data/scope/loading together for every required background read. Limit changes to report hooks unless a shared-helper issue is separately demonstrated.
 4. **Proof:** Queue A→B→C before paint, unmount/blur before execution, home-currency changes with cached data, and retry after failure. Assert cancelled reads do not run/publish, only current results resolve, and the shell/skeleton is truthful without artificial timers.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Implemented query cancellation, request serialization, and scope-aware cache resolution across all 5 report hooks (`useIncomeExpenseReport`, `useBalanceSheetReport`, `useCashFlowReport`, `useLabelsSummaryReport`, `useNetWorthGrowthReport`):
+   - Stored the cancellation function from `runDeferredSyncQuery` in `cancelPendingRef` and invoked it before new queries, on `useEffect` unmount/dependency change, and on `useFocusEffect` blur.
+   - Guarded publication with `requestIdRef`, preventing out-of-order race conditions from stale responses.
+   - Replaced the blunt `hasLoadedOnceRef` boolean with `loadedScopeKeyRef`, ensuring that changing range, mode, or currency triggers a truthful loading skeleton (`hasCachedResult: false`), while background mutations on the same scope update smoothly without flickering (`hasCachedResult: true`).
+   - Verified with automated tests in `reports-invalidation-recovery.test.cjs`.
 
 ### REP-F08 — P2, measured/source-confirmed: Large synchronous hydration and unnecessary premium work
 

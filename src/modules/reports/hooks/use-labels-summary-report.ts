@@ -45,7 +45,9 @@ export function useLabelsSummaryReport() {
   const [data, setData] = useState<LabelsSummaryReportData>(EMPTY_LABELS_REPORT);
   const [reportLoading, setReportLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedOnceRef = useRef(false);
+  const cancelPendingRef = useRef<(() => void) | null>(null);
+  const requestIdRef = useRef(0);
+  const loadedScopeKeyRef = useRef<string | null>(null);
   const isFocusedRef = useRef(true);
   const isDirtyRef = useRef(false);
 
@@ -56,29 +58,48 @@ export function useLabelsSummaryReport() {
     });
   }, [preset, customDateA, customDateB]);
 
+  const currentScopeKey = `${mode}:${range.preset}:${range.startDate.getTime()}-${range.endDate.getTime()}:${preferences.defaultCurrency}`;
+
+  const cancelPending = useCallback(() => {
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = null;
+  }, []);
+
   const refresh = useCallback(() => {
-    runDeferredSyncQuery(
+    cancelPending();
+    const requestId = ++requestIdRef.current;
+    const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
+
+    cancelPendingRef.current = runDeferredSyncQuery(
       {
-        hasCachedResult: hasLoadedOnceRef.current,
+        hasCachedResult,
         setLoading: setReportLoading,
         onMarkLoaded: () => {
-          hasLoadedOnceRef.current = true;
+          cancelPendingRef.current = null;
         },
       },
       () => {
+        if (requestId !== requestIdRef.current) return;
         try {
-          setData(getLabelsSummaryReport(mode, range));
+          const result = getLabelsSummaryReport(mode, range);
+          if (requestId !== requestIdRef.current) return;
+          setData(result);
+          loadedScopeKeyRef.current = currentScopeKey;
           setError(null);
         } catch (err: any) {
+          if (requestId !== requestIdRef.current) return;
           setError(err?.message || "Failed to load report data.");
         }
       },
     );
-  }, [mode, range, preferences.defaultCurrency]);
+  }, [cancelPending, currentScopeKey, mode, range, preferences.defaultCurrency]);
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    return () => {
+      cancelPending();
+    };
+  }, [refresh, cancelPending]);
 
   useFocusEffect(
     useCallback(() => {
@@ -89,8 +110,9 @@ export function useLabelsSummaryReport() {
       }
       return () => {
         isFocusedRef.current = false;
+        cancelPending();
       };
-    }, [refresh]),
+    }, [cancelPending, refresh]),
   );
 
   useEffect(() => {

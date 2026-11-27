@@ -11,10 +11,7 @@ import type {
   ExpandLevel,
   VarianceValue,
 } from "../types/reports.types";
-import {
-  getComparisonDateRange,
-  toDateKey,
-} from "../utils/reports-dates";
+import { getComparisonDateRange, toDateKey } from "../utils/reports-dates";
 
 const ZERO_VARIANCE: VarianceValue = {
   prevMinorUnits: 0,
@@ -65,8 +62,12 @@ export function useBalanceSheetReport() {
     () => new Date(now.getFullYear(), now.getMonth() - 1, 1),
     [now],
   );
-  const [momYear, setMomYear] = useState<number>(() => defaultMomDate.getFullYear());
-  const [momMonth, setMomMonth] = useState<number>(() => defaultMomDate.getMonth());
+  const [momYear, setMomYear] = useState<number>(() =>
+    defaultMomDate.getFullYear(),
+  );
+  const [momMonth, setMomMonth] = useState<number>(() =>
+    defaultMomDate.getMonth(),
+  );
 
   // Custom dates state (defaults: 1 month ago vs today)
   const [customDateA, setCustomDateA] = useState<string>(() => {
@@ -78,10 +79,13 @@ export function useBalanceSheetReport() {
   // Expanded nodes set
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [hasInitializedExpansion, setHasInitializedExpansion] = useState(false);
-  const [data, setData] = useState<BalanceSheetComparisonData>(EMPTY_BALANCE_SHEET);
+  const [data, setData] =
+    useState<BalanceSheetComparisonData>(EMPTY_BALANCE_SHEET);
   const [reportLoading, setReportLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedOnceRef = useRef(false);
+  const cancelPendingRef = useRef<(() => void) | null>(null);
+  const requestIdRef = useRef(0);
+  const loadedScopeKeyRef = useRef<string | null>(null);
   const isFocusedRef = useRef(true);
   const isDirtyRef = useRef(false);
 
@@ -95,29 +99,54 @@ export function useBalanceSheetReport() {
     });
   }, [preset, momYear, momMonth, customDateA, customDateB]);
 
+  const currentScopeKey = `${preset}:${range.prevDate.getTime()}-${range.currentDate.getTime()}:${hideZeroBalances}:${preferences.defaultCurrency}`;
+
+  const cancelPending = useCallback(() => {
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = null;
+  }, []);
+
   const refresh = useCallback(() => {
-    runDeferredSyncQuery(
+    cancelPending();
+    const requestId = ++requestIdRef.current;
+    const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
+
+    cancelPendingRef.current = runDeferredSyncQuery(
       {
-        hasCachedResult: hasLoadedOnceRef.current,
+        hasCachedResult,
         setLoading: setReportLoading,
         onMarkLoaded: () => {
-          hasLoadedOnceRef.current = true;
+          cancelPendingRef.current = null;
         },
       },
       () => {
+        if (requestId !== requestIdRef.current) return;
         try {
-          setData(getBalanceSheetComparison(range, { hideZeroBalances }));
+          const result = getBalanceSheetComparison(range, { hideZeroBalances });
+          if (requestId !== requestIdRef.current) return;
+          setData(result);
+          loadedScopeKeyRef.current = currentScopeKey;
           setError(null);
         } catch (err: any) {
+          if (requestId !== requestIdRef.current) return;
           setError(err?.message || "Failed to load report data.");
         }
       },
     );
-  }, [range, hideZeroBalances, preferences.defaultCurrency]);
+  }, [
+    cancelPending,
+    currentScopeKey,
+    range,
+    hideZeroBalances,
+    preferences.defaultCurrency,
+  ]);
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    return () => {
+      cancelPending();
+    };
+  }, [refresh, cancelPending]);
 
   useFocusEffect(
     useCallback(() => {
@@ -128,8 +157,9 @@ export function useBalanceSheetReport() {
       }
       return () => {
         isFocusedRef.current = false;
+        cancelPending();
       };
-    }, [refresh]),
+    }, [cancelPending, refresh]),
   );
 
   useEffect(() => {
@@ -148,7 +178,11 @@ export function useBalanceSheetReport() {
 
   // Initial expansion: Expand all (including pockets) by default
   useEffect(() => {
-    if (!hasInitializedExpansion && (data.assets.accountTypes.length > 0 || data.liabilities.accountTypes.length > 0)) {
+    if (
+      !hasInitializedExpansion &&
+      (data.assets.accountTypes.length > 0 ||
+        data.liabilities.accountTypes.length > 0)
+    ) {
       const keys = new Set<string>();
       keys.add("group:asset");
       keys.add("group:liability");
@@ -208,21 +242,18 @@ export function useBalanceSheetReport() {
   );
 
   // Collapse All with level
-  const collapseAll = useCallback(
-    (level: CollapseLevel) => {
-      if (level === "groups") {
-        // Only keep groups, or collapse everything
-        setExpandedKeys(new Set());
-      } else if (level === "types") {
-        // Keep groups expanded, but collapse all types
-        const keys = new Set<string>();
-        keys.add("group:asset");
-        keys.add("group:liability");
-        setExpandedKeys(keys);
-      }
-    },
-    [],
-  );
+  const collapseAll = useCallback((level: CollapseLevel) => {
+    if (level === "groups") {
+      // Only keep groups, or collapse everything
+      setExpandedKeys(new Set());
+    } else if (level === "types") {
+      // Keep groups expanded, but collapse all types
+      const keys = new Set<string>();
+      keys.add("group:asset");
+      keys.add("group:liability");
+      setExpandedKeys(keys);
+    }
+  }, []);
 
   return {
     preset,

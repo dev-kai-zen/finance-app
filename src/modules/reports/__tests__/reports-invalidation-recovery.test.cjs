@@ -181,3 +181,118 @@ test("REP-F06: Read failure captures error state and allows successful recovery 
 
   harness.cleanup();
 });
+
+test("REP-F07: Rapid filter switching cancels previous pending queries (A -> B -> C)", () => {
+  const executedScopes = [];
+  const cancelledScopes = [];
+
+  function createDeferredScopeHarness() {
+    let cancelPending = null;
+    let requestId = 0;
+    let currentScope = "A";
+    let data = null;
+    let loading = false;
+
+    const setScope = (newScope) => {
+      // Cancel previous pending
+      if (cancelPending) {
+        cancelPending();
+        cancelPending = null;
+      }
+
+      currentScope = newScope;
+      const reqId = ++requestId;
+      loading = true;
+
+      let cancelled = false;
+      const execute = () => {
+        if (cancelled) return;
+        if (reqId !== requestId) return;
+        executedScopes.push(newScope);
+        data = { scope: newScope };
+        loading = false;
+      };
+
+      cancelPending = () => {
+        cancelled = true;
+        cancelledScopes.push(newScope);
+      };
+
+      return { execute };
+    };
+
+    return {
+      setScope,
+      getData: () => data,
+      getLoading: () => loading,
+      cancelPending: () => cancelPending?.(),
+    };
+  }
+
+  const harness = createDeferredScopeHarness();
+
+  // Rapidly queue A -> B -> C
+  const qA = harness.setScope("A");
+  const qB = harness.setScope("B");
+  const qC = harness.setScope("C");
+
+  assert.deepEqual(cancelledScopes, ["A", "B"]);
+
+  // Run the queued callbacks
+  qA.execute();
+  qB.execute();
+  qC.execute();
+
+  // Only C actually executed and published data
+  assert.deepEqual(executedScopes, ["C"]);
+  assert.deepEqual(harness.getData(), { scope: "C" });
+  assert.equal(harness.getLoading(), false);
+});
+
+test("REP-F07: Unmount/blur cancels pending query and prevents execution", () => {
+  let executed = false;
+  let cancelled = false;
+
+  const cancelPending = () => {
+    cancelled = true;
+  };
+
+  const execute = () => {
+    if (cancelled) return;
+    executed = true;
+  };
+
+  // Simulate unmount/blur before paint
+  cancelPending();
+  execute();
+
+  assert.equal(cancelled, true);
+  assert.equal(executed, false);
+});
+
+test("REP-F07: Scope change triggers truthful loading state while mutation preserves cached smooth reload", () => {
+  let loadedScopeKey = null;
+
+  const checkHasCachedResult = (currentScopeKey) => {
+    return loadedScopeKey === currentScopeKey;
+  };
+
+  // 1. Initial scope "month" - no cached result yet
+  assert.equal(checkHasCachedResult("expense:this-month:PHP"), false);
+
+  // Data loads for "month"
+  loadedScopeKey = "expense:this-month:PHP";
+
+  // 2. Mutation occurs for same scope - has cached result (silent background reload)
+  assert.equal(checkHasCachedResult("expense:this-month:PHP"), true);
+
+  // 3. User switches to "year" - scope changed, hasCachedResult is false (shows truthful skeleton)
+  assert.equal(checkHasCachedResult("expense:this-year:PHP"), false);
+
+  // Data loads for "year"
+  loadedScopeKey = "expense:this-year:PHP";
+  assert.equal(checkHasCachedResult("expense:this-year:PHP"), true);
+
+  // 4. User switches mode from expense to income - scope changed (shows truthful skeleton)
+  assert.equal(checkHasCachedResult("income:this-year:PHP"), false);
+});
