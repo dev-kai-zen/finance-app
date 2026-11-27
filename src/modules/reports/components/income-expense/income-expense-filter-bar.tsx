@@ -228,7 +228,13 @@ export function IncomeExpenseFilterBar({
 
             <Pressable
               style={styles.applyButton}
-              onPress={() => setPeriodModalVisible(false)}
+              onPress={() => {
+                if (preset === "custom" && customDateA > customDateB) {
+                  onChangeCustomDateA(customDateB);
+                  onChangeCustomDateB(customDateA);
+                }
+                setPeriodModalVisible(false);
+              }}
             >
               <Text style={styles.applyButtonText}>Apply Period</Text>
             </Pressable>

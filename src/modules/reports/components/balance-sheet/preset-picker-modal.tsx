@@ -225,7 +225,13 @@ export function PresetPickerModal({
 
             <Pressable
               style={styles.applyButton}
-              onPress={onClose}
+              onPress={() => {
+                if (preset === "custom" && customDateA > customDateB) {
+                  onChangeCustomDateA(customDateB);
+                  onChangeCustomDateB(customDateA);
+                }
+                onClose();
+              }}
             >
               <Text style={styles.applyButtonText}>Apply Comparison</Text>
             </Pressable>

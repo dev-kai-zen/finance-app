@@ -52,9 +52,10 @@ export function getCashFlowDateRange(
       const nowKey = toDateKey(now);
       const aKey = options.customDateA ?? nowKey;
       const bKey = options.customDateB ?? nowKey;
-      const startDate = parseDateKeyToDate(aKey);
+      const [startKey, endKey] = aKey <= bKey ? [aKey, bKey] : [bKey, aKey];
+      const startDate = parseDateKeyToDate(startKey);
       startDate.setHours(0, 0, 0, 0);
-      const endDate = parseDateKeyToDate(bKey);
+      const endDate = parseDateKeyToDate(endKey);
       endDate.setHours(23, 59, 59, 999);
       return {
         preset,

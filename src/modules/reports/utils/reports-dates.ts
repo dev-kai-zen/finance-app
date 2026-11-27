@@ -110,8 +110,9 @@ export function getComparisonDateRange(
       const nowKey = toDateKey(now);
       const aKey = options.customDateA ?? nowKey;
       const bKey = options.customDateB ?? nowKey;
-      const prevDate = parseDateKeyToDate(aKey);
-      const currentDate = parseDateKeyToDate(bKey);
+      const [earlierKey, laterKey] = aKey <= bKey ? [aKey, bKey] : [bKey, aKey];
+      const prevDate = parseDateKeyToDate(earlierKey);
+      const currentDate = parseDateKeyToDate(laterKey);
       return {
         prevDate,
         currentDate,

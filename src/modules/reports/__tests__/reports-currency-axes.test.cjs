@@ -61,6 +61,10 @@ require.extensions[".tsx"] = require.extensions[".ts"] = (module, filename) => {
 };
 
 const { formatReportAxisAmount } = require("../utils/reports-currency.ts");
+const { getComparisonDateRange } = require("../utils/reports-dates.ts");
+const { getIncomeExpenseDateRange } = require("../utils/income-expense-dates.ts");
+const { getCashFlowDateRange } = require("../utils/cash-flow-dates.ts");
+const { getNetWorthDateRange } = require("../utils/net-worth-dates.ts");
 
 test("formatReportAxisAmount - zero decimal currencies (e.g. JPY / KRW)", () => {
   // 10,000 minor units in JPY is ¥10,000.
@@ -604,4 +608,47 @@ test("REP-F14 - Route respects reports public module boundary (no deep imports)"
     false,
     "ReportsRoute must not deep-import into internal @/modules/reports/ paths",
   );
+});
+
+test("Q-REP05 - Custom date range normalization automatically swaps inverted dates across all reports", () => {
+  // Test inverted dates: Date A is Dec 31, 2026, Date B is Jan 1, 2026
+  const customDateA = "2026-12-31";
+  const customDateB = "2026-01-01";
+
+  // 1. Balance sheet comparison
+  const comparison = getComparisonDateRange("custom", { customDateA, customDateB });
+  assert.equal(comparison.prevDate.getTime() <= comparison.currentDate.getTime(), true);
+  assert.equal(comparison.prevDate.getFullYear(), 2026);
+  assert.equal(comparison.prevDate.getMonth(), 0); // Jan
+  assert.equal(comparison.prevDate.getDate(), 1);
+  assert.equal(comparison.currentDate.getFullYear(), 2026);
+  assert.equal(comparison.currentDate.getMonth(), 11); // Dec
+  assert.equal(comparison.currentDate.getDate(), 31);
+
+  // 2. Income & Expense
+  const incomeExpense = getIncomeExpenseDateRange("custom", { customDateA, customDateB });
+  assert.equal(incomeExpense.startDate.getTime() <= incomeExpense.endDate.getTime(), true);
+  assert.equal(incomeExpense.startDate.getMonth(), 0); // Jan 1
+  assert.equal(incomeExpense.endDate.getMonth(), 11); // Dec 31
+  assert.match(incomeExpense.label, /Jan 1, 2026\s*–\s*Dec 31, 2026/);
+
+  // 3. Cash Flow
+  const cashFlow = getCashFlowDateRange("custom", { customDateA, customDateB });
+  assert.equal(cashFlow.startDate.getTime() <= cashFlow.endDate.getTime(), true);
+  assert.equal(cashFlow.startDate.getMonth(), 0);
+  assert.equal(cashFlow.endDate.getMonth(), 11);
+
+  // 4. Net Worth Growth
+  const netWorth = getNetWorthDateRange("custom", { customDateA, customDateB });
+  assert.equal(netWorth.startDate.getTime() <= netWorth.endDate.getTime(), true);
+  assert.equal(netWorth.startDate.getMonth(), 0);
+  assert.equal(netWorth.endDate.getMonth(), 11);
+
+  // Test already chronological dates are preserved
+  const chronoIncomeExpense = getIncomeExpenseDateRange("custom", {
+    customDateA: "2026-03-01",
+    customDateB: "2026-06-30",
+  });
+  assert.equal(chronoIncomeExpense.startDate.getMonth(), 2); // Mar
+  assert.equal(chronoIncomeExpense.endDate.getMonth(), 5); // Jun
 });

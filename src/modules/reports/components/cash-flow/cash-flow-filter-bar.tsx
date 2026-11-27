@@ -181,7 +181,13 @@ export function CashFlowFilterBar({
 
             <Pressable
               style={styles.applyButton}
-              onPress={() => setModalVisible(false)}
+              onPress={() => {
+                if (preset === "custom" && customDateA > customDateB) {
+                  onChangeCustomDateA(customDateB);
+                  onChangeCustomDateB(customDateA);
+                }
+                setModalVisible(false);
+              }}
             >
               <Text style={styles.applyButtonText}>Apply Period</Text>
             </Pressable>
