@@ -33,12 +33,71 @@ export function calculateVariance({
   currencyCode = "PHP",
 }: CalculateVarianceOptions): VarianceValue {
   if (isLiability) {
-    // Liabilities: debt magnitude
-    // Negative balance = debt.
-    const prevDebt = Math.abs(prevMinorUnits);
-    const currentDebt = Math.abs(currentMinorUnits);
-    const debtDiff = currentDebt - prevDebt;
+    const prevDebt = Math.max(0, -prevMinorUnits);
+    const currentDebt = Math.max(0, -currentMinorUnits);
+    const prevCredit = Math.max(0, prevMinorUnits);
+    const currentCredit = Math.max(0, currentMinorUnits);
 
+    // Case 1: Sign crossing from debt to credit (- -> +)
+    if (prevDebt > 0 && currentCredit > 0) {
+      const totalImprovement = prevDebt + currentCredit;
+      return {
+        prevMinorUnits,
+        currentMinorUnits,
+        diffMinorUnits: totalImprovement,
+        isFavorable: true,
+        direction: "up",
+        symbol: "▲",
+        color: REPORT_COLORS.positiveGreen,
+        formattedDiff: formatCurrency(totalImprovement, currencyCode, true),
+      };
+    }
+
+    // Case 2: Sign crossing from credit to debt (+ -> -)
+    if (prevCredit > 0 && currentDebt > 0) {
+      const totalDeterioration = prevCredit + currentDebt;
+      return {
+        prevMinorUnits,
+        currentMinorUnits,
+        diffMinorUnits: -totalDeterioration,
+        isFavorable: false,
+        direction: "down",
+        symbol: "▼",
+        color: REPORT_COLORS.negativeRed,
+        formattedDiff: formatCurrency(-totalDeterioration, currencyCode),
+      };
+    }
+
+    // Case 3: Both are credit or zero (+ -> + or 0 -> + or + -> 0)
+    if (prevDebt === 0 && currentDebt === 0) {
+      const creditDiff = currentCredit - prevCredit;
+      if (creditDiff > 0) {
+        return {
+          prevMinorUnits,
+          currentMinorUnits,
+          diffMinorUnits: creditDiff,
+          isFavorable: true,
+          direction: "up",
+          symbol: "▲",
+          color: REPORT_COLORS.positiveGreen,
+          formattedDiff: formatCurrency(creditDiff, currencyCode, true),
+        };
+      } else if (creditDiff < 0) {
+        return {
+          prevMinorUnits,
+          currentMinorUnits,
+          diffMinorUnits: creditDiff,
+          isFavorable: false,
+          direction: "down",
+          symbol: "▼",
+          color: REPORT_COLORS.negativeRed,
+          formattedDiff: formatCurrency(creditDiff, currencyCode),
+        };
+      }
+    }
+
+    // Case 4: Both are debt or zero (- -> - or 0 -> - or - -> 0)
+    const debtDiff = currentDebt - prevDebt;
     if (debtDiff < 0) {
       // Debt decreased: Favorable! (Green, Down arrow ▼, negative sign -)
       const absDiff = Math.abs(debtDiff);
@@ -64,18 +123,19 @@ export function calculateVariance({
         color: REPORT_COLORS.negativeRed,
         formattedDiff: formatCurrency(debtDiff, currencyCode, true),
       };
-    } else {
-      return {
-        prevMinorUnits,
-        currentMinorUnits,
-        diffMinorUnits: 0,
-        isFavorable: true,
-        direction: "neutral",
-        symbol: "",
-        color: REPORT_COLORS.neutralMuted,
-        formattedDiff: formatCurrency(0, currencyCode),
-      };
     }
+
+    // Equal
+    return {
+      prevMinorUnits,
+      currentMinorUnits,
+      diffMinorUnits: 0,
+      isFavorable: true,
+      direction: "neutral",
+      symbol: "",
+      color: REPORT_COLORS.neutralMuted,
+      formattedDiff: formatCurrency(0, currencyCode),
+    };
   }
 
   // Asset or Net Worth

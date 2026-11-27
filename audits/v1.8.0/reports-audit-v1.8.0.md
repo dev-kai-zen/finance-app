@@ -255,12 +255,19 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
    - **Modal Picker Sheets**: Configured `maxHeight: "85%"` on `styles.sheet` and wrapped scrollable content in `<ScrollView showsVerticalScrollIndicator={true} keyboardShouldPersistTaps="handled">` across `PresetPickerModal`, `ExpandCollapseModal`, `IncomeExpenseFilterBar`, `CashFlowFilterBar`, and `NetWorthFilterBar`, ensuring sticky headers and apply buttons with smoothly scrollable options.
 4. **Proof:** Verified with comprehensive automated unit tests in `src/modules/reports/__tests__/reports-currency-axes.test.cjs` asserting all 5 surfaces.
 
-### REP-F13 — P2, executed: Liability variance treats positive credit as debt
+### REP-F13 — RESOLVED: Liability variance treats positive credit as debt
 
-1. **Problem:** Positive card credit moving **+5,000 → +10,000** minor units returns an unfavorable red “debt increased” **+5,000**. Moving **-10,000 debt → +5,000 credit** reports only a 5,000 debt-magnitude reduction, losing the sign crossing.
-2. **Cause:** [calculateVariance](../../src/modules/reports/services/get-balance-sheet-comparison.service.ts#L35) uses `Math.abs` on both liability balances. Positive credit is valid under the existing Credit Cards audit; net-worth totals still use signed balances correctly.
-3. **Smallest fix:** Define whether this column describes signed balance movement or debt-only magnitude. Use signed movement/favorability or `max(0, -balance)` with explicit credit disclosure according to that decision. Do not change ledger signs or card billing history.
-4. **Proof:** Negative→negative debt decrease/increase, negative→zero, negative→positive, positive→positive and reverse crossings. Assert raw balances, displayed difference, direction/color, group rollups, and net-worth reconciliation in actual comparison-service fixtures.
+1. **Problem:** Positive card credit moving **+5,000 → +10,000** minor units returned an unfavorable red “debt increased” **+5,000 ▲**. Moving **-10,000 debt → +5,000 credit** reported only a 5,000 debt-magnitude reduction, losing the sign crossing and underreporting the 15,000 net improvement.
+2. **Cause:** [calculateVariance](../../src/modules/reports/services/get-balance-sheet-comparison.service.ts#L35) blindly applied `Math.abs` on both liability balances under the assumption that all liability balances are negative debt.
+3. **Fix:**
+   - Implemented state-aware liability variance in `calculateVariance`:
+     - $\text{Debt} = \max(0, -\text{balance})$ and $\text{Credit} = \max(0, \text{balance})$.
+     - **Pure credit**: Credit increases (+5k → +10k) are favorable Green `▲` `+5k`; credit decreases (+10k → +2k) are unfavorable Red `▼` `-8k`.
+     - **Debt-to-credit crossing**: ($-10\text{k} \to +5\text{k}$) captures the full $+15\text{k}$ improvement in Green `▲`.
+     - **Credit-to-debt crossing**: ($+5\text{k} \to -10\text{k}$) captures the full $-15\text{k}$ deterioration in Red `▼`.
+     - **Zero transitions**: Debt-to-zero ($-10\text{k} \to 0$) is Green `▼`; credit-to-zero ($+5\text{k} \to 0$) is Red `▼`; zero-to-debt ($0 \to -10\text{k}$) is Red `▲`; zero-to-credit ($0 \to +5\text{k}$) is Green `▲`.
+     - **Pure debt**: Existing intuitive behavior (debt down = Green `▼`, debt up = Red `▲`) is preserved.
+4. **Proof:** Verified with comprehensive automated unit tests covering all 11 transitions in `src/modules/reports/__tests__/balance-sheet-comparison.test.cjs` and `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
 ### REP-F14 — P3, source-confirmed: Route bypasses Reports public type export
 

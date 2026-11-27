@@ -20,10 +20,71 @@ function formatPhpNumber(amountMinorUnits) {
 
 function calculateVariance({ prevMinorUnits, currentMinorUnits, isLiability }) {
   if (isLiability) {
-    const prevDebt = Math.abs(prevMinorUnits);
-    const currentDebt = Math.abs(currentMinorUnits);
-    const debtDiff = currentDebt - prevDebt;
+    const prevDebt = Math.max(0, -prevMinorUnits);
+    const currentDebt = Math.max(0, -currentMinorUnits);
+    const prevCredit = Math.max(0, prevMinorUnits);
+    const currentCredit = Math.max(0, currentMinorUnits);
 
+    // Case 1: Sign crossing from debt to credit (- -> +)
+    if (prevDebt > 0 && currentCredit > 0) {
+      const totalImprovement = prevDebt + currentCredit;
+      return {
+        prevMinorUnits,
+        currentMinorUnits,
+        diffMinorUnits: totalImprovement,
+        isFavorable: true,
+        direction: "up",
+        symbol: "▲",
+        color: REPORT_COLORS.positiveGreen,
+        formattedDiff: `+${formatPhpNumber(totalImprovement)}`,
+      };
+    }
+
+    // Case 2: Sign crossing from credit to debt (+ -> -)
+    if (prevCredit > 0 && currentDebt > 0) {
+      const totalDeterioration = prevCredit + currentDebt;
+      return {
+        prevMinorUnits,
+        currentMinorUnits,
+        diffMinorUnits: -totalDeterioration,
+        isFavorable: false,
+        direction: "down",
+        symbol: "▼",
+        color: REPORT_COLORS.negativeRed,
+        formattedDiff: `-${formatPhpNumber(totalDeterioration)}`,
+      };
+    }
+
+    // Case 3: Both are credit or zero (+ -> + or 0 -> + or + -> 0)
+    if (prevDebt === 0 && currentDebt === 0) {
+      const creditDiff = currentCredit - prevCredit;
+      if (creditDiff > 0) {
+        return {
+          prevMinorUnits,
+          currentMinorUnits,
+          diffMinorUnits: creditDiff,
+          isFavorable: true,
+          direction: "up",
+          symbol: "▲",
+          color: REPORT_COLORS.positiveGreen,
+          formattedDiff: `+${formatPhpNumber(creditDiff)}`,
+        };
+      } else if (creditDiff < 0) {
+        return {
+          prevMinorUnits,
+          currentMinorUnits,
+          diffMinorUnits: creditDiff,
+          isFavorable: false,
+          direction: "down",
+          symbol: "▼",
+          color: REPORT_COLORS.negativeRed,
+          formattedDiff: `-${formatPhpNumber(Math.abs(creditDiff))}`,
+        };
+      }
+    }
+
+    // Case 4: Both are debt or zero (- -> - or 0 -> - or - -> 0)
+    const debtDiff = currentDebt - prevDebt;
     if (debtDiff < 0) {
       // Debt decreased: Favorable! (Green, Down arrow ▼, negative sign -)
       const absDiff = Math.abs(debtDiff);
@@ -157,6 +218,90 @@ test("Liability variance: debt increase has Red color, positive + sign, and ▲"
   assert.equal(result.symbol, "▲");
   assert.equal(result.color, REPORT_COLORS.negativeRed);
   assert.equal(result.formattedDiff, "+₱5,000.00");
+  assert.equal(result.isFavorable, false);
+});
+
+test("Liability variance: positive credit increase (+5k -> +10k) has Green color, positive + sign, and ▲", () => {
+  const result = calculateVariance({
+    prevMinorUnits: 500000, // +₱5,000.00 credit
+    currentMinorUnits: 1000000, // +₱10,000.00 credit
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, 500000);
+  assert.equal(result.symbol, "▲");
+  assert.equal(result.color, REPORT_COLORS.positiveGreen);
+  assert.equal(result.formattedDiff, "+₱5,000.00");
+  assert.equal(result.isFavorable, true);
+});
+
+test("Liability variance: positive credit decrease (+10k -> +2k) has Red color, negative - sign, and ▼", () => {
+  const result = calculateVariance({
+    prevMinorUnits: 1000000, // +₱10,000.00 credit
+    currentMinorUnits: 200000, // +₱2,000.00 credit
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, -800000);
+  assert.equal(result.symbol, "▼");
+  assert.equal(result.color, REPORT_COLORS.negativeRed);
+  assert.equal(result.formattedDiff, "-₱8,000.00");
+  assert.equal(result.isFavorable, false);
+});
+
+test("Liability variance: debt-to-credit sign crossing (-10k -> +5k) captures full 15k improvement in Green ▲", () => {
+  const result = calculateVariance({
+    prevMinorUnits: -1000000, // -₱10,000.00 debt
+    currentMinorUnits: 500000, // +₱5,000.00 credit
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, 1500000);
+  assert.equal(result.symbol, "▲");
+  assert.equal(result.color, REPORT_COLORS.positiveGreen);
+  assert.equal(result.formattedDiff, "+₱15,000.00");
+  assert.equal(result.isFavorable, true);
+});
+
+test("Liability variance: credit-to-debt sign crossing (+5k -> -10k) captures full 15k deterioration in Red ▼", () => {
+  const result = calculateVariance({
+    prevMinorUnits: 500000, // +₱5,000.00 credit
+    currentMinorUnits: -1000000, // -₱10,000.00 debt
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, -1500000);
+  assert.equal(result.symbol, "▼");
+  assert.equal(result.color, REPORT_COLORS.negativeRed);
+  assert.equal(result.formattedDiff, "-₱15,000.00");
+  assert.equal(result.isFavorable, false);
+});
+
+test("Liability variance: debt-to-zero (-10k -> 0) has Green color, negative - sign, and ▼", () => {
+  const result = calculateVariance({
+    prevMinorUnits: -1000000,
+    currentMinorUnits: 0,
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, -1000000);
+  assert.equal(result.symbol, "▼");
+  assert.equal(result.color, REPORT_COLORS.positiveGreen);
+  assert.equal(result.formattedDiff, "-₱10,000.00");
+  assert.equal(result.isFavorable, true);
+});
+
+test("Liability variance: credit-to-zero (+5k -> 0) has Red color, negative - sign, and ▼", () => {
+  const result = calculateVariance({
+    prevMinorUnits: 500000,
+    currentMinorUnits: 0,
+    isLiability: true,
+  });
+
+  assert.equal(result.diffMinorUnits, -500000);
+  assert.equal(result.symbol, "▼");
+  assert.equal(result.color, REPORT_COLORS.negativeRed);
+  assert.equal(result.formattedDiff, "-₱5,000.00");
   assert.equal(result.isFavorable, false);
 });
 

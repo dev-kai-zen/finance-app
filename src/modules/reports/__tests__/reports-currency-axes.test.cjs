@@ -24,6 +24,23 @@ Module._load = function (request, parent, ...rest) {
       formatPrivacyAmount: (amount, isPrivate) => (isPrivate ? "••••••" : amount),
     };
   }
+  if (request === "@/infrastructure/database/client") {
+    return { db: {} };
+  }
+  if (request === "@/modules/currencies") {
+    return {
+      getCurrencyPreferences: () => ({ defaultCurrency: "PHP" }),
+    };
+  }
+  if (request === "@/modules/accounts") {
+    return {
+      getBalanceSheet: () => ({
+        assets: { accountTypes: [] },
+        liabilities: { accountTypes: [] },
+        netWorthMinorUnits: 0,
+      }),
+    };
+  }
   return originalLoad.call(this, request, parent, ...rest);
 };
 
@@ -36,6 +53,7 @@ require.extensions[".tsx"] = require.extensions[".ts"] = (module, filename) => {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
       esModuleInterop: true,
+      jsx: ts.JsxEmit.React,
     },
     fileName: filename,
   }).outputText;
@@ -439,4 +457,134 @@ test("REP-F12 - Essential text containment and modal responsiveness", () => {
       `${modal.name} must wrap scrollable options in a ScrollView`,
     );
   }
+});
+
+test("REP-F13 - State-aware liability variance (positive credit & zero crossings)", () => {
+  const { calculateVariance } = require("../services/get-balance-sheet-comparison.service.ts");
+
+  // 1. Pure debt decrease: -25k -> -20k (-5k ▼ Green)
+  const debtDecrease = calculateVariance({
+    prevMinorUnits: -2_500_000,
+    currentMinorUnits: -2_000_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(debtDecrease.diffMinorUnits, -500_000);
+  assert.equal(debtDecrease.symbol, "▼");
+  assert.equal(debtDecrease.color, "#10B981");
+  assert.equal(debtDecrease.isFavorable, true);
+  assert.match(debtDecrease.formattedDiff, /-\u20b15,000\.00|-₱5,000\.00/);
+
+  // 2. Pure debt increase: -20k -> -25k (+5k ▲ Red)
+  const debtIncrease = calculateVariance({
+    prevMinorUnits: -2_000_000,
+    currentMinorUnits: -2_500_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(debtIncrease.diffMinorUnits, 500_000);
+  assert.equal(debtIncrease.symbol, "▲");
+  assert.equal(debtIncrease.color, "#EF4444");
+  assert.equal(debtIncrease.isFavorable, false);
+  assert.match(debtIncrease.formattedDiff, /\+\u20b15,000\.00|\+₱5,000\.00/);
+
+  // 3. Pure credit increase: +5k -> +10k (+5k ▲ Green, favorable)
+  const creditIncrease = calculateVariance({
+    prevMinorUnits: 500_000,
+    currentMinorUnits: 1_000_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(creditIncrease.diffMinorUnits, 500_000);
+  assert.equal(creditIncrease.symbol, "▲");
+  assert.equal(creditIncrease.color, "#10B981");
+  assert.equal(creditIncrease.isFavorable, true);
+  assert.match(creditIncrease.formattedDiff, /\+\u20b15,000\.00|\+₱5,000\.00/);
+
+  // 4. Pure credit decrease: +10k -> +2k (-8k ▼ Red, unfavorable)
+  const creditDecrease = calculateVariance({
+    prevMinorUnits: 1_000_000,
+    currentMinorUnits: 200_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(creditDecrease.diffMinorUnits, -800_000);
+  assert.equal(creditDecrease.symbol, "▼");
+  assert.equal(creditDecrease.color, "#EF4444");
+  assert.equal(creditDecrease.isFavorable, false);
+  assert.match(creditDecrease.formattedDiff, /-\u20b18,000\.00|-₱8,000\.00/);
+
+  // 5. Debt to credit sign crossing: -10k -> +5k (+15k ▲ Green)
+  const debtToCredit = calculateVariance({
+    prevMinorUnits: -1_000_000,
+    currentMinorUnits: 500_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(debtToCredit.diffMinorUnits, 1_500_000);
+  assert.equal(debtToCredit.symbol, "▲");
+  assert.equal(debtToCredit.color, "#10B981");
+  assert.equal(debtToCredit.isFavorable, true);
+  assert.match(debtToCredit.formattedDiff, /\+\u20b115,000\.00|\+₱15,000\.00/);
+
+  // 6. Credit to debt sign crossing: +5k -> -10k (-15k ▼ Red)
+  const creditToDebt = calculateVariance({
+    prevMinorUnits: 500_000,
+    currentMinorUnits: -1_000_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(creditToDebt.diffMinorUnits, -1_500_000);
+  assert.equal(creditToDebt.symbol, "▼");
+  assert.equal(creditToDebt.color, "#EF4444");
+  assert.equal(creditToDebt.isFavorable, false);
+  assert.match(creditToDebt.formattedDiff, /-\u20b115,000\.00|-₱15,000\.00/);
+
+  // 7. Debt to zero: -10k -> 0 (-10k ▼ Green)
+  const debtToZero = calculateVariance({
+    prevMinorUnits: -1_000_000,
+    currentMinorUnits: 0,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(debtToZero.diffMinorUnits, -1_000_000);
+  assert.equal(debtToZero.symbol, "▼");
+  assert.equal(debtToZero.color, "#10B981");
+  assert.equal(debtToZero.isFavorable, true);
+
+  // 8. Credit to zero: +5k -> 0 (-5k ▼ Red)
+  const creditToZero = calculateVariance({
+    prevMinorUnits: 500_000,
+    currentMinorUnits: 0,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(creditToZero.diffMinorUnits, -500_000);
+  assert.equal(creditToZero.symbol, "▼");
+  assert.equal(creditToZero.color, "#EF4444");
+  assert.equal(creditToZero.isFavorable, false);
+
+  // 9. Zero to debt: 0 -> -10k (+10k ▲ Red)
+  const zeroToDebt = calculateVariance({
+    prevMinorUnits: 0,
+    currentMinorUnits: -1_000_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(zeroToDebt.diffMinorUnits, 1_000_000);
+  assert.equal(zeroToDebt.symbol, "▲");
+  assert.equal(zeroToDebt.color, "#EF4444");
+  assert.equal(zeroToDebt.isFavorable, false);
+
+  // 10. Zero to credit: 0 -> +5k (+5k ▲ Green)
+  const zeroToCredit = calculateVariance({
+    prevMinorUnits: 0,
+    currentMinorUnits: 500_000,
+    isLiability: true,
+    currencyCode: "PHP",
+  });
+  assert.equal(zeroToCredit.diffMinorUnits, 500_000);
+  assert.equal(zeroToCredit.symbol, "▲");
+  assert.equal(zeroToCredit.color, "#10B981");
+  assert.equal(zeroToCredit.isFavorable, true);
 });
