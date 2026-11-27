@@ -150,7 +150,7 @@ function fixture(options = {}) {
     },
     flushAsync,
     stateSlots,
-    getError: () => stateSlots[4].value,
+    getError: () => stateSlots[5].value,
   };
 }
 
@@ -166,20 +166,24 @@ test("GOAL-F05: useGoals sets error state on failed read and exposes clearError"
   assert.equal(f.getError(), null, "clearError must reset error to null");
 });
 
-test("GOAL-F05: useGoals delete failure sets error and throws for caller catch", () => {
+test("GOAL-F05: useGoals delete failure sets error and throws for caller catch", async () => {
   const f = fixture({ shouldFailDelete: true });
-  assert.throws(
-    () => f.hook.deleteGoal("g1"),
+  await assert.rejects(
+    async () => {
+      await f.hook.deleteGoal("g1");
+    },
     /Disk I\/O failure on delete/,
     "Must throw to allow UI boundary handling",
   );
   assert.equal(f.getError(), "Disk I/O failure on delete");
 });
 
-test("GOAL-F05: useGoals toggleStatus failure sets error and throws for caller catch", () => {
+test("GOAL-F05: useGoals toggleStatus failure sets error and throws for caller catch", async () => {
   const f = fixture({ shouldFailToggle: true });
-  assert.throws(
-    () => f.hook.toggleStatus("g1", "completed"),
+  await assert.rejects(
+    async () => {
+      await f.hook.toggleStatus("g1", "completed");
+    },
     /Status transition constraint failed/,
     "Must throw to allow UI boundary handling",
   );

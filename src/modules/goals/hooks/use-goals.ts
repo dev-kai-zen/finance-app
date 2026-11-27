@@ -32,13 +32,24 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   });
   const [filter, setFilter] = useState<GoalFilter>("all");
   const [loading, setLoading] = useState(true);
+  const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
 
   const isFocusedRef = useRef(false);
+  const requestIdRef = useRef(0);
   const frameIdRef = useRef<number | null>(null);
   const lastEvaluatedDateRef = useRef<string>(new Date().toDateString());
   const cancelPendingRef = useRef<(() => void) | null>(null);
+
+  const cancelPending = useCallback(() => {
+    ++requestIdRef.current;
+    if (cancelPendingRef.current) {
+      cancelPendingRef.current();
+      cancelPendingRef.current = null;
+    }
+    setIsPending(false);
+  }, []);
 
   const cancelScheduledRefresh = useCallback(() => {
     if (frameIdRef.current !== null) {
@@ -51,29 +62,49 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     }
   }, []);
 
-  const refresh = useCallback(() => {
-    cancelPendingRef.current?.();
-    if (skipQuery) return;
-    cancelPendingRef.current = runDeferredSyncQuery(
-      {
-        hasCachedResult: hasLoadedOnceRef.current,
-        setLoading,
-        onMarkLoaded: () => {
-          hasLoadedOnceRef.current = true;
+  const refresh = useCallback((): Promise<void> => {
+    cancelPending();
+    if (skipQuery) return Promise.resolve();
+
+    const currentRequestId = requestIdRef.current;
+    setIsPending(true);
+
+    return new Promise<void>((resolve) => {
+      const cancelQuery = runDeferredSyncQuery(
+        {
+          hasCachedResult: hasLoadedOnceRef.current,
+          setLoading,
+          onMarkLoaded: () => {
+            hasLoadedOnceRef.current = true;
+          },
         },
-      },
-      () => {
-        try {
-          const data = getGoalsWithProgress();
-          setGoals(data.goals);
-          setSummary(data.summary);
-          setError(null);
-        } catch (cause) {
-          setError(goalErrorMessage(cause));
-        }
-      },
-    );
-  }, [skipQuery]);
+        () => {
+          if (currentRequestId !== requestIdRef.current) {
+            resolve();
+            return;
+          }
+          cancelPendingRef.current = null;
+          try {
+            const data = getGoalsWithProgress();
+            setGoals(data.goals);
+            setSummary(data.summary);
+            setError(null);
+          } catch (cause) {
+            setError(goalErrorMessage(cause));
+          } finally {
+            setIsPending(false);
+            resolve();
+          }
+        },
+      );
+
+      cancelPendingRef.current = () => {
+        cancelQuery();
+        setIsPending(false);
+        resolve();
+      };
+    });
+  }, [cancelPending, skipQuery]);
 
   const scheduleRefresh = useCallback(() => {
     cancelScheduledRefresh();
@@ -85,7 +116,7 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     frameIdRef.current = schedule(() => {
       frameIdRef.current = null;
       if (isFocusedRef.current) {
-        refresh();
+        void refresh();
       }
     });
   }, [cancelScheduledRefresh, refresh]);
@@ -98,7 +129,7 @@ export function useGoals(options?: { skipQuery?: boolean }) {
       if (skipQuery) {
         return () => {
           isFocusedRef.current = false;
-          cancelPendingRef.current?.();
+          cancelPending();
           cancelScheduledRefresh();
         };
       }
@@ -138,10 +169,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
         txSub.remove();
         schedSub.remove();
         appStateSub.remove();
-        cancelPendingRef.current?.();
+        cancelPending();
         cancelScheduledRefresh();
       };
-    }, [cancelScheduledRefresh, refresh, scheduleRefresh, skipQuery]),
+    }, [cancelPending, cancelScheduledRefresh, refresh, scheduleRefresh, skipQuery]),
   );
 
   useEffect(() => {
@@ -153,10 +184,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   }, [scheduleRefresh]);
 
   const handleSaveGoal = useCallback(
-    (input: GoalInput, existingId?: string | null) => {
+    async (input: GoalInput, existingId?: string | null) => {
       try {
         saveGoalService(input, existingId);
-        refresh();
+        await refresh();
         return true;
       } catch (cause) {
         setError(goalErrorMessage(cause));
@@ -167,10 +198,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   );
 
   const handleDeleteGoal = useCallback(
-    (id: string) => {
+    async (id: string) => {
       try {
         deleteGoalService(id);
-        refresh();
+        await refresh();
       } catch (cause) {
         setError(goalErrorMessage(cause));
         throw cause;
@@ -180,10 +211,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   );
 
   const handleToggleStatus = useCallback(
-    (id: string, newStatus: GoalStatus) => {
+    async (id: string, newStatus: GoalStatus) => {
       try {
         toggleGoalStatusService(id, newStatus);
-        refresh();
+        await refresh();
       } catch (cause) {
         setError(goalErrorMessage(cause));
         throw cause;
@@ -213,6 +244,7 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     filter,
     setFilter,
     loading,
+    isPending,
     error,
     clearError,
     refresh,

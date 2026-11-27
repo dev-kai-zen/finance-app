@@ -79,6 +79,7 @@ function GoalsScreenContent({
     filter,
     setFilter,
     loading,
+    isPending,
     error,
     clearError,
     saveGoal,
@@ -91,9 +92,9 @@ function GoalsScreenContent({
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
-      refresh();
+      await refresh();
     } finally {
-      setTimeout(() => setIsPullRefreshing(false), 500);
+      setIsPullRefreshing(false);
     }
   }, [refresh]);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
@@ -228,7 +229,7 @@ function GoalsScreenContent({
 
   const handleSaveGoal = async (input: GoalInput, existingId?: string | null) => {
     const isFirstGoal = goals.length === 0 && !existingId;
-    const result = saveGoal(input, existingId);
+    const result = await saveGoal(input, existingId);
     if (result && isFirstGoal && !isPromptDismissed("firstGoalCelebrated")) {
       dismissPrompt("firstGoalCelebrated");
       setCongratulationsVisible(true);
@@ -418,6 +419,15 @@ function GoalsScreenContent({
         </View>
       ) : (
         <View style={styles.goalsList}>
+          {isPending && !isPullRefreshing && goals.length > 0 && (
+            <View
+              accessibilityLabel="Updating goals"
+              style={styles.subtleUpdatingRow}
+            >
+              <ActivityIndicator color={theme.colors.primary} size="small" />
+              <Text style={styles.subtleUpdatingText}>Updating goals...</Text>
+            </View>
+          )}
           {error && goals.length > 0 && (
             <View style={styles.cachedErrorBanner}>
               <AlertTriangle color={theme.colors.warning} size={16} />
@@ -841,6 +851,22 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    subtleUpdatingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 6,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: `${theme.colors.primary}10`,
+      borderRadius: theme.borderRadius.medium,
+      marginBottom: theme.spacing.xs,
+      gap: theme.spacing.sm,
+    },
+    subtleUpdatingText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
     },
   });
 }

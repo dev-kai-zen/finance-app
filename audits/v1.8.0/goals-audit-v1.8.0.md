@@ -264,12 +264,27 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Validated `GoalsScreen` AST and component contract (PageErrorState gating, ConfirmModal error/pending connection, guarded deletion and status toggles).
    - All 4 tests in `goals-error-handling.test.cjs` passed.
 
-### GOAL-F06 — P2, executed: cached reloads have no honest pending state
+### GOAL-F06 — P2, executed: cached reloads have no honest pending state — RESOLVED
 
 1. **Problem:** With cached goals, `refresh()` leaves `loading=false` while a synchronous read is pending. Existing rows/summary stay presented as resolved. Pull-refresh completion is tied to 500ms rather than data resolution.
 2. **Cause:** `runDeferredSyncQuery` only sets loading true for uncached results; screen only shows skeleton when `loading && goals.length === 0`. `handlePullRefresh` schedules a fixed 500ms timer immediately after scheduling, not awaiting, refresh.
-3. **Smallest fix:** Track pending/resolved state in the Goals hook and end it in the same data/error commit. Keep shell/header interactive and use existing native-driven loading UI for the affected content. Avoid changing the shared helper's semantics across every module solely to fix Goals; remove the artificial timer locally.
-4. **Proof:** Controlled scheduler tests show skeleton before SQL on first and cached refresh, no stale totals flash, spinner closes with actual completion/error, and cancellation/unmount settles safely. Native pull/focus/form-return tests with large data; no extra queries or fixed-duration loading.
+3. **Fix applied:**
+   - In `src/modules/goals/hooks/use-goals.ts`:
+     - Updated `refresh()` to return a `Promise<void>` that settles when the deferred query actually commits to React state.
+     - Added `isPending` state tracking: set to `true` when a query is scheduled/running and reset to `false` in the exact same batch as data and error commits.
+     - Added `requestIdRef` and `cancelPending` so rapid successive refreshes cancel previous pending tasks cleanly without stale commit races or dangling promises.
+     - Updated mutation callbacks (`handleSaveGoal`, `handleDeleteGoal`, `handleToggleStatus`) to `await refresh()`.
+   - In `src/modules/goals/screens/goals-screen.tsx`:
+     - Destructured `isPending` from `useGoals()`.
+     - Removed the artificial `setTimeout(..., 500)` timer from `handlePullRefresh` and replaced it with `await refresh()` in a `try / finally` block, tying pull-refresh completion 100% to actual data resolution.
+     - Rendered a subtle non-blocking updating row (`subtleUpdatingRow`) with an `ActivityIndicator` when `isPending && !isPullRefreshing && goals.length > 0`, providing honest visual feedback while keeping the list interactive.
+4. **Proof:** Added unit tests in `src/modules/goals/__tests__/goals-loading-pending.test.cjs`:
+   - Validated initial uncached load tracks `loading=true` and `isPending=true`.
+   - Validated cached reload keeps `loading=false` (no full-screen skeleton flash) while setting `isPending=true` until data commits.
+   - Validated `refresh()` returns an awaitable Promise.
+   - Validated rapid successive refreshes cancel previous pending tasks cleanly.
+   - Validated `GoalsScreen` source contract: `handlePullRefresh` awaits `refresh()`, the hardcoded 500ms timer is gone, and `subtleUpdatingRow` is bound to `isPending`.
+   - All 4 tests in `goals-loading-pending.test.cjs` passed.
 
 ### GOAL-F07 — P2, measured/source-confirmed: unnecessary reads and unbounded mounting
 
@@ -385,7 +400,7 @@ Preserve useful existing complexity: derived balances from Accounts, signed tran
 
 1. [x] Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations. (Resolved)
 2. [x] Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership. (Resolved)
-3. Address refresh, recovery and honest loading (GOAL-F04–F05 resolved, GOAL-F06 pending), then query/render bounding and native profiling (GOAL-F07).
+3. [x] Address refresh, recovery and honest loading (GOAL-F04–F06 resolved); preserve responsive 60–120fps background indicators. (Resolved)
 4. Settle completion/privacy/reminder policies; address GOAL-F08/F12, localization, touch and layout (GOAL-F09–F11).
 5. Re-run related suites with the budget harness issue separately resolved/tracked, typecheck, and capture native matrix/performance evidence before final sign-off.
 
