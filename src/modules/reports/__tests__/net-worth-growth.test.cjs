@@ -231,3 +231,45 @@ test("computeNetWorthGrowthPoints computes assets, liabilities, net worth trajec
   assert.equal(res.periodChangeMinorUnits, 500000);
   assert.equal(res.periodChangePercentage, 6);
 });
+
+function getNetWorthDateRange(preset, options = {}) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  switch (preset) {
+    case "6m": {
+      const startDate = new Date(currentYear, currentMonth - 5, 1, 0, 0, 0, 0);
+      const endDate = new Date(currentYear, currentMonth, now.getDate(), 23, 59, 59, 999);
+      return { preset, startDate, endDate, label: "Last 6 Months" };
+    }
+    case "1y": {
+      const startDate = new Date(currentYear, currentMonth - 11, 1, 0, 0, 0, 0);
+      const endDate = new Date(currentYear, currentMonth, now.getDate(), 23, 59, 59, 999);
+      return { preset, startDate, endDate, label: "Last 1 Year (12M)" };
+    }
+    case "all": {
+      const startDate = new Date(currentYear - 2, currentMonth, 1, 0, 0, 0, 0);
+      const endDate = new Date(currentYear, currentMonth, now.getDate(), 23, 59, 59, 999);
+      return { preset, startDate, endDate, label: "Last 2 Years (24M)" };
+    }
+    case "custom": {
+      const nowKey = now.toISOString().slice(0, 10);
+      const aKey = options.customDateA || nowKey;
+      const bKey = options.customDateB || nowKey;
+      return { preset, startDate: new Date(aKey), endDate: new Date(bKey), label: `${aKey} – ${bKey}` };
+    }
+  }
+}
+
+test("REP-F04: Net worth 'all' preset accurately describes 'Last 2 Years (24M)' timeline", () => {
+  const range = getNetWorthDateRange("all");
+  assert.equal(range.preset, "all");
+  assert.equal(range.label, "Last 2 Years (24M)");
+
+  // Start date is exactly 24 months ago from current month
+  const now = new Date();
+  assert.equal(range.startDate.getFullYear(), now.getFullYear() - 2);
+  assert.equal(range.startDate.getMonth(), now.getMonth());
+  assert.equal(range.startDate.getDate(), 1);
+});

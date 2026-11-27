@@ -34,7 +34,7 @@ const NET_WORTH_PRESETS: Array<{
 }> = [
   { key: "6m", label: "Last 6 Months", desc: "Past 6 calendar months" },
   { key: "1y", label: "Last 1 Year (12M)", desc: "Past 12 calendar months" },
-  { key: "all", label: "All Available History", desc: "Complete historical timeline" },
+  { key: "all", label: "Last 2 Years (24M)", desc: "Past 24 calendar months" },
   { key: "custom", label: "Custom Date Range", desc: "Select custom start and end dates" },
 ];
 

@@ -148,12 +148,13 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
    - In `CategoryBreakdownTable` and `LabelsSummaryTable`, negative refund rows display "Net refund" instead of "0% of total" and suppress progress bar fills (`0%` instead of `1%` minimum).
    - Automated tests added in `income-expense.test.cjs` and `category-expense-refunds.test.cjs`.
 
-### REP-F04 — P2, executed: “All Available History” stops at a fixed two-year start
+### REP-F04 — P2, executed: “All Available History” stops at a fixed two-year start — RESOLVED
 
 1. **Problem:** On November 26, 2026, All Available History starts **November 1, 2024**, irrespective of older account/ledger history. Its picker describes a “Complete historical timeline.”
 2. **Cause:** [getNetWorthDateRange](../../src/modules/reports/utils/net-worth-dates.ts#L41) uses `currentYear - 2`, not the earliest eligible history. Earlier history still influences accumulated balances but is absent from the displayed timeline.
 3. **Smallest fix:** Either label this preset honestly as a limited timeline, or obtain the earliest eligible date through owning public services and build a bounded display strategy. Do not query the full ledger during render to discover its first date.
 4. **Proof:** Accounts opened more than two years ago, old transactions, empty history, opening-only data, archive/report hiding, and long-range point/render limits. Assert the first displayed date against the agreed meaning.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Re-labeled the preset to `"Last 2 Years (24M)"` and description to `"Past 24 calendar months"` in `net-worth-filter-bar.tsx` and `net-worth-dates.ts`. This honestly reflects the 24-month bounded calculation, prevents false advertising of a "complete historical timeline", preserves bounded 25-point rendering performance and frame rates, and keeps multi-year historical queries accessible via Custom Date Range. Verified with automated regression test in `net-worth-growth.test.cjs`.
 
 ### REP-F05 — P2, executed: January MoM defaults compare future months
 

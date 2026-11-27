@@ -45,7 +45,7 @@ export function getNetWorthDateRange(
         preset,
         startDate,
         endDate,
-        label: "All Available History",
+        label: "Last 2 Years (24M)",
       };
     }
 
