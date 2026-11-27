@@ -43,9 +43,10 @@ export function getComparisonDateRange(
     momMonth?: number; // 0-indexed
     customDateA?: string; // YYYY-MM-DD
     customDateB?: string; // YYYY-MM-DD
+    referenceDate?: Date; // Optional for testing with controlled clocks
   } = {},
 ): ComparisonDateRange {
-  const now = new Date();
+  const now = options.referenceDate ?? new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
@@ -71,9 +72,10 @@ export function getComparisonDateRange(
     }
 
     case "mom": {
-      const year = options.momYear ?? currentYear;
+      const defaultPrevDate = new Date(currentYear, currentMonth - 1, 1);
+      const year = options.momYear ?? defaultPrevDate.getFullYear();
       // Default to previous month if today is early in current month, or selected month
-      const month = options.momMonth ?? (currentMonth > 0 ? currentMonth - 1 : 11);
+      const month = options.momMonth ?? defaultPrevDate.getMonth();
       const currMoM = getEndOfMonth(year, month);
       const prevMoM = getEndOfMonth(year, month - 1);
       return {

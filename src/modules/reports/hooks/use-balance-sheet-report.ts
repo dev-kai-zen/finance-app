@@ -59,10 +59,12 @@ export function useBalanceSheetReport() {
 
   // MoM state
   const now = useMemo(() => new Date(), []);
-  const [momYear, setMomYear] = useState<number>(() => now.getFullYear());
-  const [momMonth, setMomMonth] = useState<number>(() =>
-    now.getMonth() > 0 ? now.getMonth() - 1 : 11,
+  const defaultMomDate = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() - 1, 1),
+    [now],
   );
+  const [momYear, setMomYear] = useState<number>(() => defaultMomDate.getFullYear());
+  const [momMonth, setMomMonth] = useState<number>(() => defaultMomDate.getMonth());
 
   // Custom dates state (defaults: 1 month ago vs today)
   const [customDateA, setCustomDateA] = useState<string>(() => {
