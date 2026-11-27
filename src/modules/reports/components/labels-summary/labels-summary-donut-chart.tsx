@@ -55,8 +55,8 @@ export function LabelsSummaryDonutChart({
   const positiveLabels = labels.filter((it) => it.totalMinorUnits > 0);
   const sliceSum = positiveLabels.reduce((acc, it) => acc + it.totalMinorUnits, 0);
 
-  // If no spending or income or no positive slices to chart
-  if (totalMinorUnits <= 0 || positiveLabels.length === 0 || sliceSum <= 0) {
+  // If no transactions exist at all
+  if (labels.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.chartWrapper}>
@@ -78,6 +78,72 @@ export function LabelsSummaryDonutChart({
             <Text style={styles.emptySubLabel}>for this period</Text>
           </View>
         </View>
+      </View>
+    );
+  }
+
+  // If there are transactions but no positive slices (all activity is net-zero or net-negative refunds)
+  if (positiveLabels.length === 0 || sliceSum <= 0) {
+    const subtitle =
+      totalMinorUnits < 0
+        ? "NET REFUND"
+        : totalMinorUnits === 0
+          ? "NET ZERO"
+          : `TOTAL ${mode.toUpperCase()}`;
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.chartWrapper}>
+          <Svg width={SIZE} height={SIZE}>
+            <Circle
+              cx={CENTER}
+              cy={CENTER}
+              r={OUTER_RADIUS - 10}
+              stroke={styles.emptyCircle.borderColor}
+              strokeWidth={20}
+              strokeDasharray="6, 6"
+              fill="none"
+            />
+          </Svg>
+          <View style={styles.centerOverlay} pointerEvents="none">
+            {selectedLabel ? (
+              <>
+                <Text numberOfLines={1} style={styles.centerLabelName}>
+                  {selectedLabel.labelId === "unlabeled"
+                    ? "Unlabeled"
+                    : `#${selectedLabel.labelName}`}
+                </Text>
+                <Text numberOfLines={1} style={styles.centerAmount}>
+                  {formatPrivacyAmount(
+                    formatCurrency(selectedLabel.totalMinorUnits, currencyCode),
+                    isPrivate,
+                  )}
+                </Text>
+                <Text style={styles.centerMeta}>
+                  {selectedLabel.totalMinorUnits < 0
+                    ? "Net refund"
+                    : `${selectedLabel.percentage}% of total`}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.centerTitle}>{subtitle}</Text>
+                <Text numberOfLines={1} style={styles.centerAmount}>
+                  {formatPrivacyAmount(
+                    formatCurrency(totalMinorUnits, currencyCode),
+                    isPrivate,
+                  )}
+                </Text>
+                <Text style={styles.centerMeta}>
+                  {transactionCount} {transactionCount === 1 ? "transaction" : "transactions"}
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+        <Text style={styles.tapTip}>
+          {selectedLabel ? "Tap label again to reset selection" : "Select a label below to inspect"}
+        </Text>
       </View>
     );
   }
@@ -164,7 +230,9 @@ export function LabelsSummaryDonutChart({
                 )}
               </Text>
               <Text style={styles.centerMeta}>
-                {selectedLabel.percentage}% of total
+                {selectedLabel.totalMinorUnits < 0
+                  ? "Net refund"
+                  : `${selectedLabel.percentage}% of total`}
               </Text>
             </>
           ) : (

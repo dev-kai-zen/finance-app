@@ -125,9 +125,15 @@ export function getLabelBreakdown(
 
   const items: LabelBreakdownItem[] = [];
 
+  const positiveTotal = Array.from(map.values())
+    .filter((l) => l.total > 0)
+    .reduce((sum, l) => sum + l.total, 0);
+
   for (const [, data] of map.entries()) {
     const percentage =
-      overallTotal > 0 && data.total > 0 ? (data.total / overallTotal) * 100 : 0;
+      positiveTotal > 0 && data.total > 0
+        ? (data.total / positiveTotal) * 100
+        : 0;
 
     items.push({
       labelId: data.id,

@@ -32,7 +32,8 @@ function aggregateCategoryBreakdown({
     const catName = cat ? cat.name : "Uncategorized";
     const catColor = cat ? cat.hexColorsId : null;
     const catIcon = cat ? cat.icon : (type === "income" ? "wallet" : "tag");
-    const amount = Math.abs(tx.amountMinorUnits);
+    const amount =
+      type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits;
 
     const existing = map.get(catId);
     if (existing) {
@@ -52,9 +53,16 @@ function aggregateCategoryBreakdown({
     overallTxCount += 1;
   }
 
+  const positiveTotal = Array.from(map.values())
+    .filter((c) => c.total > 0)
+    .reduce((sum, c) => sum + c.total, 0);
+
   const items = [];
   for (const [id, data] of map.entries()) {
-    const percentage = overallTotal > 0 ? (data.total / overallTotal) * 100 : 0;
+    const percentage =
+      positiveTotal > 0 && data.total > 0
+        ? (data.total / positiveTotal) * 100
+        : 0;
     items.push({
       categoryId: id,
       categoryName: data.name,
@@ -142,4 +150,85 @@ test("Category breakdown returns empty result when no transactions exist in rang
   assert.equal(result.totalMinorUnits, 0);
   assert.equal(result.transactionCount, 0);
   assert.equal(result.items.length, 0);
+});
+
+test("REP-F03: Category breakdown handles mixed positive expenses and refunds without exceeding 100%", () => {
+  const categories = [
+    { id: "cat-dining", name: "Dining", hexColorsId: "coral", icon: "utensils" },
+    { id: "cat-groceries", name: "Groceries", hexColorsId: "emerald", icon: "shopping-cart" },
+    { id: "cat-electronics", name: "Electronics", hexColorsId: "blue", icon: "tv" },
+  ];
+
+  const transactions = [
+    // Dining: ₱100 expense
+    { id: "tx-1", type: "expense", categoryId: "cat-dining", amountMinorUnits: -10000, occurredAt: "2026-10-01T12:00:00Z" },
+    // Groceries: ₱50 expense
+    { id: "tx-2", type: "expense", categoryId: "cat-groceries", amountMinorUnits: -5000, occurredAt: "2026-10-02T12:00:00Z" },
+    // Electronics: ₱30 refund
+    { id: "tx-3", type: "expense", categoryId: "cat-electronics", amountMinorUnits: 3000, occurredAt: "2026-10-03T12:00:00Z" },
+  ];
+
+  const result = aggregateCategoryBreakdown({
+    type: "expense",
+    startDate: new Date("2026-10-01T00:00:00Z"),
+    endDate: new Date("2026-10-31T23:59:59Z"),
+    transactions,
+    categories,
+  });
+
+  // Net total: 100 + 50 - 30 = 120 (12,000 minor units)
+  assert.equal(result.totalMinorUnits, 12000);
+  assert.equal(result.transactionCount, 3);
+  assert.equal(result.items.length, 3);
+
+  // Positive total is 100 + 50 = 150
+  // Dining: 100 / 150 = 66.7% (NOT 100 / 120 = 83.3%)
+  const dining = result.items.find((i) => i.categoryId === "cat-dining");
+  assert.ok(dining);
+  assert.equal(dining.totalMinorUnits, 10000);
+  assert.equal(dining.percentage, 66.7);
+
+  // Groceries: 50 / 150 = 33.3% (NOT 50 / 120 = 41.7%)
+  const groceries = result.items.find((i) => i.categoryId === "cat-groceries");
+  assert.ok(groceries);
+  assert.equal(groceries.totalMinorUnits, 5000);
+  assert.equal(groceries.percentage, 33.3);
+
+  // Sum of positive percentages is exactly 100% (66.7 + 33.3 = 100)
+  assert.equal(Number((dining.percentage + groceries.percentage).toFixed(1)), 100);
+
+  // Electronics: Net refund -30, percentage 0%
+  const electronics = result.items.find((i) => i.categoryId === "cat-electronics");
+  assert.ok(electronics);
+  assert.equal(electronics.totalMinorUnits, -3000);
+  assert.equal(electronics.percentage, 0);
+});
+
+test("REP-F03: Category breakdown handles net-zero activity with transactions", () => {
+  const categories = [
+    { id: "cat-clothing", name: "Clothing", hexColorsId: "purple", icon: "tag" },
+  ];
+
+  const transactions = [
+    // Purchase: ₱2,500 expense
+    { id: "tx-1", type: "expense", categoryId: "cat-clothing", amountMinorUnits: -250000, occurredAt: "2026-10-01T12:00:00Z" },
+    // Return: ₱2,500 refund
+    { id: "tx-2", type: "expense", categoryId: "cat-clothing", amountMinorUnits: 250000, occurredAt: "2026-10-05T12:00:00Z" },
+  ];
+
+  const result = aggregateCategoryBreakdown({
+    type: "expense",
+    startDate: new Date("2026-10-01T00:00:00Z"),
+    endDate: new Date("2026-10-31T23:59:59Z"),
+    transactions,
+    categories,
+  });
+
+  // Net total is 0, but transaction count is 2
+  assert.equal(result.totalMinorUnits, 0);
+  assert.equal(result.transactionCount, 2);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].totalMinorUnits, 0);
+  assert.equal(result.items[0].transactionCount, 2);
+  assert.equal(result.items[0].percentage, 0);
 });

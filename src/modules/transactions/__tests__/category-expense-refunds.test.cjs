@@ -572,3 +572,48 @@ test("REP-F02: split transactions contribute to category counts and overall dist
 
   sqlite.close();
 });
+
+test("REP-F03: getCategoryBreakdown calculates percentage against positive category spending", () => {
+  const db = setupTestDb();
+  const now = new Date(2026, 10, 15, 12).getTime();
+  const startDate = new Date(2026, 10, 1);
+  const endDate = new Date(2026, 10, 30, 23, 59, 59);
+
+  sqlite.prepare("INSERT INTO accounts (id, name, currency_code, created_at, updated_at) VALUES ('acc_main', 'Cash', 'PHP', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO categories (id, name, type, icon, created_at, updated_at) VALUES ('cat_dining', 'Dining', 'expense', 'utensils', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO categories (id, name, type, icon, created_at, updated_at) VALUES ('cat_electronics', 'Electronics', 'expense', 'tv', ?, ?)").run(now, now);
+
+  // Dining expense: ₱100 (10,000 minor units)
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_dining', 'acc_main', 'cat_dining', 'expense', 'PHP', -10000, ?, ?, ?)
+  `).run(now, now, now);
+
+  // Electronics refund: ₱20 (2,000 minor units)
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_elec_ref', 'acc_main', 'cat_electronics', 'expense', 'PHP', 2000, ?, ?, ?)
+  `).run(now, now, now);
+
+  const { getCategoryBreakdown } = require("../services/get-category-breakdown.service");
+
+  const breakdown = getCategoryBreakdown({ type: "expense", startDate, endDate }, db);
+
+  // Net total: 100 - 20 = 80 PHP (8000 minor units)
+  assert.equal(breakdown.totalMinorUnits, 8000);
+  assert.equal(breakdown.transactionCount, 2);
+
+  // Dining: 100 PHP, percentage should be 100% of positive spending, NOT 125%
+  const diningItem = breakdown.items.find((i) => i.categoryId === "cat_dining");
+  assert.ok(diningItem);
+  assert.equal(diningItem.totalMinorUnits, 10000);
+  assert.equal(diningItem.percentage, 100);
+
+  // Electronics: -20 PHP, percentage should be 0%
+  const elecItem = breakdown.items.find((i) => i.categoryId === "cat_electronics");
+  assert.ok(elecItem);
+  assert.equal(elecItem.totalMinorUnits, -2000);
+  assert.equal(elecItem.percentage, 0);
+
+  sqlite.close();
+});

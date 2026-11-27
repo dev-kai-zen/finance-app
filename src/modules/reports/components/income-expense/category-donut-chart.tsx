@@ -54,8 +54,11 @@ export function CategoryDonutChart({
 
   const selectedCategory = categories.find((c) => c.categoryId === selectedCategoryId);
 
-  // If no spending or income
-  if (totalMinorUnits === 0 || categories.length === 0) {
+  const positiveCategories = categories.filter((c) => c.totalMinorUnits > 0);
+  const positiveSum = positiveCategories.reduce((acc, c) => acc + c.totalMinorUnits, 0);
+
+  // If no transactions exist at all
+  if (categories.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.chartWrapper}>
@@ -81,12 +84,76 @@ export function CategoryDonutChart({
     );
   }
 
-  // Build slices
+  // If there are transactions but no positive spending slices (all activity is net-zero or net-negative refunds)
+  if (positiveCategories.length === 0 || positiveSum <= 0) {
+    const subtitle =
+      totalMinorUnits < 0
+        ? "NET REFUND"
+        : totalMinorUnits === 0
+          ? "NET ZERO"
+          : `TOTAL ${mode.toUpperCase()}`;
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.chartWrapper}>
+          <Svg width={SIZE} height={SIZE}>
+            <Circle
+              cx={CENTER}
+              cy={CENTER}
+              r={OUTER_RADIUS - 10}
+              stroke={styles.emptyCircle.borderColor}
+              strokeWidth={20}
+              strokeDasharray="6, 6"
+              fill="none"
+            />
+          </Svg>
+          <View style={styles.centerOverlay} pointerEvents="none">
+            {selectedCategory ? (
+              <>
+                <Text numberOfLines={1} style={styles.centerCategoryName}>
+                  {selectedCategory.categoryName}
+                </Text>
+                <Text numberOfLines={1} style={styles.centerAmount}>
+                  {formatPrivacyAmount(
+                    formatCurrency(selectedCategory.totalMinorUnits, currencyCode),
+                    isPrivate,
+                  )}
+                </Text>
+                <Text style={styles.centerMeta}>
+                  {selectedCategory.totalMinorUnits < 0
+                    ? "Net refund"
+                    : `${selectedCategory.percentage}% of total`}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.centerTitle}>{subtitle}</Text>
+                <Text numberOfLines={1} style={styles.centerAmount}>
+                  {formatPrivacyAmount(
+                    formatCurrency(totalMinorUnits, currencyCode),
+                    isPrivate,
+                  )}
+                </Text>
+                <Text style={styles.centerMeta}>
+                  {transactionCount} {transactionCount === 1 ? "transaction" : "transactions"}
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+        <Text style={styles.tapTip}>
+          {selectedCategory ? "Tap category again to reset selection" : "Select a category below to inspect"}
+        </Text>
+      </View>
+    );
+  }
+
+  // Build slices from positive categories
   // Total angle is 2 * PI
   let currentAngle = -Math.PI / 2; // Start from top (12 o'clock)
 
-  const slices = categories.map((cat, idx) => {
-    const fraction = totalMinorUnits > 0 ? cat.totalMinorUnits / totalMinorUnits : 0;
+  const slices = positiveCategories.map((cat, idx) => {
+    const fraction = positiveSum > 0 ? cat.totalMinorUnits / positiveSum : 0;
     const angleSpan = fraction * 2 * Math.PI;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angleSpan;
@@ -110,7 +177,7 @@ export function CategoryDonutChart({
       effectiveOuterRadius,
       startAngle,
       endAngle,
-      categories.length > 1 ? 0.02 : 0, // tiny gap if multiple slices
+      positiveCategories.length > 1 ? 0.02 : 0, // tiny gap if multiple slices
     );
 
     return {
@@ -157,7 +224,9 @@ export function CategoryDonutChart({
                 )}
               </Text>
               <Text style={styles.centerMeta}>
-                {selectedCategory.percentage}% of total
+                {selectedCategory.totalMinorUnits < 0
+                  ? "Net refund"
+                  : `${selectedCategory.percentage}% of total`}
               </Text>
             </>
           ) : (

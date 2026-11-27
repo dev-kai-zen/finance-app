@@ -140,9 +140,15 @@ export function getCategoryBreakdown(
 
   const items: CategoryBreakdownItem[] = [];
 
+  const positiveTotal = Array.from(map.values())
+    .filter((c) => c.total > 0)
+    .reduce((sum, c) => sum + c.total, 0);
+
   for (const [id, data] of map.entries()) {
     const percentage =
-      overallTotal > 0 && data.total > 0 ? (data.total / overallTotal) * 100 : 0;
+      positiveTotal > 0 && data.total > 0
+        ? (data.total / positiveTotal) * 100
+        : 0;
 
     items.push({
       categoryId: id,

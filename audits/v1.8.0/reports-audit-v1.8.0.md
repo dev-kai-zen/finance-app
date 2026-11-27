@@ -135,12 +135,18 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 4. **Proof:** Split-only, mixed unsplit/split, repeated same-category allocations, split refunds, and multiple categories. Overall counts must not sum per-category memberships. Retain signed amount and budget/category parity tests.
 5. **Resolution (November 27, 2026):** **RESOLVED.** Updated `get-category-breakdown.service.ts` to derive overall transaction count from distinct contributing parent transactions (`distinctTxIds.size`). Used `seenCategoryTx` set (`${catId}:${row.transactionId}`) to track distinct contributing transactions per category without inflating counts for multiple split entries within the same category. Verified with automated SQLite regression test in `category-expense-refunds.test.cjs`.
 
-### REP-F03 — P2, source-confirmed: Signed category results do not fit the donut/empty contract
+### REP-F03 — P2, source-confirmed: Signed category results do not fit the donut/empty contract — RESOLVED
 
 1. **Problem:** Valid refunds can make a category negative or total zero despite activity. The UI says “No expenses” at zero; with one 100 expense category and another -20 refund category, positive slice fraction is 1.25 and negative fraction -0.25.
 2. **Cause:** [CategoryDonutChart](../../src/modules/reports/components/income-expense/category-donut-chart.tsx#L58) treats zero total as empty and builds arcs directly from signed amount/total. Backend percentages clamp negative categories to zero. Labels needs the same decision after REP-F01.
 3. **Smallest fix:** Agree a truthful signed/zero-activity presentation, then adapt the existing chart/empty state while preserving exact net amounts in the table. Do not discard refund rows or convert net totals back to absolute values.
 4. **Proof:** Actual returned signed data fed to chart handlers for refund-only, zero-net/nonempty, mixed negative/positive, all-positive, income reversal, and selections. Native geometry and accessible descriptions still require device checks.
+5. **Resolution (November 27, 2026):** **RESOLVED.**
+   - In `get-category-breakdown.service.ts` and `get-label-breakdown.service.ts`, calculated category/label percentages relative to gross positive spending (`positiveTotal`), ensuring positive shares sum to 100% without exceeding 100% when refunds reduce net total.
+   - In `CategoryDonutChart` and `LabelsSummaryDonutChart`, isolated positive slices (`positiveCategories`) with slice angles proportional to `positiveSum`, eliminating negative or $>360^\circ$ SVG arcs.
+   - Separated the truly empty state (`categories.length === 0`) from active net-zero and net-negative periods (`positiveSum <= 0`), rendering a neutral ring with truthful center cutout details (`NET ZERO` or `NET REFUND`, exact signed amount, and transaction counts).
+   - In `CategoryBreakdownTable` and `LabelsSummaryTable`, negative refund rows display "Net refund" instead of "0% of total" and suppress progress bar fills (`0%` instead of `1%` minimum).
+   - Automated tests added in `income-expense.test.cjs` and `category-expense-refunds.test.cjs`.
 
 ### REP-F04 — P2, executed: “All Available History” stops at a fixed two-year start
 

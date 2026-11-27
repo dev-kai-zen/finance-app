@@ -182,7 +182,7 @@ export function LabelsSummaryTable({
                     style={[
                       styles.progressBarFill,
                       {
-                        width: `${Math.min(100, Math.max(1, item.percentage))}%`,
+                        width: `${item.totalMinorUnits > 0 ? Math.min(100, Math.max(1, item.percentage)) : 0}%`,
                         backgroundColor: color,
                       },
                     ]}
@@ -191,7 +191,9 @@ export function LabelsSummaryTable({
 
                 <View style={styles.metaRow}>
                   <Text style={styles.percentageText}>
-                    {item.percentage}% of total
+                    {item.totalMinorUnits < 0
+                      ? "Net refund"
+                      : `${item.percentage}% of total`}
                   </Text>
                   <Text style={styles.countText}>
                     {item.transactionCount}{" "}
