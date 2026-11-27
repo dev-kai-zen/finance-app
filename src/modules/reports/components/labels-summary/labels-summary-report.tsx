@@ -6,7 +6,7 @@ import { IncomeExpenseFilterBar } from "../income-expense/income-expense-filter-
 import { LabelsSummaryDonutChart } from "./labels-summary-donut-chart";
 import { LabelsSummaryTable } from "./labels-summary-table";
 
-export function LabelsSummaryReport() {
+export function LabelsSummaryReport(props?: { skipQuery?: boolean }) {
   const {
     mode,
     setMode,
@@ -23,7 +23,7 @@ export function LabelsSummaryReport() {
     reportLoading,
     selectedLabelId,
     setSelectedLabelId,
-  } = useLabelsSummaryReport();
+  } = useLabelsSummaryReport({ skipQuery: props?.skipQuery });
 
   return (
     <View style={styles.container}>

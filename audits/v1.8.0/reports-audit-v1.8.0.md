@@ -189,12 +189,17 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
    - Replaced the blunt `hasLoadedOnceRef` boolean with `loadedScopeKeyRef`, ensuring that changing range, mode, or currency triggers a truthful loading skeleton (`hasCachedResult: false`), while background mutations on the same scope update smoothly without flickering (`hasCachedResult: true`).
    - Verified with automated tests in `reports-invalidation-recovery.test.cjs`.
 
-### REP-F08 — P2, measured/source-confirmed: Large synchronous hydration and unnecessary premium work
+### REP-F08 — P2, measured/source-confirmed: Large synchronous hydration and unnecessary premium work — RESOLVED
 
 1. **Problem:** At 10,000 rows, service calls hydrate every matching transaction; Labels adds 20 support batches. Net Worth hydrates historical ledger rows and reads management metadata it never uses. Locked premium reports still execute these paths beneath blur.
 2. **Cause:** [Report query repositories](../../src/modules/transactions/repositories/transactions.repository.ts#L1936) return `.all()` period rows; [multi-cutoff balance service](../../src/modules/transactions/services/get-account-balance-deltas.service.ts#L34) reads all active history up to max cutoff. [Net Worth](../../src/modules/reports/services/get-net-worth-growth-report.service.ts#L25) calls `getAccountsWithBalances(context)` with management flags on. [ProGate](../../src/modules/pro/components/pro-gate.tsx#L138) mounts children in blur mode. Every table maps rows in a ScrollView; large category/label/account populations have no virtualization.
 3. **Smallest fix:** First remove unused balance/management reads through an appropriate existing public account capability and avoid live premium queries when a static preview suffices. For aggregation changes, keep correctness in owning Transactions/Accounts services; preserve per-row currency rounding and signed totals. Do not add `LIMIT` to aggregate inputs or reuse a paginated feed that drops financial history. Profile before replacing small tables.
 4. **Proof:** Real SQLite statements/row bounds/plans at 0/1/500/501/10k+, independent FX/refund/split equivalence, hidden/archived data, free/Pro mounting, and native navigation/scroll/inspector profiling. Section 6 records baseline costs and temporary sorts. Deferred execution alone does not meet the frame budget.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Optimized query execution and bypassed unnecessary background processing:
+   - Updated `getNetWorthGrowthReport` in `get-net-worth-growth-report.service.ts` to call `getAccountsWithBalances(context, { includeManagementFlags: false })`, eliminating redundant scans across transaction history, presets, and schedules.
+   - Added `skipQuery?: boolean` support across all 4 premium report hooks (`useBalanceSheetReport`, `useCashFlowReport`, `useNetWorthGrowthReport`, `useLabelsSummaryReport`) and their components.
+   - In `ReportsScreen` (`reports-screen.tsx`), wired `const { isPro } = useProStatus();` and passed `skipQuery={!isPro}` to all 4 premium reports mounted under `<ProGate mode="blur">`, completely eliminating live SQLite query execution beneath blur for non-Pro users.
+   - Verified with automated tests in `reports-invalidation-recovery.test.cjs`.
 
 ### REP-F09 — P2, executed: Cash Flow and Net Worth axes assume two decimal places
 

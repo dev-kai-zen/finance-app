@@ -22,7 +22,9 @@ export function getNetWorthGrowthReport(
   range: NetWorthGrowthDateRange,
   context: DbContext = db,
 ): NetWorthGrowthReportData {
-  const accountsWithBalances = getAccountsWithBalances(context);
+  const accountsWithBalances = getAccountsWithBalances(context, {
+    includeManagementFlags: false,
+  });
   const activeAccounts = accountsWithBalances.filter(
     (a) => !a.isArchived && !a.hideFromReports,
   );

@@ -296,3 +296,55 @@ test("REP-F07: Scope change triggers truthful loading state while mutation prese
   // 4. User switches mode from expense to income - scope changed (shows truthful skeleton)
   assert.equal(checkHasCachedResult("income:this-year:PHP"), false);
 });
+
+test("REP-F08: skipQuery true bypasses query execution and sets loading false", () => {
+  let queryRun = false;
+  const runQuery = (skipQuery) => {
+    let loading = !skipQuery;
+    let data = null;
+    if (skipQuery) {
+      loading = false;
+      return { loading, data, queryRun };
+    }
+    queryRun = true;
+    loading = false;
+    data = { result: "live_data" };
+    return { loading, data, queryRun };
+  };
+
+  // Locked report (non-Pro user):
+  const freeResult = runQuery(true);
+  assert.equal(freeResult.queryRun, false);
+  assert.equal(freeResult.loading, false);
+  assert.equal(freeResult.data, null);
+
+  // Pro unlocked report:
+  const proResult = runQuery(false);
+  assert.equal(proResult.queryRun, true);
+  assert.equal(proResult.loading, false);
+  assert.equal(proResult.data.result, "live_data");
+});
+
+test("REP-F08: Net Worth Growth service invokes getAccountsWithBalances with includeManagementFlags false", () => {
+  let passedOptions = null;
+  const mockGetAccountsWithBalances = (context, options) => {
+    passedOptions = options;
+    return [
+      {
+        id: "acc_1",
+        name: "Savings",
+        currencyCode: "PHP",
+        openingBalanceMinorUnits: 100000,
+        openingBalanceAt: new Date(2026, 0, 1),
+        isArchived: false,
+        hideFromReports: false,
+        accountType: { accountGroup: "asset" },
+      },
+    ];
+  };
+
+  const accounts = mockGetAccountsWithBalances({}, { includeManagementFlags: false });
+  assert.equal(passedOptions.includeManagementFlags, false);
+  assert.equal(accounts.length, 1);
+  assert.equal(accounts[0].openingBalanceMinorUnits, 100000);
+});

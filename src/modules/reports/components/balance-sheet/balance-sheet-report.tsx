@@ -5,7 +5,7 @@ import { useBalanceSheetReport } from "../../hooks/use-balance-sheet-report";
 import { BalanceSheetFilterBar } from "./balance-sheet-filter-bar";
 import { BalanceSheetTable } from "./balance-sheet-table";
 
-export function BalanceSheetReport() {
+export function BalanceSheetReport(props?: { skipQuery?: boolean }) {
   const {
     preset,
     setPreset,
@@ -27,7 +27,7 @@ export function BalanceSheetReport() {
     toggleExpanded,
     expandAll,
     collapseAll,
-  } = useBalanceSheetReport();
+  } = useBalanceSheetReport({ skipQuery: props?.skipQuery });
 
   return (
     <View style={styles.container}>

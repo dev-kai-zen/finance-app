@@ -8,7 +8,7 @@ import { CashFlowFilterBar } from "./cash-flow-filter-bar";
 import { CashFlowSummaryCards } from "./cash-flow-summary-cards";
 import { CashFlowTable } from "./cash-flow-table";
 
-export function CashFlowReport() {
+export function CashFlowReport(props?: { skipQuery?: boolean }) {
   const {
     preset,
     setPreset,
@@ -23,7 +23,7 @@ export function CashFlowReport() {
     reportLoading,
     selectedPeriodKey,
     setSelectedPeriodKey,
-  } = useCashFlowReport();
+  } = useCashFlowReport({ skipQuery: props?.skipQuery });
 
   return (
     <View style={styles.container}>

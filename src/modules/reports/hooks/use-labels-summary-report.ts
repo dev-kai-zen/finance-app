@@ -29,7 +29,8 @@ const EMPTY_LABELS_REPORT: LabelsSummaryReportData = {
   labels: [],
 };
 
-export function useLabelsSummaryReport() {
+export function useLabelsSummaryReport(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery === true;
   const { preferences } = useCurrencyPreferences();
   const [mode, setMode] = useState<IncomeExpenseMode>("expense");
   const [preset, setPreset] = useState<IncomeExpensePeriodPreset>("this-month");
@@ -43,7 +44,7 @@ export function useLabelsSummaryReport() {
 
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   const [data, setData] = useState<LabelsSummaryReportData>(EMPTY_LABELS_REPORT);
-  const [reportLoading, setReportLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
   const cancelPendingRef = useRef<(() => void) | null>(null);
   const requestIdRef = useRef(0);
@@ -67,6 +68,10 @@ export function useLabelsSummaryReport() {
 
   const refresh = useCallback(() => {
     cancelPending();
+    if (skipQuery) {
+      setReportLoading(false);
+      return;
+    }
     const requestId = ++requestIdRef.current;
     const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
 
@@ -95,16 +100,18 @@ export function useLabelsSummaryReport() {
   }, [cancelPending, currentScopeKey, mode, range, preferences.defaultCurrency]);
 
   useEffect(() => {
-    refresh();
+    if (!skipQuery) {
+      refresh();
+    }
     return () => {
       cancelPending();
     };
-  }, [refresh, cancelPending]);
+  }, [refresh, cancelPending, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      if (isDirtyRef.current) {
+      if (!skipQuery && isDirtyRef.current) {
         isDirtyRef.current = false;
         refresh();
       }
@@ -112,13 +119,14 @@ export function useLabelsSummaryReport() {
         isFocusedRef.current = false;
         cancelPending();
       };
-    }, [cancelPending, refresh]),
+    }, [cancelPending, refresh, skipQuery]),
   );
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
       "FINANCE_APP_TRANSACTION_MUTATED",
       () => {
+        if (skipQuery) return;
         if (!isFocusedRef.current) {
           isDirtyRef.current = true;
           return;
@@ -127,7 +135,7 @@ export function useLabelsSummaryReport() {
       },
     );
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, skipQuery]);
 
   return {
     mode,

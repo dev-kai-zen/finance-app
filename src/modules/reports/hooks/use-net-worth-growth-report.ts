@@ -28,7 +28,8 @@ const EMPTY_NET_WORTH_REPORT: NetWorthGrowthReportData = {
   points: [],
 };
 
-export function useNetWorthGrowthReport() {
+export function useNetWorthGrowthReport(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery === true;
   const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<NetWorthGrowthPreset>("1y");
 
@@ -41,7 +42,7 @@ export function useNetWorthGrowthReport() {
 
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [data, setData] = useState<NetWorthGrowthReportData>(EMPTY_NET_WORTH_REPORT);
-  const [reportLoading, setReportLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
   const cancelPendingRef = useRef<(() => void) | null>(null);
   const requestIdRef = useRef(0);
@@ -65,6 +66,10 @@ export function useNetWorthGrowthReport() {
 
   const refresh = useCallback(() => {
     cancelPending();
+    if (skipQuery) {
+      setReportLoading(false);
+      return;
+    }
     const requestId = ++requestIdRef.current;
     const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
 
@@ -93,16 +98,18 @@ export function useNetWorthGrowthReport() {
   }, [cancelPending, currentScopeKey, range, preferences.defaultCurrency]);
 
   useEffect(() => {
-    refresh();
+    if (!skipQuery) {
+      refresh();
+    }
     return () => {
       cancelPending();
     };
-  }, [refresh, cancelPending]);
+  }, [refresh, cancelPending, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      if (isDirtyRef.current) {
+      if (!skipQuery && isDirtyRef.current) {
         isDirtyRef.current = false;
         refresh();
       }
@@ -110,13 +117,14 @@ export function useNetWorthGrowthReport() {
         isFocusedRef.current = false;
         cancelPending();
       };
-    }, [cancelPending, refresh]),
+    }, [cancelPending, refresh, skipQuery]),
   );
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
       "FINANCE_APP_TRANSACTION_MUTATED",
       () => {
+        if (skipQuery) return;
         if (!isFocusedRef.current) {
           isDirtyRef.current = true;
           return;
@@ -125,7 +133,7 @@ export function useNetWorthGrowthReport() {
       },
     );
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, skipQuery]);
 
   return {
     preset,

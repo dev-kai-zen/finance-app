@@ -51,7 +51,8 @@ const EMPTY_BALANCE_SHEET: BalanceSheetComparisonData = {
   },
 };
 
-export function useBalanceSheetReport() {
+export function useBalanceSheetReport(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery === true;
   const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<ComparisonPreset>("prev-vs-today");
   const [hideZeroBalances, setHideZeroBalances] = useState<boolean>(true);
@@ -81,7 +82,7 @@ export function useBalanceSheetReport() {
   const [hasInitializedExpansion, setHasInitializedExpansion] = useState(false);
   const [data, setData] =
     useState<BalanceSheetComparisonData>(EMPTY_BALANCE_SHEET);
-  const [reportLoading, setReportLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
   const cancelPendingRef = useRef<(() => void) | null>(null);
   const requestIdRef = useRef(0);
@@ -108,6 +109,10 @@ export function useBalanceSheetReport() {
 
   const refresh = useCallback(() => {
     cancelPending();
+    if (skipQuery) {
+      setReportLoading(false);
+      return;
+    }
     const requestId = ++requestIdRef.current;
     const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
 
@@ -142,16 +147,18 @@ export function useBalanceSheetReport() {
   ]);
 
   useEffect(() => {
-    refresh();
+    if (!skipQuery) {
+      refresh();
+    }
     return () => {
       cancelPending();
     };
-  }, [refresh, cancelPending]);
+  }, [refresh, cancelPending, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      if (isDirtyRef.current) {
+      if (!skipQuery && isDirtyRef.current) {
         isDirtyRef.current = false;
         refresh();
       }
@@ -159,13 +166,14 @@ export function useBalanceSheetReport() {
         isFocusedRef.current = false;
         cancelPending();
       };
-    }, [cancelPending, refresh]),
+    }, [cancelPending, refresh, skipQuery]),
   );
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
       "FINANCE_APP_TRANSACTION_MUTATED",
       () => {
+        if (skipQuery) return;
         if (!isFocusedRef.current) {
           isDirtyRef.current = true;
           return;
@@ -174,7 +182,7 @@ export function useBalanceSheetReport() {
       },
     );
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, skipQuery]);
 
   // Initial expansion: Expand all (including pockets) by default
   useEffect(() => {

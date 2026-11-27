@@ -11,7 +11,7 @@ import { NetWorthGrowthChart } from "./net-worth-growth-chart";
 import { NetWorthHistoryTable } from "./net-worth-history-table";
 import { NetWorthSummaryCards } from "./net-worth-summary-cards";
 
-export function NetWorthGrowthReport() {
+export function NetWorthGrowthReport(props?: { skipQuery?: boolean }) {
   const {
     preset,
     setPreset,
@@ -26,7 +26,7 @@ export function NetWorthGrowthReport() {
     reportLoading,
     selectedPointIndex,
     setSelectedPointIndex,
-  } = useNetWorthGrowthReport();
+  } = useNetWorthGrowthReport({ skipQuery: props?.skipQuery });
 
   const [inspectModalVisible, setInspectModalVisible] = useState(false);
   const { preferences } = useCurrencyPreferences();

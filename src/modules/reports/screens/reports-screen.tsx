@@ -12,7 +12,7 @@ import { useHeaderWalkthroughAction } from "@/components/app-shell-header-contex
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { ProGate } from "@/modules/pro";
+import { ProGate, useProStatus } from "@/modules/pro";
 import { AnchoredAdDock } from "@/modules/ads";
 import { logTelemetryEvent } from "@/infrastructure/telemetry";
 import {
@@ -46,6 +46,7 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPro } = useProStatus();
   const [activeTab, setActiveTab] = useState<ReportTabKey>(
     () => props?.initialTab ?? "income-expense",
   );
@@ -150,25 +151,25 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
 
             {activeTab === "balance-sheet" ? (
               <ProGate mode="blur">
-                <BalanceSheetReport />
+                <BalanceSheetReport skipQuery={!isPro} />
               </ProGate>
             ) : null}
 
             {activeTab === "cash-flow" ? (
               <ProGate mode="blur">
-                <CashFlowReport />
+                <CashFlowReport skipQuery={!isPro} />
               </ProGate>
             ) : null}
 
             {activeTab === "net-worth" ? (
               <ProGate mode="blur">
-                <NetWorthGrowthReport />
+                <NetWorthGrowthReport skipQuery={!isPro} />
               </ProGate>
             ) : null}
 
             {activeTab === "labels-summary" ? (
               <ProGate mode="blur">
-                <LabelsSummaryReport />
+                <LabelsSummaryReport skipQuery={!isPro} />
               </ProGate>
             ) : null}
           </>

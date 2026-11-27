@@ -27,7 +27,8 @@ const EMPTY_CASH_FLOW_REPORT: CashFlowReportData = {
   periods: [],
 };
 
-export function useCashFlowReport() {
+export function useCashFlowReport(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery === true;
   const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<CashFlowPeriodPreset>("6m");
 
@@ -40,7 +41,7 @@ export function useCashFlowReport() {
 
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string | null>(null);
   const [data, setData] = useState<CashFlowReportData>(EMPTY_CASH_FLOW_REPORT);
-  const [reportLoading, setReportLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
   const cancelPendingRef = useRef<(() => void) | null>(null);
   const requestIdRef = useRef(0);
@@ -64,6 +65,10 @@ export function useCashFlowReport() {
 
   const refresh = useCallback(() => {
     cancelPending();
+    if (skipQuery) {
+      setReportLoading(false);
+      return;
+    }
     const requestId = ++requestIdRef.current;
     const hasCachedResult = loadedScopeKeyRef.current === currentScopeKey;
 
@@ -92,16 +97,18 @@ export function useCashFlowReport() {
   }, [cancelPending, currentScopeKey, range, preferences.defaultCurrency]);
 
   useEffect(() => {
-    refresh();
+    if (!skipQuery) {
+      refresh();
+    }
     return () => {
       cancelPending();
     };
-  }, [refresh, cancelPending]);
+  }, [refresh, cancelPending, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      if (isDirtyRef.current) {
+      if (!skipQuery && isDirtyRef.current) {
         isDirtyRef.current = false;
         refresh();
       }
@@ -109,13 +116,14 @@ export function useCashFlowReport() {
         isFocusedRef.current = false;
         cancelPending();
       };
-    }, [cancelPending, refresh]),
+    }, [cancelPending, refresh, skipQuery]),
   );
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
       "FINANCE_APP_TRANSACTION_MUTATED",
       () => {
+        if (skipQuery) return;
         if (!isFocusedRef.current) {
           isDirtyRef.current = true;
           return;
@@ -124,7 +132,7 @@ export function useCashFlowReport() {
       },
     );
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, skipQuery]);
 
   return {
     preset,
