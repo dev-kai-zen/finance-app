@@ -51,11 +51,11 @@ export function LabelsSummaryTable({
   }
 
   const labeledPct =
-    totalMinorUnits > 0
+    totalMinorUnits > 0 && labeledMinorUnits > 0
       ? Number(((labeledMinorUnits / totalMinorUnits) * 100).toFixed(1))
       : 0;
   const unlabeledPct =
-    totalMinorUnits > 0
+    totalMinorUnits > 0 && unlabeledMinorUnits > 0
       ? Number(((unlabeledMinorUnits / totalMinorUnits) * 100).toFixed(1))
       : 0;
 

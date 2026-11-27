@@ -119,12 +119,13 @@ Separate FX fixture: USD **100** minor at PHP 50/USD, JPY **100** units at PHP 0
 
 P1 = materially incorrect financial results. P2 = incorrect counts/date/display behavior, recovery, performance, privacy, localization, or layout. P3 = localized architecture issue. **None is fixed by this audit.** Each entry supplies the four-question gate for a future surgical change; policy-dependent items require the stated contract settled first.
 
-### REP-F01 — P1, executed: Labels Summary inflates refunds and reversals
+### REP-F01 — P1, executed: Labels Summary inflates refunds and reversals — RESOLVED
 
 1. **Problem:** Fixture shows spending 171,000 instead of 131,000 and earnings 210,000 instead of 190,000. Reports views disagree on the same records.
 2. **Cause:** [getLabelBreakdown](../../src/modules/transactions/services/get-label-breakdown.service.ts#L98) converts `Math.abs(tx.amountMinorUnits)` for every matching row. [getLabelsSummaryReport](../../src/modules/reports/services/get-labels-summary-report.service.ts) forwards it unchanged.
 3. **Smallest fix:** Transactions owns the signed net calculation; align expense/income direction with its category service. Preserve unique-transaction totals and overlapping label membership. No new abstraction is needed. Define signed chart behavior alongside REP-F03 before changing chart data.
 4. **Proof:** Actual report-service SQLite tests for ordinary/refund/reversal, refund-only/net-zero, labeled/unlabeled/multi-label, splits, fees, deleted rows, dates, and 0/2/3-decimal FX; assert totals and each row independently. Check other `getLabelBreakdown` consumers.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Replaced `Math.abs(tx.amountMinorUnits)` in `get-label-breakdown.service.ts` with directional signed magnitude (`query.type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits`), matching `get-category-breakdown.service.ts`. Guarded percentage calculation (`overallTotal > 0 && data.total > 0`) and filtered non-positive slices in `labels-summary-donut-chart.tsx` and `labels-summary-table.tsx`. Verified with automated SQLite regression test in `category-expense-refunds.test.cjs` and unit tests in `labels-summary.test.cjs`.
 
 ### REP-F02 — P2, executed: Split transactions contribute money but zero counts
 

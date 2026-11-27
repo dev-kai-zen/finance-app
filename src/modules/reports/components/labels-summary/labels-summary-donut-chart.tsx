@@ -52,8 +52,11 @@ export function LabelsSummaryDonutChart({
 
   const selectedLabel = labels.find((l) => l.labelId === selectedLabelId);
 
-  // If no spending or income
-  if (totalMinorUnits === 0 || labels.length === 0) {
+  const positiveLabels = labels.filter((it) => it.totalMinorUnits > 0);
+  const sliceSum = positiveLabels.reduce((acc, it) => acc + it.totalMinorUnits, 0);
+
+  // If no spending or income or no positive slices to chart
+  if (totalMinorUnits <= 0 || positiveLabels.length === 0 || sliceSum <= 0) {
     return (
       <View style={styles.container}>
         <View style={styles.chartWrapper}>
@@ -79,12 +82,10 @@ export function LabelsSummaryDonutChart({
     );
   }
 
-  const sliceSum = labels.reduce((acc, it) => acc + it.totalMinorUnits, 0);
-
   // Build slices
   let currentAngle = -Math.PI / 2; // Start from top (12 o'clock)
 
-  const slices = labels.map((item, idx) => {
+  const slices = positiveLabels.map((item, idx) => {
     const fraction = sliceSum > 0 ? item.totalMinorUnits / sliceSum : 0;
     const angleSpan = fraction * 2 * Math.PI;
     const startAngle = currentAngle;
@@ -114,7 +115,7 @@ export function LabelsSummaryDonutChart({
       effectiveOuterRadius,
       startAngle,
       endAngle,
-      labels.length > 1 ? 0.02 : 0, // tiny gap if multiple slices
+      positiveLabels.length > 1 ? 0.02 : 0, // tiny gap if multiple slices
     );
 
     return {

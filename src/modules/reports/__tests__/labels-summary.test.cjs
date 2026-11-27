@@ -56,7 +56,9 @@ function aggregateLabelBreakdown({
     const txTime = new Date(tx.occurredAt).getTime();
     if (txTime < startTime || txTime > endTime) continue;
 
-    const amount = Math.abs(tx.amountMinorUnits);
+    const signedMagnitude =
+      type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits;
+    const amount = signedMagnitude;
     overallTotal += amount;
     overallTxCount += 1;
 
@@ -79,7 +81,8 @@ function aggregateLabelBreakdown({
 
   const items = [];
   for (const [, data] of map.entries()) {
-    const percentage = overallTotal > 0 ? (data.total / overallTotal) * 100 : 0;
+    const percentage =
+      overallTotal > 0 && data.total > 0 ? (data.total / overallTotal) * 100 : 0;
     items.push({
       labelId: data.id,
       labelName: data.name,
@@ -244,4 +247,72 @@ test("Labels summary returns empty result when no transactions exist in range", 
   assert.equal(result.labeledTransactionCount, 0);
   assert.equal(result.unlabeledTransactionCount, 0);
   assert.equal(result.items.length, 0);
+});
+
+test("REP-F01: Labels summary nets expense refunds instead of inflating them", () => {
+  const labels = [
+    { id: "lbl-work", name: "Work", color: "#10B981" },
+  ];
+
+  const transactions = [
+    // Expense: 1000 PHP (-100000 minor units) tagged Work
+    { id: "tx-1", type: "expense", amountMinorUnits: -100000, occurredAt: "2026-10-05T09:00:00Z" },
+    // Refund: 200 PHP (+20000 minor units) tagged Work
+    { id: "tx-2", type: "expense", amountMinorUnits: 20000, occurredAt: "2026-10-10T14:00:00Z" },
+  ];
+
+  const transactionLabels = [
+    { transactionId: "tx-1", labelId: "lbl-work" },
+    { transactionId: "tx-2", labelId: "lbl-work" },
+  ];
+
+  const result = aggregateLabelBreakdown({
+    type: "expense",
+    startDate: new Date("2026-10-01T00:00:00Z"),
+    endDate: new Date("2026-10-31T23:59:59Z"),
+    transactions,
+    transactionLabels,
+    labels,
+  });
+
+  // Net: 1000 - 200 = 800 PHP (80000 minor units), NOT 120000
+  assert.equal(result.totalMinorUnits, 80000, "Total expense must net to 80000, not 120000");
+  assert.equal(result.labeledMinorUnits, 80000);
+  assert.equal(result.transactionCount, 2);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].labelName, "Work");
+  assert.equal(result.items[0].totalMinorUnits, 80000);
+  assert.equal(result.items[0].percentage, 100);
+});
+
+test("REP-F01: Labels summary nets income reversals instead of inflating them", () => {
+  const labels = [
+    { id: "lbl-salary", name: "Salary", color: "#3B82F6" },
+  ];
+
+  const transactions = [
+    // Income: 2000 PHP (+200000 minor units) tagged Salary
+    { id: "tx-1", type: "income", amountMinorUnits: 200000, occurredAt: "2026-10-05T09:00:00Z" },
+    // Reversal / deduction: -100 PHP (-10000 minor units) tagged Salary
+    { id: "tx-2", type: "income", amountMinorUnits: -10000, occurredAt: "2026-10-10T14:00:00Z" },
+  ];
+
+  const transactionLabels = [
+    { transactionId: "tx-1", labelId: "lbl-salary" },
+    { transactionId: "tx-2", labelId: "lbl-salary" },
+  ];
+
+  const result = aggregateLabelBreakdown({
+    type: "income",
+    startDate: new Date("2026-10-01T00:00:00Z"),
+    endDate: new Date("2026-10-31T23:59:59Z"),
+    transactions,
+    transactionLabels,
+    labels,
+  });
+
+  // Net: 2000 - 100 = 1900 PHP (190000 minor units), NOT 210000
+  assert.equal(result.totalMinorUnits, 190000, "Total income must net to 190000, not 210000");
+  assert.equal(result.items[0].totalMinorUnits, 190000);
+  assert.equal(result.items[0].percentage, 100);
 });

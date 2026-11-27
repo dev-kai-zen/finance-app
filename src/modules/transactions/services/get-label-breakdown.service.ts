@@ -96,8 +96,10 @@ export function getLabelBreakdown(
   };
 
   for (const { transaction: tx, accountCurrencyCode } of rows) {
+    const signedMagnitude =
+      query.type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits;
     const amount = convertCurrencyMinorUnits(
-      Math.abs(tx.amountMinorUnits),
+      signedMagnitude,
       accountCurrencyCode,
       homeCurrency,
       ratesMap,
@@ -125,7 +127,7 @@ export function getLabelBreakdown(
 
   for (const [, data] of map.entries()) {
     const percentage =
-      overallTotal > 0 ? (data.total / overallTotal) * 100 : 0;
+      overallTotal > 0 && data.total > 0 ? (data.total / overallTotal) * 100 : 0;
 
     items.push({
       labelId: data.id,

@@ -196,6 +196,21 @@ function setupTestDb() {
       value TEXT NOT NULL,
       updated_at INTEGER NOT NULL
     );
+    CREATE TABLE labels (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      color TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_archived INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE transaction_labels (
+      transaction_id TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+      label_id TEXT NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (transaction_id, label_id)
+    );
   `);
 
   database = drizzle(
@@ -405,6 +420,84 @@ test("B05: income reversal/refund in getCategoryBreakdown accurately nets revenu
   assert.ok(salaryItem);
   assert.equal(salaryItem.totalMinorUnits, 80000, "Salary net income should be 80000, not 120000");
   assert.equal(breakdown.totalMinorUnits, 80000);
+
+  sqlite.close();
+});
+
+test("REP-F01: getLabelBreakdown accurately nets expense refunds and income reversals in SQLite", () => {
+  const db = setupTestDb();
+  const now = new Date(2026, 10, 15, 12).getTime();
+  const startDate = new Date(2026, 10, 1);
+  const endDate = new Date(2026, 10, 30, 23, 59, 59);
+
+  sqlite.prepare("INSERT INTO accounts (id, name, currency_code, created_at, updated_at) VALUES ('acc_main', 'Cash', 'PHP', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO labels (id, name, color, created_at, updated_at) VALUES ('lbl_work', 'Work', '#10B981', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO labels (id, name, color, created_at, updated_at) VALUES ('lbl_travel', 'Travel', '#3B82F6', ?, ?)").run(now, now);
+
+  // Expense 1: 1000 PHP (-100000 minor units) tagged Work & Travel
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_exp_work_1', 'acc_main', 'expense', 'PHP', -100000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare("INSERT INTO transaction_labels (transaction_id, label_id, created_at) VALUES ('tx_exp_work_1', 'lbl_work', ?)").run(now);
+  sqlite.prepare("INSERT INTO transaction_labels (transaction_id, label_id, created_at) VALUES ('tx_exp_work_1', 'lbl_travel', ?)").run(now);
+
+  // Refund 1: 200 PHP (+20000 minor units) tagged Work only
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_ref_work_1', 'acc_main', 'expense', 'PHP', 20000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare("INSERT INTO transaction_labels (transaction_id, label_id, created_at) VALUES ('tx_ref_work_1', 'lbl_work', ?)").run(now);
+
+  // Unlabeled Expense: 300 PHP (-30000 minor units)
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_exp_unlabeled', 'acc_main', 'expense', 'PHP', -30000, ?, ?, ?)
+  `).run(now, now, now);
+
+  const { getLabelBreakdown } = require("../services/get-label-breakdown.service");
+
+  // 1. Expense Breakdown:
+  // Net total = 1000 - 200 + 300 = 1100 PHP (110000 minor units)
+  // Work: 1000 - 200 = 800 PHP (80000 minor units)
+  // Travel: 1000 PHP (100000 minor units)
+  // Unlabeled: 300 PHP (30000 minor units)
+  const expenseResult = getLabelBreakdown({ type: "expense", startDate, endDate }, db);
+
+  assert.equal(expenseResult.totalMinorUnits, 110000, "Overall expense should net to 110000, not 150000");
+  assert.equal(expenseResult.transactionCount, 3);
+  assert.equal(expenseResult.labeledMinorUnits, 80000); // 1000 - 200
+  assert.equal(expenseResult.unlabeledMinorUnits, 30000);
+
+  const workItem = expenseResult.items.find((i) => i.labelId === "lbl_work");
+  assert.ok(workItem);
+  assert.equal(workItem.totalMinorUnits, 80000, "Work label must net to 80000, not 120000");
+  assert.equal(workItem.transactionCount, 2);
+
+  const travelItem = expenseResult.items.find((i) => i.labelId === "lbl_travel");
+  assert.ok(travelItem);
+  assert.equal(travelItem.totalMinorUnits, 100000);
+  assert.equal(travelItem.transactionCount, 1);
+
+  // 2. Income Breakdown with reversal:
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_inc_work_1', 'acc_main', 'income', 'PHP', 200000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare("INSERT INTO transaction_labels (transaction_id, label_id, created_at) VALUES ('tx_inc_work_1', 'lbl_work', ?)").run(now);
+
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_inc_rev_1', 'acc_main', 'income', 'PHP', -10000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare("INSERT INTO transaction_labels (transaction_id, label_id, created_at) VALUES ('tx_inc_rev_1', 'lbl_work', ?)").run(now);
+
+  const incomeResult = getLabelBreakdown({ type: "income", startDate, endDate }, db);
+  assert.equal(incomeResult.totalMinorUnits, 190000, "Income must net to 190000, not 210000");
+  const workIncome = incomeResult.items.find((i) => i.labelId === "lbl_work");
+  assert.ok(workIncome);
+  assert.equal(workIncome.totalMinorUnits, 190000);
+  assert.equal(workIncome.transactionCount, 2);
 
   sqlite.close();
 });
