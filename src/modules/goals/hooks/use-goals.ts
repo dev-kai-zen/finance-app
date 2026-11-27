@@ -19,8 +19,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
   const skipQuery = options?.skipQuery ?? false;
   const [goals, setGoals] = useState<GoalWithProgress[]>([]);
   const [summary, setSummary] = useState<GoalSummaryStats>({
+    currencyCode: "PHP",
     totalTargetMinorUnits: 0,
     totalSavedMinorUnits: 0,
+    totalRemainingMinorUnits: 0,
     overallProgressPercentage: 0,
     activeGoalsCount: 0,
     completedGoalsCount: 0,

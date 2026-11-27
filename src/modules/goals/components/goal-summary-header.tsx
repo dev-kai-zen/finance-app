@@ -16,7 +16,7 @@ export interface GoalSummaryHeaderProps {
 
 export function GoalSummaryHeader({
   summary,
-  currencyCode = "PHP",
+  currencyCode,
   totalTargetRef,
 }: GoalSummaryHeaderProps) {
   const theme = useAppTheme();
@@ -24,16 +24,23 @@ export function GoalSummaryHeader({
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
 
+  const activeCurrency =
+    currencyCode ?? summary.currencyCode ?? preferences.defaultCurrency ?? "PHP";
+
   const {
     totalTargetMinorUnits,
     totalSavedMinorUnits,
+    totalRemainingMinorUnits,
     overallProgressPercentage,
     activeGoalsCount,
     completedGoalsCount,
     totalGoalsCount,
   } = summary;
 
-  const remaining = Math.max(0, totalTargetMinorUnits - totalSavedMinorUnits);
+  const remaining =
+    totalRemainingMinorUnits !== undefined
+      ? totalRemainingMinorUnits
+      : Math.max(0, totalTargetMinorUnits - totalSavedMinorUnits);
   const clampedProgress = Math.min(100, Math.max(0, overallProgressPercentage));
 
   return (
@@ -44,7 +51,7 @@ export function GoalSummaryHeader({
           <View>
             <Text style={styles.heroSubheading}>TOTAL TARGET</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.heroTargetAmount}>
-              {formatPrivacyAmount(formatCurrency(totalTargetMinorUnits, currencyCode), isPrivate)}
+              {formatPrivacyAmount(formatCurrency(totalTargetMinorUnits, activeCurrency), isPrivate)}
             </Text>
           </View>
           <View style={styles.percentageBadge}>
@@ -83,13 +90,13 @@ export function GoalSummaryHeader({
                 },
               ]}
             >
-              {formatPrivacyAmount(formatCurrency(totalSavedMinorUnits, currencyCode), isPrivate)}
+              {formatPrivacyAmount(formatCurrency(totalSavedMinorUnits, activeCurrency), isPrivate)}
             </Text>
           </View>
           <View style={styles.alignRight}>
             <Text style={styles.statLabel}>Remaining shortfall</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.statValueRemaining}>
-              {formatPrivacyAmount(formatCurrency(remaining, currencyCode), isPrivate)}
+              {formatPrivacyAmount(formatCurrency(remaining, activeCurrency), isPrivate)}
             </Text>
           </View>
         </View>

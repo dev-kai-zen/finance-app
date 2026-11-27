@@ -275,6 +275,7 @@ function GoalsScreenContent({
       {/* Summary Metrics */}
       <GoalSummaryHeader
         summary={summary}
+        currencyCode={summary.currencyCode}
         totalTargetRef={totalTargetRef}
       />
 

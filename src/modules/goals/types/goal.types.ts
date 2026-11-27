@@ -65,8 +65,10 @@ export interface GoalInput {
 }
 
 export interface GoalSummaryStats {
+  currencyCode?: string;
   totalTargetMinorUnits: number;
   totalSavedMinorUnits: number;
+  totalRemainingMinorUnits?: number;
   overallProgressPercentage: number;
   activeGoalsCount: number;
   completedGoalsCount: number;

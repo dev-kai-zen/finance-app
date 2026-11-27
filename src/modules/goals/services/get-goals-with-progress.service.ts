@@ -3,6 +3,14 @@ import {
   getAccountsWithBalances,
   getPocketsWithBalances,
 } from "@/modules/accounts";
+import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import { listGoals } from "../repositories/goals.repository";
 import type {
   GoalSummaryStats,
@@ -30,8 +38,22 @@ export function getGoalsWithProgress(
 
   let totalTarget = 0;
   let totalSaved = 0;
+  let totalRemaining = 0;
   let activeCount = 0;
   let completedCount = 0;
+
+  const defaultCurrency =
+    getCurrencyPreferences(context).defaultCurrency || DEFAULT_BASE_CURRENCY;
+  const distinctCurrencies = new Set(goals.map((g) => g.currencyCode));
+  const summaryCurrency =
+    distinctCurrencies.size === 1
+      ? Array.from(distinctCurrencies)[0]
+      : defaultCurrency;
+
+  const ratesMap =
+    distinctCurrencies.size > 1
+      ? getExchangeRateMap(DEFAULT_BASE_CURRENCY, context)
+      : undefined;
 
   const goalsWithProgress: GoalWithProgress[] = goals.map((goal) => {
     const linkedAccounts: LinkedAccountItem[] = goal.accountIds
@@ -93,8 +115,31 @@ export function getGoalsWithProgress(
     });
 
     if (item.status !== "paused") {
-      totalTarget += item.targetAmountMinorUnits;
-      totalSaved += item.currentAmountMinorUnits;
+      const convertedTarget = convertCurrencyMinorUnits(
+        item.targetAmountMinorUnits,
+        item.currencyCode,
+        summaryCurrency,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      );
+      const convertedSaved = convertCurrencyMinorUnits(
+        item.currentAmountMinorUnits,
+        item.currencyCode,
+        summaryCurrency,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      );
+      const convertedRemaining = convertCurrencyMinorUnits(
+        item.remainingMinorUnits,
+        item.currencyCode,
+        summaryCurrency,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      );
+
+      totalTarget += convertedTarget;
+      totalSaved += convertedSaved;
+      totalRemaining += convertedRemaining;
     }
 
     if (item.isCompleted) {
@@ -110,8 +155,10 @@ export function getGoalsWithProgress(
     totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
 
   const summary: GoalSummaryStats = {
+    currencyCode: summaryCurrency,
     totalTargetMinorUnits: totalTarget,
     totalSavedMinorUnits: totalSaved,
+    totalRemainingMinorUnits: totalRemaining,
     overallProgressPercentage,
     activeGoalsCount: activeCount,
     completedGoalsCount: completedCount,

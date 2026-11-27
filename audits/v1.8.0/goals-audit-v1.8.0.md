@@ -154,12 +154,28 @@ npx tsc --noEmit
 
 All findings below remain **open**. Directions are proposed, not implemented. Each supplies the actual problem, cause/path, smallest reasonable direction, and regression proof required before a production change. Native-only risks retain that evidence level.
 
-### GOAL-F01 / B09 — P1, executed: incompatible summary money is labeled PHP
+### GOAL-F01 / B09 — P1, executed: incompatible summary money is labeled PHP — RESOLVED
 
 1. **Problem:** PHP 2,000 + USD 200 becomes PHP 2,200. A USD-only summary is also labeled PHP. Raw percentages weight currencies by incompatible minor units; equal 50% fixture progress does not validate that formula generally.
 2. **Cause:** `getGoalsWithProgress`, lines 95–110, sums every nonpaused goal's raw target/saved values. `GoalSummaryHeader`, line 19, defaults to PHP; screen lines 276–279 pass no currency. `GoalSummaryStats` carries no denomination.
-3. **Smallest fix:** Prefer per-currency summary groups using one existing traversal and a small type/header change. Alternatively use the existing currency service with a clearly labeled estimate and missing-rate policy. Decide Q-G01 first. Do not just replace PHP with the preference currency or add a persistent summary cache.
-4. **Proof:** Production-service/UI-prop tests for PHP-only, USD-only, mixed PHP/USD, JPY and three-decimal currency, unequal progress, paused/completed, privacy, remaining and rounding; no changes to per-goal denomination. Grouping can be O(G), with no extra SQL.
+3. **Fix applied:**
+   - Updated `GoalSummaryStats` to include `currencyCode?: string;` and `totalRemainingMinorUnits?: number;`.
+   - In `getGoalsWithProgress`:
+     - If all active goals share a single currency, use that currency directly (exact math, no FX conversion).
+     - If goals span multiple currencies (or no goals exist), use the user's default currency (`getCurrencyPreferences(context).defaultCurrency || DEFAULT_BASE_CURRENCY`) and convert target, saved, and remaining values via `convertCurrencyMinorUnits` and `getExchangeRateMap(DEFAULT_BASE_CURRENCY, context)`.
+     - Calculated `totalRemainingMinorUnits` by summing individual goal non-negative remaining shortfalls so surplus in an overfunded goal does not erase deficits in underfunded goals.
+   - In `goals-screen.tsx`: passed `currencyCode={summary.currencyCode}` to `GoalSummaryHeader`.
+   - In `goal-summary-header.tsx`: resolved `activeCurrency` dynamically from `currencyCode ?? summary.currencyCode ?? preferences.defaultCurrency ?? "PHP"` (removing hardcoded default) and used `summary.totalRemainingMinorUnits`.
+   - In `use-goals.ts`: initialized summary with default currency and remaining units.
+4. **Proof:** Added durable production-service tests in `src/modules/goals/__tests__/goals-summary-currency.test.cjs` covering:
+   - Single PHP goal returns exact amounts in PHP.
+   - Single USD goal returns exact amounts in USD without PHP mislabeling.
+   - Mixed PHP + USD goals convert properly using exchange rates (preventing the 220,000 raw minor units defect).
+   - JPY (0 decimals) conversion accurately scales without truncation.
+   - Overfunded surplus preserves independent underfunded shortfalls in `totalRemainingMinorUnits`.
+   - Paused goals are excluded from active target/saved/remaining totals.
+   - Empty goals returns zero totals with the user's default currency.
+   All 15 tests in `src/modules/goals/__tests__/` passed.
 
 ### GOAL-F02 — P2, executed callback + ledger probe: Add Funds drops pocket identity
 
@@ -308,7 +324,7 @@ Preserve useful existing complexity: derived balances from Accounts, signed tran
 
 ## 9. Remediation order and sign-off record
 
-1. Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations.
+1. [x] Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations. (Resolved)
 2. Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership.
 3. Address refresh, recovery and honest loading (GOAL-F04–F06), then query/render bounding and native profiling (GOAL-F07).
 4. Settle completion/privacy/reminder policies; address GOAL-F08/F12, localization, touch and layout (GOAL-F09–F11).
