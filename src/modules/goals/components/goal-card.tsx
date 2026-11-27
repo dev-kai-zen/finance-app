@@ -294,15 +294,31 @@ export const GoalCard = memo(function GoalCard({
             </Pressable>
           ) : null}
           {isCompleted ? (
-            <Pressable
-              onPress={() => onToggleStatus("in_progress")}
-              style={styles.reopenButton}
-            >
-              <RotateCcw color={theme.colors.textSecondary} size={14} />
-              <Text style={styles.reopenButtonText}>Mark as In Progress</Text>
-            </Pressable>
+            goal.currentAmountMinorUnits >= goal.targetAmountMinorUnits ? (
+              <Pressable
+                accessibilityLabel={`Increase target for ${goal.name}`}
+                accessibilityRole="button"
+                onPress={onEdit}
+                style={styles.reopenButton}
+              >
+                <Pencil color={theme.colors.textSecondary} size={14} />
+                <Text style={styles.reopenButtonText}>Increase Target</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                accessibilityLabel={`Mark ${goal.name} as in progress`}
+                accessibilityRole="button"
+                onPress={() => onToggleStatus("in_progress")}
+                style={styles.reopenButton}
+              >
+                <RotateCcw color={theme.colors.textSecondary} size={14} />
+                <Text style={styles.reopenButtonText}>Mark as In Progress</Text>
+              </Pressable>
+            )
           ) : (
             <Pressable
+              accessibilityLabel={`Mark ${goal.name} as completed`}
+              accessibilityRole="button"
               onPress={() => onToggleStatus("completed")}
               style={styles.completeButton}
             >

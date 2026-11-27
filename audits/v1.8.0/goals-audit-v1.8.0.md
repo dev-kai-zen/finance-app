@@ -311,12 +311,25 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Validated `GoalsScreen` AST contracts (memoized `GoalListItem`, stable callbacks, static `pageContentContainer` style).
    - All 40 tests across `src/modules/goals/__tests__/` passed and `npx tsc --noEmit` exited with 0 errors.
 
-### GOAL-F08 — P2, executed: reopening a reached goal is a no-op in the UI
+### GOAL-F08 — P2, executed: reopening a reached goal is a no-op in the UI — RESOLVED
 
 1. **Problem:** “Mark as In Progress” on an automatically reached goal writes `in_progress`, then the refreshed card is still Completed and offers the same action again.
-2. **Cause:** `calculateGoalProgress` uses `goal.status === "completed" || current >= target`; `GoalCard` selects the reopen action whenever `isCompleted`. A balance-reached goal already has stored `in_progress`, so changing status cannot change its derived completion.
-3. **Smallest fix:** Settle Q-G03. Keep automatic reaching and remove/replace the ineffective action for that case, or explicitly define a manual override using existing state semantics if sufficient. Do not add a new persisted state without an agreed requirement. Keep manually completed underfunded goals reopenable.
-4. **Proof:** Actual service and rendered-action tests for below/exactly/above target, manual completion, auto completion, balance falling again, pause, and filtering/counts. Verify repeated press has a meaningful result and reminder eligibility agrees with the chosen policy.
+2. **Cause:** `calculateGoalProgress` uses `goal.status === "completed" || current >= target`; `GoalCard` selected the reopen action whenever `isCompleted`. A balance-reached goal already has stored `in_progress`, so setting status to `in_progress` cannot change its derived completion or the action rendered.
+3. **Fix applied:**
+   - In `src/modules/goals/components/goal-card.tsx`:
+     - Replaced the binary `isCompleted` toggle in `bottomActionsRow` with honest state-driven action selection:
+       - If `isCompleted`:
+         - If `goal.currentAmountMinorUnits >= goal.targetAmountMinorUnits` (reached or exceeded): renders **"Increase Target"** (`Pencil` icon, calling `onEdit`), taking the user straight into the edit modal to raise their target if they want to keep saving, eliminating the broken no-op button loop completely.
+         - If `goal.currentAmountMinorUnits < goal.targetAmountMinorUnits` (manually completed underfunded goal): renders **"Mark as In Progress"** (`RotateCcw` icon, calling `onToggleStatus("in_progress")`), which transitions `status` back to `in_progress` and restores the card to Active/In Progress.
+       - If `!isCompleted` (underfunded in-progress goal): renders **"Mark as Completed"** (`Check` icon, calling `onToggleStatus("completed")`).
+     - Added explicit `accessibilityRole="button"` and meaningful `accessibilityLabel` attributes to all action buttons.
+   - In `src/modules/notifications/services/schedule-goal-reminders.service.ts`:
+     - Added guards `goal.isCompleted || goal.currentAmountMinorUnits >= goal.targetAmountMinorUnits`, ensuring reached goals are excluded from deadline notification alerts.
+4. **Proof:** Added unit tests in `src/modules/goals/__tests__/goals-status-lifecycle.test.cjs`:
+   - Validated `calculateGoalProgress` across below, reached, overfunded, and falling balance scenarios (active goal uncompletes when balance drops below target; manually completed goal stays completed).
+   - Validated `GoalCard` AST contract: proves reached goals render "Increase Target" linked to `onEdit`, underfunded completed goals render "Mark as In Progress" linked to `onToggleStatus("in_progress")`, and active goals render "Mark as Completed" linked to `onToggleStatus("completed")`.
+   - Validated `scheduleGoalReminders` excludes reached/completed goals from deadline reminders.
+   - All 50 tests across Goals and Notifications suites passed and `npx tsc --noEmit` passed with 0 errors.
 
 ### GOAL-F09 — P2, source-confirmed: core feature remains English with device-locale dates
 

@@ -29,7 +29,14 @@ export async function scheduleGoalReminders(
     const windowEndMs = now.getTime() + 30 * 24 * 60 * 60 * 1000;
 
     for (const goal of goals) {
-      if (goal.status !== "in_progress" || !goal.targetDate) continue;
+      if (
+        goal.status !== "in_progress" ||
+        goal.isCompleted ||
+        goal.currentAmountMinorUnits >= goal.targetAmountMinorUnits ||
+        !goal.targetDate
+      ) {
+        continue;
+      }
 
       const targetDate = new Date(goal.targetDate);
       const alertDate = new Date(
