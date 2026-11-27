@@ -501,3 +501,74 @@ test("REP-F01: getLabelBreakdown accurately nets expense refunds and income reve
 
   sqlite.close();
 });
+
+test("REP-F02: split transactions contribute to category counts and overall distinct transaction count", () => {
+  const db = setupTestDb();
+  const now = new Date(2026, 10, 15, 12).getTime();
+  const startDate = new Date(2026, 10, 1);
+  const endDate = new Date(2026, 10, 30, 23, 59, 59);
+
+  sqlite.prepare("INSERT INTO accounts (id, name, currency_code, created_at, updated_at) VALUES ('acc_main', 'Cash', 'PHP', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO categories (id, name, type, icon, created_at, updated_at) VALUES ('cat_dining', 'Dining', 'expense', 'utensils', ?, ?)").run(now, now);
+  sqlite.prepare("INSERT INTO categories (id, name, type, icon, created_at, updated_at) VALUES ('cat_groceries', 'Groceries', 'expense', 'shopping-cart', ?, ?)").run(now, now);
+
+  // 1. Unsplit Expense: 1000 PHP (-100000 minor units) in Dining
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_unsplit_1', 'acc_main', 'cat_dining', 'expense', 'PHP', -100000, ?, ?, ?)
+  `).run(now, now, now);
+
+  // 2. Split Expense: 500 PHP (-50000 minor units) split across Dining (30000), Groceries (20000)
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_split_1', 'acc_main', null, 'expense', 'PHP', -50000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare(`
+    INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+    VALUES ('entry_s1', 'tx_split_1', 'cat_dining', 30000, ?, ?)
+  `).run(now, now);
+  sqlite.prepare(`
+    INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+    VALUES ('entry_s2', 'tx_split_1', 'cat_groceries', 20000, ?, ?)
+  `).run(now, now);
+
+  // 3. Split Expense with multiple entries in SAME category: 300 PHP (-30000 minor units) with two Dining items
+  sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES ('tx_split_2', 'acc_main', null, 'expense', 'PHP', -30000, ?, ?, ?)
+  `).run(now, now, now);
+  sqlite.prepare(`
+    INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+    VALUES ('entry_s3', 'tx_split_2', 'cat_dining', 20000, ?, ?)
+  `).run(now, now);
+  sqlite.prepare(`
+    INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at)
+    VALUES ('entry_s4', 'tx_split_2', 'cat_dining', 10000, ?, ?)
+  `).run(now, now);
+
+  const { getCategoryBreakdown } = require("../services/get-category-breakdown.service");
+
+  const breakdown = getCategoryBreakdown({ type: "expense", startDate, endDate }, db);
+
+  // Total transactions: exactly 3 parent transactions (tx_unsplit_1, tx_split_1, tx_split_2)
+  assert.equal(breakdown.transactionCount, 3, "Overall count must be 3 distinct parent transactions");
+  assert.equal(breakdown.totalMinorUnits, 180000); // 1000 + 500 + 300 = 1800 PHP
+
+  // Dining should have 3 transactions:
+  // - tx_unsplit_1 (unsplit)
+  // - tx_split_1 (split 1)
+  // - tx_split_2 (split 2 - multiple entries count as 1 contributing transaction)
+  const diningItem = breakdown.items.find((i) => i.categoryId === "cat_dining");
+  assert.ok(diningItem);
+  assert.equal(diningItem.transactionCount, 3, "Dining should count 3 distinct contributing transactions");
+  assert.equal(diningItem.totalMinorUnits, 160000); // 1000 + 300 + 300
+
+  // Groceries should have 1 transaction:
+  // - tx_split_1 (split 1)
+  const groceriesItem = breakdown.items.find((i) => i.categoryId === "cat_groceries");
+  assert.ok(groceriesItem);
+  assert.equal(groceriesItem.transactionCount, 1, "Groceries should count 1 contributing transaction, NOT 0");
+  assert.equal(groceriesItem.totalMinorUnits, 20000); // 200 PHP
+
+  sqlite.close();
+});

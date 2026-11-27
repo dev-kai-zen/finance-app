@@ -127,12 +127,13 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 4. **Proof:** Actual report-service SQLite tests for ordinary/refund/reversal, refund-only/net-zero, labeled/unlabeled/multi-label, splits, fees, deleted rows, dates, and 0/2/3-decimal FX; assert totals and each row independently. Check other `getLabelBreakdown` consumers.
 5. **Resolution (November 27, 2026):** **RESOLVED.** Replaced `Math.abs(tx.amountMinorUnits)` in `get-label-breakdown.service.ts` with directional signed magnitude (`query.type === "expense" ? -tx.amountMinorUnits : tx.amountMinorUnits`), matching `get-category-breakdown.service.ts`. Guarded percentage calculation (`overallTotal > 0 && data.total > 0`) and filtered non-positive slices in `labels-summary-donut-chart.tsx` and `labels-summary-table.tsx`. Verified with automated SQLite regression test in `category-expense-refunds.test.cjs` and unit tests in `labels-summary.test.cjs`.
 
-### REP-F02 — P2, executed: Split transactions contribute money but zero counts
+### REP-F02 — P2, executed: Split transactions contribute money but zero counts — RESOLVED
 
 1. **Problem:** Four expense parents display as three transactions; Groceries displays 200.00 with zero transactions.
 2. **Cause:** [getCategoryBreakdown](../../src/modules/transactions/services/get-category-breakdown.service.ts#L93) skips split parents in the ordinary loop, then adds every split allocation with `countDelta: 0` at line 129.
 3. **Smallest fix:** In the owning Transactions service count distinct split parents overall and distinct parent/category pairs per category. Use sets/maps in the existing pass; do not query once per split.
 4. **Proof:** Split-only, mixed unsplit/split, repeated same-category allocations, split refunds, and multiple categories. Overall counts must not sum per-category memberships. Retain signed amount and budget/category parity tests.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Updated `get-category-breakdown.service.ts` to derive overall transaction count from distinct contributing parent transactions (`distinctTxIds.size`). Used `seenCategoryTx` set (`${catId}:${row.transactionId}`) to track distinct contributing transactions per category without inflating counts for multiple split entries within the same category. Verified with automated SQLite regression test in `category-expense-refunds.test.cjs`.
 
 ### REP-F03 — P2, source-confirmed: Signed category results do not fit the donut/empty contract
 

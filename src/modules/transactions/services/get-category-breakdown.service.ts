@@ -50,7 +50,8 @@ export function getCategoryBreakdown(
   >();
 
   let overallTotal = 0;
-  let overallTxCount = 0;
+  const distinctTxIds = new Set<string>();
+  const seenCategoryTx = new Set<string>();
   const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
@@ -86,13 +87,13 @@ export function getCategoryBreakdown(
       });
     }
     overallTotal += amount;
-    overallTxCount += countDelta;
   };
 
   for (const { transaction: tx, category: cat, accountCurrencyCode } of rows) {
     if (splitParentIds.has(tx.id)) {
       continue;
     }
+    distinctTxIds.add(tx.id);
     const catId = cat?.id ?? "uncategorized";
     const catName = cat?.name ?? "Uncategorized";
     const catColor = cat?.hexColorsId ?? null;
@@ -106,10 +107,12 @@ export function getCategoryBreakdown(
       ratesMap,
       DEFAULT_BASE_CURRENCY,
     );
+    seenCategoryTx.add(`${catId}:${tx.id}`);
     addToMap(catId, catName, catColor, catIcon, amount, 1);
   }
 
   for (const row of splitRows) {
+    distinctTxIds.add(row.transactionId);
     const catId = row.categoryId ?? "uncategorized";
     const catName = row.categoryName ?? "Uncategorized";
     const catColor = row.categoryColor;
@@ -126,7 +129,13 @@ export function getCategoryBreakdown(
       ratesMap,
       DEFAULT_BASE_CURRENCY,
     );
-    addToMap(catId, catName, catColor, catIcon, amount, 0);
+    const pairKey = `${catId}:${row.transactionId}`;
+    let countDelta = 0;
+    if (!seenCategoryTx.has(pairKey)) {
+      seenCategoryTx.add(pairKey);
+      countDelta = 1;
+    }
+    addToMap(catId, catName, catColor, catIcon, amount, countDelta);
   }
 
   const items: CategoryBreakdownItem[] = [];
@@ -154,7 +163,7 @@ export function getCategoryBreakdown(
     startDate: query.startDate,
     endDate: query.endDate,
     totalMinorUnits: overallTotal,
-    transactionCount: overallTxCount,
+    transactionCount: distinctTxIds.size,
     items,
   };
 }
