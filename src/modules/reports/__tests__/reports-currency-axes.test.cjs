@@ -588,3 +588,20 @@ test("REP-F13 - State-aware liability variance (positive credit & zero crossings
   assert.equal(zeroToCredit.color, "#10B981");
   assert.equal(zeroToCredit.isFavorable, true);
 });
+
+test("REP-F14 - Route respects reports public module boundary (no deep imports)", () => {
+  const reportsRouteSource = fs.readFileSync(
+    path.resolve(__dirname, "../../../../src/app/reports.tsx"),
+    "utf8",
+  );
+  assert.match(
+    reportsRouteSource,
+    /from\s+["']@\/modules\/reports["']/,
+    "ReportsRoute must import from @/modules/reports public boundary",
+  );
+  assert.equal(
+    reportsRouteSource.includes("@/modules/reports/"),
+    false,
+    "ReportsRoute must not deep-import into internal @/modules/reports/ paths",
+  );
+});

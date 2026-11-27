@@ -1,6 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { ReportsScreen } from "@/modules/reports";
-import type { ReportTabKey } from "@/modules/reports/types/reports.types";
+import { ReportsScreen, type ReportTabKey } from "@/modules/reports";
 
 export default function ReportsRoute() {
   const { tab } = useLocalSearchParams<{ tab?: string }>();

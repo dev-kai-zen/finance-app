@@ -269,12 +269,12 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
      - **Pure debt**: Existing intuitive behavior (debt down = Green `▼`, debt up = Red `▲`) is preserved.
 4. **Proof:** Verified with comprehensive automated unit tests covering all 11 transitions in `src/modules/reports/__tests__/balance-sheet-comparison.test.cjs` and `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
-### REP-F14 — P3, source-confirmed: Route bypasses Reports public type export
+### REP-F14 — RESOLVED: Route bypasses Reports public type export
 
-1. **Problem:** `src/app/reports.tsx` imports `ReportTabKey` from `@/modules/reports/types/reports.types`.
-2. **Cause:** The route uses an internal path even though [Reports index](../../src/modules/reports/index.ts) already exports the type.
-3. **Smallest fix:** Import that type from `@/modules/reports` alongside the screen. No file moves or barrel redesign.
-4. **Proof:** Typecheck and valid/invalid route-tab smoke test; runtime query/render cost is unchanged.
+1. **Problem:** `src/app/reports.tsx` imported `ReportTabKey` from `@/modules/reports/types/reports.types`, bypassing the public module boundary.
+2. **Cause:** The route used an internal path even though `src/modules/reports/index.ts` already re-exports domain types.
+3. **Fix:** Consolidated imports in `src/app/reports.tsx` to `import { ReportsScreen, type ReportTabKey } from "@/modules/reports";` adhering strictly to AGENTS.md Section 4 and Section 16 Rule 3.
+4. **Proof:** Verified with TypeScript typecheck (`npx tsc --noEmit`) and automated route boundary assertion in `reports-currency-axes.test.cjs`.
 
 ## 5. Unified text-layout and accessibility review
 
