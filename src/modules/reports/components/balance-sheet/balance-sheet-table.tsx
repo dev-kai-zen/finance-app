@@ -150,9 +150,9 @@ function GroupSection({
       {/* Group Header Row */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${groupNode.title}, Total Current: ${formatCurrency(
-          groupNode.variance.currentMinorUnits,
-          currencyCode,
+        accessibilityLabel={`${groupNode.title}, Total Current: ${formatPrivacyAmount(
+          formatCurrency(groupNode.variance.currentMinorUnits, currencyCode),
+          isPrivate,
         )}. Tap to ${expanded ? "collapse" : "expand"}.`}
         onPress={() => onToggleExpanded(groupKey)}
         style={({ pressed }) => [
@@ -233,9 +233,9 @@ function AccountTypeSection({
       {/* Account Type Header Row */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${typeNode.name}, Current: ${formatCurrency(
-          typeNode.variance.currentMinorUnits,
-          currencyCode,
+        accessibilityLabel={`${typeNode.name}, Current: ${formatPrivacyAmount(
+          formatCurrency(typeNode.variance.currentMinorUnits, currencyCode),
+          isPrivate,
         )}. Tap to ${expanded ? "collapse" : "expand"}.`}
         onPress={() => onToggleExpanded(typeKey)}
         style={({ pressed }) => [

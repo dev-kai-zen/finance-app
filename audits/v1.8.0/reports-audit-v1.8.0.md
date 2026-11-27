@@ -221,6 +221,13 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 2. **Cause:** [BalanceSheetTable group label](../../src/modules/reports/components/balance-sheet/balance-sheet-table.tsx#L153) and type label at line 236 interpolate `formatCurrency` without `formatPrivacyAmount`; the account row already applies it. Numeric SVG axes in REP-F09 are unconditional.
 3. **Smallest fix:** Apply the existing privacy formatter to overview accessibility labels and align axis policy. Preserve the intentionally unmasked shared inspector; opening that modal is an explicit inspection action under the accepted Dashboard policy.
 4. **Proof:** Exact rendered label/text assertions with privacy on/off plus TalkBack/VoiceOver traversal through collapsed/expanded groups, both charts, and deliberate inspector opening. No native screen-reader check was run here.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Updated [BalanceSheetTable](../../src/modules/reports/components/balance-sheet/balance-sheet-table.tsx) to wrap `formatCurrency` with `formatPrivacyAmount(..., isPrivate)` in both `accessibilityLabel` attributes:
+   - GroupSection (line 153): `${groupNode.title}, Total Current: ${formatPrivacyAmount(formatCurrency(...), isPrivate)}. Tap to...`
+   - AccountTypeSection (line 236): `${typeNode.name}, Current: ${formatPrivacyAmount(formatCurrency(...), isPrivate)}. Tap to...`
+   - Chart axes in Cash Flow and Net Worth were previously aligned under REP-F09 with `formatReportAxisAmount`, which masks ticks to `••••••` when `isPrivate: true`.
+   - Preserves intentionally unmasked shared NetWorthInspectModal under explicit user inspection policy.
+   - Screen readers (TalkBack / VoiceOver) now truthfully announce `••••••` instead of leaking exact money amounts aloud when Privacy Mode is enabled.
+   - Verified with automated test assertions in `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
 ### REP-F11 — P2, source-confirmed: Feature localization and touch ergonomics are incomplete
 

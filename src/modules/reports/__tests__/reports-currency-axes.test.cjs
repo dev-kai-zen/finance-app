@@ -193,3 +193,56 @@ test("formatReportAxisAmount - privacy mode masking", () => {
     "••••••",
   );
 });
+
+test("REP-F10: Balance Sheet Group and Account Type accessibilityLabels respect privacy mode", () => {
+  const currency = require("../../../utils/currency.ts");
+  const { formatPrivacyAmount } = require("@/modules/settings");
+
+  const buildGroupLabel = (title, currentMinorUnits, currencyCode, isPrivate, expanded) =>
+    `${title}, Total Current: ${formatPrivacyAmount(
+      currency.formatCurrency(currentMinorUnits, currencyCode),
+      isPrivate,
+    )}. Tap to ${expanded ? "collapse" : "expand"}.`;
+
+  const buildTypeLabel = (name, currentMinorUnits, currencyCode, isPrivate, expanded) =>
+    `${name}, Current: ${formatPrivacyAmount(
+      currency.formatCurrency(currentMinorUnits, currencyCode),
+      isPrivate,
+    )}. Tap to ${expanded ? "collapse" : "expand"}.`;
+
+  // Privacy OFF: announces actual currency amount
+  assert.equal(
+    buildGroupLabel("ASSETS", 125_000_000, "PHP", false, true),
+    "ASSETS, Total Current: ₱1,250,000.00. Tap to collapse.",
+  );
+  assert.equal(
+    buildTypeLabel("Bank Accounts", 45_000_000, "PHP", false, false),
+    "Bank Accounts, Current: ₱450,000.00. Tap to expand.",
+  );
+
+  // Privacy ON: MUST announce masked amounts (••••••)
+  assert.equal(
+    buildGroupLabel("ASSETS", 125_000_000, "PHP", true, true),
+    "ASSETS, Total Current: ••••••. Tap to collapse.",
+  );
+  assert.equal(
+    buildTypeLabel("Bank Accounts", 45_000_000, "PHP", true, false),
+    "Bank Accounts, Current: ••••••. Tap to expand.",
+  );
+
+  // Verify source code of balance-sheet-table.tsx contains formatPrivacyAmount in both accessibilityLabels
+  const tableSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/balance-sheet/balance-sheet-table.tsx"),
+    "utf8",
+  );
+  assert.match(
+    tableSource,
+    /accessibilityLabel=\{`\$\{groupNode\.title\}, Total Current: \$\{formatPrivacyAmount\(/,
+    "GroupSection accessibilityLabel must wrap formatCurrency with formatPrivacyAmount",
+  );
+  assert.match(
+    tableSource,
+    /accessibilityLabel=\{`\$\{typeNode\.name\}, Current: \$\{formatPrivacyAmount\(/,
+    "AccountTypeSection accessibilityLabel must wrap formatCurrency with formatPrivacyAmount",
+  );
+});
