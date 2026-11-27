@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -236,7 +237,13 @@ function GoalAccountPickerModalContent({
     });
   }, [accounts, pockets, localSelectedAccountIds, localSelectedPocketIds, currencyCode]);
 
+  const handleDismiss = useCallback(() => {
+    Keyboard.dismiss();
+    onClose();
+  }, [onClose]);
+
   const handleSave = () => {
+    Keyboard.dismiss();
     onConfirm(localSelectedAccountIds, localSelectedPocketIds);
     onClose();
   };
@@ -280,7 +287,7 @@ function GoalAccountPickerModalContent({
   return (
     <Modal
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleDismiss}
       transparent
       visible={visible}
     >
@@ -289,7 +296,7 @@ function GoalAccountPickerModalContent({
         behavior="height"
         style={styles.backdrop}
       >
-        <Pressable onPress={onClose} style={styles.scrim} />
+        <Pressable onPress={handleDismiss} style={styles.scrim} />
         <View style={styles.sheetContainer}>
           {/* Header */}
           <View style={styles.header}>
@@ -302,7 +309,8 @@ function GoalAccountPickerModalContent({
             <TouchableOpacity
               accessibilityLabel={t("goals.picker.close")}
               accessibilityRole="button"
-              onPress={onClose}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={handleDismiss}
               style={styles.closeBtn}
             >
               <X color={theme.colors.textSecondary} size={20} />
@@ -328,6 +336,9 @@ function GoalAccountPickerModalContent({
             />
             {searchQuery.length > 0 && Platform.OS !== "ios" && (
               <TouchableOpacity
+                accessibilityLabel={t("goals.picker.clearAll")}
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 onPress={() => setSearchQuery("")}
                 style={styles.clearSearchBtn}
               >
@@ -352,12 +363,16 @@ function GoalAccountPickerModalContent({
             </View>
             <View style={styles.toolbarActions}>
               <TouchableOpacity
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 onPress={handleSelectAllAccounts}
                 style={styles.toolbarButton}
               >
                 <Text style={styles.toolbarButtonText}>{t("goals.picker.selectAll")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 onPress={handleClearAll}
                 style={styles.toolbarButton}
               >

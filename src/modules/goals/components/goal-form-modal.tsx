@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import {
   Calendar,
   Check,
@@ -457,8 +465,14 @@ function GoalFormModalContent({
                 amountMinorUnits={targetAmountMinorUnits}
                 currencyCode={currencyCode}
                 label={t("goals.form.targetAmountLabel")}
-                onOpenCalculator={() => setIsCalculatorOpen(true)}
-                onPressCurrency={() => setIsCurrencyPickerOpen(true)}
+                onOpenCalculator={() => {
+                  Keyboard.dismiss();
+                  setIsCalculatorOpen(true);
+                }}
+                onPressCurrency={() => {
+                  Keyboard.dismiss();
+                  setIsCurrencyPickerOpen(true);
+                }}
                 showSignToggle={false}
               />
             </View>
@@ -555,7 +569,8 @@ function GoalFormModalContent({
                           </View>
                           <Pressable
                             accessibilityLabel={`Unlink ${account.name}`}
-                            hitSlop={6}
+                            accessibilityRole="button"
+                            hitSlop={{ top: 13, bottom: 13, left: 13, right: 13 }}
                             onPress={() => removeAccount(account.id)}
                             style={styles.accountChipRemove}
                           >
@@ -609,7 +624,8 @@ function GoalFormModalContent({
                           </View>
                           <Pressable
                             accessibilityLabel={`Unlink ${pocket.name}`}
-                            hitSlop={6}
+                            accessibilityRole="button"
+                            hitSlop={{ top: 13, bottom: 13, left: 13, right: 13 }}
                             onPress={() => removePocket(pocket.id)}
                             style={styles.accountChipRemove}
                           >
@@ -621,7 +637,10 @@ function GoalFormModalContent({
                   </View>
 
                   <Pressable
-                    onPress={() => setIsAccountPickerOpen(true)}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setIsAccountPickerOpen(true);
+                    }}
                     style={styles.manageAccountsButton}
                   >
                     <Plus color={theme.colors.primary} size={16} />
@@ -632,7 +651,10 @@ function GoalFormModalContent({
                 </View>
               ) : (
                 <Pressable
-                  onPress={() => setIsAccountPickerOpen(true)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setIsAccountPickerOpen(true);
+                  }}
                   style={styles.pickerButton}
                 >
                   <View style={styles.pickerLeft}>
@@ -662,7 +684,10 @@ function GoalFormModalContent({
               </View>
               <View style={styles.datePickerRow}>
                 <Pressable
-                  onPress={() => setIsDatePickerOpen(true)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setIsDatePickerOpen(true);
+                  }}
                   style={[styles.pickerButton, { flex: 1 }]}
                 >
                   <View style={styles.pickerLeft}>
@@ -699,7 +724,10 @@ function GoalFormModalContent({
                 <Pressable
                   accessibilityLabel={`Current icon: ${iconKey || "target"}. Tap to change icon.`}
                   accessibilityRole="button"
-                  onPress={() => setIsIconPickerOpen(true)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setIsIconPickerOpen(true);
+                  }}
                   style={styles.iconSelectButton}
                 >
                   <View
@@ -776,7 +804,10 @@ function GoalFormModalContent({
                     <Pressable
                       accessibilityLabel={t("goals.form.addCustomColor")}
                       accessibilityRole="button"
-                      onPress={() => setIsColorFormOpen(true)}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setIsColorFormOpen(true);
+                      }}
                       style={({ pressed }) => [
                         styles.addColorSwatch,
                         { borderColor: theme.colors.primary },

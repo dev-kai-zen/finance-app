@@ -179,7 +179,8 @@ export const GoalCard = memo(function GoalCard({
         <View style={styles.headerActions}>
           <Pressable
             accessibilityLabel={t("goals.card.editGoal")}
-            hitSlop={8}
+            accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={onEdit}
             style={styles.iconButton}
           >
@@ -187,7 +188,8 @@ export const GoalCard = memo(function GoalCard({
           </Pressable>
           <Pressable
             accessibilityLabel={t("goals.card.deleteGoal")}
-            hitSlop={8}
+            accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={onDelete}
             style={styles.iconButton}
           >
@@ -325,7 +327,9 @@ export const GoalCard = memo(function GoalCard({
         <View collapsable={false} ref={markCompleteRef} style={styles.bottomActionsRow}>
           {!isCompleted && onAddFunds ? (
             <Pressable
+              accessibilityLabel={t("goals.card.addFunds")}
               accessibilityRole="button"
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
               onPress={onAddFunds}
               style={styles.addFundsButton}
             >
@@ -338,6 +342,7 @@ export const GoalCard = memo(function GoalCard({
               <Pressable
                 accessibilityLabel={t("goals.card.accessibilityIncreaseTarget", { name: goal.name })}
                 accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                 onPress={onEdit}
                 style={styles.reopenButton}
               >
@@ -348,6 +353,7 @@ export const GoalCard = memo(function GoalCard({
               <Pressable
                 accessibilityLabel={t("goals.card.accessibilityMarkInProgress", { name: goal.name })}
                 accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                 onPress={() => onToggleStatus("in_progress")}
                 style={styles.reopenButton}
               >
@@ -359,6 +365,7 @@ export const GoalCard = memo(function GoalCard({
             <Pressable
               accessibilityLabel={t("goals.card.accessibilityMarkCompleted", { name: goal.name })}
               accessibilityRole="button"
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
               onPress={() => onToggleStatus("completed")}
               style={styles.completeButton}
             >

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -71,6 +72,7 @@ export function FullScreenFormModal({
   }, [visible]);
 
   const handleRequestClose = useCallback(() => {
+    Keyboard.dismiss();
     if (pending) return;
     if (isDirty) {
       setShowUnsavedPrompt(true);

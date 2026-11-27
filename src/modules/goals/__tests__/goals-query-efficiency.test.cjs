@@ -220,6 +220,7 @@ test("GoalAccountPickerModal early-returns null when visible=false without execu
       createElement: () => null,
     },
     "react-native": {
+      Keyboard: { dismiss: () => {} },
       Modal: () => null,
       Platform: { OS: "ios" },
       Pressable: () => null,
