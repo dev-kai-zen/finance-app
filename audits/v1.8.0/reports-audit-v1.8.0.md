@@ -207,6 +207,13 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 2. **Cause:** `formatShortK` divides by 100 in [CashFlowBarChart](../../src/modules/reports/components/cash-flow/cash-flow-bar-chart.tsx#L245) and [NetWorthGrowthChart](../../src/modules/reports/components/net-worth/net-worth-growth-chart.tsx#L349), ignoring currency precision. These helpers also bypass privacy masking.
 3. **Smallest fix:** Use existing currency precision/formatting support for these axis labels. Reuse an existing helper if suitable; no global formatting rewrite or new provider is warranted.
 4. **Proof:** Render/helper assertions for JPY/PHP/USD/KWD, negative/zero/large values and both decimal formats. Compare axis scale with exact table amounts; native label containment and masked output remain required.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Created `formatReportAxisAmount` in `src/modules/reports/utils/reports-currency.ts` and integrated it into both charts:
+   - Uses `getCurrencyMinorUnitExponent(currencyCode)` to scale minor units by $10^{\text{exponent}}$ dynamically (fixing the 100x scale error for JPY/KRW and 10x error for KWD/BHD).
+   - Handles negative scale values with proper sign preservation and rounding.
+   - Respects user decimal format preferences (`dot-comma`, `space-comma`) when formatting million abbreviation labels (`M`).
+   - Integrated privacy masking (`isPrivate ? formatPrivacyAmount(...) : ...`), ensuring chart SVG tick marks display masked characters (`••••••`) instead of leaking wealth scale when privacy mode is enabled.
+   - Updated `CashFlowBarChart` (for `scaleMax`, `scaleMax / 2`, and baseline `0`) and `NetWorthGrowthChart` (for `scaleMax` and `scaleMin`).
+   - Verified with unit test assertions in `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
 ### REP-F10 — P2, source-confirmed: Balance Sheet speaks masked overview amounts
 

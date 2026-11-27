@@ -14,6 +14,7 @@ import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { CashFlowRowItem } from "../../types/cash-flow.types";
+import { formatReportAxisAmount } from "../../utils/reports-currency";
 
 interface CashFlowBarChartProps {
   periods: CashFlowRowItem[];
@@ -140,7 +141,11 @@ export function CashFlowBarChart({
             fill={styles.axisText.color}
             textAnchor="end"
           >
-            {formatShortK(scaleMax)}
+            {formatReportAxisAmount(scaleMax, {
+              currencyCode: preferences.defaultCurrency,
+              isPrivate,
+              decimalFormat: preferences.decimalFormat,
+            })}
           </SvgText>
           <SvgText
             x={PLOT_LEFT - 6}
@@ -149,7 +154,11 @@ export function CashFlowBarChart({
             fill={styles.axisText.color}
             textAnchor="end"
           >
-            {formatShortK(scaleMax / 2)}
+            {formatReportAxisAmount(scaleMax / 2, {
+              currencyCode: preferences.defaultCurrency,
+              isPrivate,
+              decimalFormat: preferences.decimalFormat,
+            })}
           </SvgText>
           <SvgText
             x={PLOT_LEFT - 6}
@@ -158,7 +167,11 @@ export function CashFlowBarChart({
             fill={styles.axisText.color}
             textAnchor="end"
           >
-            0
+            {formatReportAxisAmount(0, {
+              currencyCode: preferences.defaultCurrency,
+              isPrivate,
+              decimalFormat: preferences.decimalFormat,
+            })}
           </SvgText>
 
           {/* Bars per Period */}
@@ -240,17 +253,6 @@ export function CashFlowBarChart({
       </View>
     </View>
   );
-}
-
-function formatShortK(cents: number): string {
-  const pesos = Math.round(cents / 100);
-  if (pesos >= 1000000) {
-    return `${(pesos / 1000000).toFixed(1)}M`;
-  }
-  if (pesos >= 1000) {
-    return `${Math.round(pesos / 1000)}k`;
-  }
-  return String(pesos);
 }
 
 function createStyles(theme: AppTheme) {

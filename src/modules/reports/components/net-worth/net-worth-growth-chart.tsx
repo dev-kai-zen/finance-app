@@ -25,6 +25,7 @@ import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { NetWorthPoint } from "../../types/net-worth-growth.types";
+import { formatReportAxisAmount } from "../../utils/reports-currency";
 
 interface NetWorthGrowthChartProps {
   points: NetWorthPoint[];
@@ -221,7 +222,11 @@ export function NetWorthGrowthChart({
                 x={PLOT_LEFT - 6}
                 y={PLOT_TOP + 4}
               >
-                {formatShortK(scaleMax)}
+                {formatReportAxisAmount(scaleMax, {
+                  currencyCode: preferences.defaultCurrency,
+                  isPrivate,
+                  decimalFormat: preferences.decimalFormat,
+                })}
               </SvgText>
               <SvgText
                 fill={styles.axisText.color}
@@ -230,7 +235,11 @@ export function NetWorthGrowthChart({
                 x={PLOT_LEFT - 6}
                 y={zeroY + 3}
               >
-                {formatShortK(scaleMin)}
+                {formatReportAxisAmount(scaleMin, {
+                  currencyCode: preferences.defaultCurrency,
+                  isPrivate,
+                  decimalFormat: preferences.decimalFormat,
+                })}
               </SvgText>
 
               {/* Area Fill */}
@@ -344,17 +353,6 @@ function shouldShowXLabel(
   if (index === total - 2) return false;
   if (total <= 12) return index % 2 === (total % 2 === 1 ? 0 : 1);
   return index % 3 === (total % 3 === 1 ? 0 : 1);
-}
-
-function formatShortK(cents: number): string {
-  const pesos = Math.round(cents / 100);
-  if (Math.abs(pesos) >= 1000000) {
-    return `${(pesos / 1000000).toFixed(1)}M`;
-  }
-  if (Math.abs(pesos) >= 1000) {
-    return `${Math.round(pesos / 1000)}k`;
-  }
-  return String(pesos);
 }
 
 function createStyles(theme: AppTheme) {
