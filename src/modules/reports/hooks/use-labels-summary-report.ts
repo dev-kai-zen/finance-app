@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getLabelsSummaryReport } from "../services/get-labels-summary-report.service";
@@ -42,7 +44,10 @@ export function useLabelsSummaryReport() {
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   const [data, setData] = useState<LabelsSummaryReportData>(EMPTY_LABELS_REPORT);
   const [reportLoading, setReportLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const isFocusedRef = useRef(true);
+  const isDirtyRef = useRef(false);
 
   const range = useMemo(() => {
     return getIncomeExpenseDateRange(preset, {
@@ -51,7 +56,7 @@ export function useLabelsSummaryReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
@@ -61,10 +66,46 @@ export function useLabelsSummaryReport() {
         },
       },
       () => {
-        setData(getLabelsSummaryReport(mode, range));
+        try {
+          setData(getLabelsSummaryReport(mode, range));
+          setError(null);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load report data.");
+        }
       },
     );
   }, [mode, range, preferences.defaultCurrency]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      if (isDirtyRef.current) {
+        isDirtyRef.current = false;
+        refresh();
+      }
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [refresh]),
+  );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (!isFocusedRef.current) {
+          isDirtyRef.current = true;
+          return;
+        }
+        refresh();
+      },
+    );
+    return () => sub.remove();
+  }, [refresh]);
 
   return {
     mode,
@@ -77,6 +118,8 @@ export function useLabelsSummaryReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedLabelId,
     setSelectedLabelId,

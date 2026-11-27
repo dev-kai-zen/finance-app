@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { PageLoadingState } from "@/components/page-container";
+import { PageErrorState, PageLoadingState } from "@/components/page-container";
 import { useLabelsSummaryReport } from "../../hooks/use-labels-summary-report";
 import { IncomeExpenseFilterBar } from "../income-expense/income-expense-filter-bar";
 import { LabelsSummaryDonutChart } from "./labels-summary-donut-chart";
@@ -18,6 +18,8 @@ export function LabelsSummaryReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedLabelId,
     setSelectedLabelId,
@@ -43,7 +45,9 @@ export function LabelsSummaryReport() {
         onChangeCustomDateB={setCustomDateB}
       />
 
-      {reportLoading ? (
+      {error ? (
+        <PageErrorState message={error} onRetry={refresh} />
+      ) : reportLoading ? (
         <PageLoadingState message="Loading report..." variant="cards" />
       ) : (
         <>

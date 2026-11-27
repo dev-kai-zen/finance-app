@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { PageLoadingState } from "@/components/page-container";
+import { PageErrorState, PageLoadingState } from "@/components/page-container";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useCashFlowReport } from "../../hooks/use-cash-flow-report";
 import { CashFlowBarChart } from "./cash-flow-bar-chart";
@@ -18,6 +18,8 @@ export function CashFlowReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedPeriodKey,
     setSelectedPeriodKey,
@@ -40,7 +42,9 @@ export function CashFlowReport() {
         />
       </WalkthroughTarget>
 
-      {reportLoading ? (
+      {error ? (
+        <PageErrorState message={error} onRetry={refresh} />
+      ) : reportLoading ? (
         <PageLoadingState message="Loading report..." variant="cards" />
       ) : (
         <>

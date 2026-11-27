@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getNetWorthGrowthReport } from "../services/get-net-worth-growth-report.service";
@@ -40,7 +42,10 @@ export function useNetWorthGrowthReport() {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [data, setData] = useState<NetWorthGrowthReportData>(EMPTY_NET_WORTH_REPORT);
   const [reportLoading, setReportLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const isFocusedRef = useRef(true);
+  const isDirtyRef = useRef(false);
 
   const range: NetWorthGrowthDateRange = useMemo(() => {
     return getNetWorthDateRange(preset, {
@@ -49,7 +54,7 @@ export function useNetWorthGrowthReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
@@ -59,10 +64,46 @@ export function useNetWorthGrowthReport() {
         },
       },
       () => {
-        setData(getNetWorthGrowthReport(range));
+        try {
+          setData(getNetWorthGrowthReport(range));
+          setError(null);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load report data.");
+        }
       },
     );
   }, [range, preferences.defaultCurrency]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      if (isDirtyRef.current) {
+        isDirtyRef.current = false;
+        refresh();
+      }
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [refresh]),
+  );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (!isFocusedRef.current) {
+          isDirtyRef.current = true;
+          return;
+        }
+        refresh();
+      },
+    );
+    return () => sub.remove();
+  }, [refresh]);
 
   return {
     preset,
@@ -73,6 +114,8 @@ export function useNetWorthGrowthReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedPointIndex,
     setSelectedPointIndex,

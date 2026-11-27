@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { NetWorthInspectModal, PageLoadingState } from "@/components";
+import { NetWorthInspectModal, PageErrorState, PageLoadingState } from "@/components";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { usePrivacyMode } from "@/modules/settings";
@@ -21,6 +21,8 @@ export function NetWorthGrowthReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedPointIndex,
     setSelectedPointIndex,
@@ -48,7 +50,9 @@ export function NetWorthGrowthReport() {
         />
       </WalkthroughTarget>
 
-      {reportLoading ? (
+      {error ? (
+        <PageErrorState message={error} onRetry={refresh} />
+      ) : reportLoading ? (
         <PageLoadingState message="Loading report..." variant="cards" />
       ) : (
         <>

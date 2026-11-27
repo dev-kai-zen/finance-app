@@ -164,12 +164,18 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
 4. **Proof:** January/December and leap-year fixed clocks, untouched default, explicit MoM input, previous/next navigation, and independent cutoff balance assertions.
 5. **Resolution (November 27, 2026):** **RESOLVED.** Atomically derived default `year` and `month` from a single previous-month reference date (`new Date(now.getFullYear(), now.getMonth() - 1, 1)`) in both `useBalanceSheetReport` (`use-balance-sheet-report.ts`) and `getComparisonDateRange` (`reports-dates.ts`). When evaluated under a January date, default MoM now correctly computes the previous completed calendar month (December of the prior year vs November of the prior year) instead of future months. Preserves explicit period selections and month-navigation rollover in `PresetPickerModal`. Verified with automated regression tests in `balance-sheet-comparison.test.cjs`.
 
-### REP-F06 — P2, source-confirmed: Mounted reports miss invalidation and cannot recover read failures
+### REP-F06 — P2, source-confirmed: Mounted reports miss invalidation and cannot recover read failures — RESOLVED
 
 1. **Problem:** An external save, account change, rate update, or return to the mounted report can leave its snapshot stale. A read exception has no report error/retry UI.
 2. **Cause:** [Report hooks](../../src/modules/reports/hooks/) fetch in dependency-driven `useEffect` only. They have no focus/financial mutation subscriptions or error state. [runDeferredSyncQuery](../../src/utils/run-deferred-sync-query.ts) has `finally`, no catch, and marks loading complete even when the callback throws. Cached date ranges also do not roll forward merely because the day changes. [DatabaseProvider](../../src/infrastructure/database/database-provider.tsx#L58) already remounts children after database replacement; a missing replacement remount is **not** a finding here. Uncancelled work from the old mount is REP-F07.
 3. **Smallest fix:** Add scoped invalidation and explicit error/retry within existing hooks using established app events; refresh on focus without duplicate mount+focus queries. Preserve replacement remounting and cancel work from the old mount. Do not introduce a report cache provider or change the shared scheduler contract for unrelated callers without evidence.
 4. **Proof:** Mounted report + Quick Entry, account hide/archive/edit, scheduler/import write, home currency/rate change, midnight/refocus, DB replacement, injected initial/reload failure, retry success, and offscreen gating. Assert latest values and refresh counts using actual hooks/callbacks; native visible refresh is still pending.
+5. **Resolution (November 27, 2026):** **RESOLVED.** Added scoped invalidation, focus management, and error/retry states across all 5 report hooks (`useIncomeExpenseReport`, `useBalanceSheetReport`, `useCashFlowReport`, `useLabelsSummaryReport`, `useNetWorthGrowthReport`) and their corresponding report UI components:
+   - Wired `DeviceEventEmitter.addListener("FINANCE_APP_TRANSACTION_MUTATED")` with `isFocusedRef` to trigger immediate reload when active or set `isDirtyRef.current = true` when offscreen.
+   - Wired `useFocusEffect` to refresh only if dirty on refocus, strictly avoiding duplicate mount+focus queries.
+   - Wrapped queries in `try ... catch` to capture read exceptions into `error` state and expose `refresh()`.
+   - Updated all 5 report components to render `<PageErrorState message={error} onRetry={refresh} />` on failure.
+   - Verified with automated lifecycle tests in `reports-invalidation-recovery.test.cjs`.
 
 ### REP-F07 — P2, source-confirmed: Uncancelled work and stale data during cached reloads
 

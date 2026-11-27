@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getIncomeExpenseReport } from "../services/get-income-expense-report.service";
@@ -38,7 +40,10 @@ export function useIncomeExpenseReport() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [data, setData] = useState<IncomeExpenseReportData>(EMPTY_REPORT);
   const [reportLoading, setReportLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const isFocusedRef = useRef(true);
+  const isDirtyRef = useRef(false);
 
   const range = useMemo(() => {
     return getIncomeExpenseDateRange(preset, {
@@ -47,7 +52,7 @@ export function useIncomeExpenseReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
@@ -57,10 +62,46 @@ export function useIncomeExpenseReport() {
         },
       },
       () => {
-        setData(getIncomeExpenseReport(mode, range));
+        try {
+          setData(getIncomeExpenseReport(mode, range));
+          setError(null);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load report data.");
+        }
       },
     );
   }, [mode, range, preferences.defaultCurrency]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      if (isDirtyRef.current) {
+        isDirtyRef.current = false;
+        refresh();
+      }
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [refresh]),
+  );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (!isFocusedRef.current) {
+          isDirtyRef.current = true;
+          return;
+        }
+        refresh();
+      },
+    );
+    return () => sub.remove();
+  }, [refresh]);
 
   return {
     mode,
@@ -73,6 +114,8 @@ export function useIncomeExpenseReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedCategoryId,
     setSelectedCategoryId,

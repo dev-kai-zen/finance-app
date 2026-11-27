@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getBalanceSheetComparison } from "../services/get-balance-sheet-comparison.service";
@@ -78,7 +80,10 @@ export function useBalanceSheetReport() {
   const [hasInitializedExpansion, setHasInitializedExpansion] = useState(false);
   const [data, setData] = useState<BalanceSheetComparisonData>(EMPTY_BALANCE_SHEET);
   const [reportLoading, setReportLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const isFocusedRef = useRef(true);
+  const isDirtyRef = useRef(false);
 
   // Compute date range
   const range = useMemo(() => {
@@ -90,8 +95,7 @@ export function useBalanceSheetReport() {
     });
   }, [preset, momYear, momMonth, customDateA, customDateB]);
 
-  // Compute comparison data
-  useEffect(() => {
+  const refresh = useCallback(() => {
     runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
@@ -101,10 +105,46 @@ export function useBalanceSheetReport() {
         },
       },
       () => {
-        setData(getBalanceSheetComparison(range, { hideZeroBalances }));
+        try {
+          setData(getBalanceSheetComparison(range, { hideZeroBalances }));
+          setError(null);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load report data.");
+        }
       },
     );
   }, [range, hideZeroBalances, preferences.defaultCurrency]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      if (isDirtyRef.current) {
+        isDirtyRef.current = false;
+        refresh();
+      }
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, [refresh]),
+  );
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (!isFocusedRef.current) {
+          isDirtyRef.current = true;
+          return;
+        }
+        refresh();
+      },
+    );
+    return () => sub.remove();
+  }, [refresh]);
 
   // Initial expansion: Expand all (including pockets) by default
   useEffect(() => {
@@ -199,6 +239,8 @@ export function useBalanceSheetReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     expandedKeys,
     isExpanded,

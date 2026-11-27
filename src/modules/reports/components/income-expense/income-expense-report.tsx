@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { PageLoadingState } from "@/components/page-container";
+import { PageErrorState, PageLoadingState } from "@/components/page-container";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useIncomeExpenseReport } from "../../hooks/use-income-expense-report";
 import { CategoryBreakdownTable } from "./category-breakdown-table";
@@ -19,6 +19,8 @@ export function IncomeExpenseReport() {
     setCustomDateB,
     range,
     data,
+    error,
+    refresh,
     reportLoading,
     selectedCategoryId,
     setSelectedCategoryId,
@@ -46,7 +48,9 @@ export function IncomeExpenseReport() {
         />
       </WalkthroughTarget>
 
-      {reportLoading ? (
+      {error ? (
+        <PageErrorState message={error} onRetry={refresh} />
+      ) : reportLoading ? (
         <PageLoadingState message="Loading report..." variant="cards" />
       ) : (
         <>
