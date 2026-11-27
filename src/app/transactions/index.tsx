@@ -5,6 +5,7 @@ export default function TransactionsRoute() {
   const {
     budgetScope,
     accountId,
+    pocketId,
     categoryId,
     exactCategory,
     datePreset,
@@ -17,6 +18,7 @@ export default function TransactionsRoute() {
   } = useLocalSearchParams<{
     budgetScope?: string | string[];
     accountId?: string;
+    pocketId?: string;
     categoryId?: string;
     exactCategory?: string;
     datePreset?: string;
@@ -29,6 +31,8 @@ export default function TransactionsRoute() {
   }>();
   const initialAccountId =
     typeof accountId === "string" && accountId.length > 0 ? accountId : undefined;
+  const initialPocketId =
+    typeof pocketId === "string" && pocketId.length > 0 ? pocketId : undefined;
   const initialCategoryId =
     typeof categoryId === "string" && categoryId.length > 0
       ? categoryId
@@ -57,6 +61,7 @@ export default function TransactionsRoute() {
     <TransactionsScreen
       initialBudgetScope={budgetScope === undefined ? undefined : typeof budgetScope === "string" ? budgetScope : ""}
       initialAccountId={initialAccountId}
+      initialPocketId={initialPocketId}
       initialCategoryId={initialCategoryId}
       initialExactCategory={initialExactCategory}
       initialDatePreset={initialDatePreset}

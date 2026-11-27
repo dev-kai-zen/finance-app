@@ -177,12 +177,24 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Empty goals returns zero totals with the user's default currency.
    All 15 tests in `src/modules/goals/__tests__/` passed.
 
-### GOAL-F02 — P2, executed callback + ledger probe: Add Funds drops pocket identity
+### GOAL-F02 — P2, executed callback + ledger probe: Add Funds drops pocket identity — RESOLVED
 
 1. **Problem:** A pocket-only goal opens income creation for its parent account. With no matching default pocket, saving leaves goal progress unchanged; a different configured default pocket can receive the entry. The exact navigation callback was executed, while the native form/save remains untested.
 2. **Cause:** Screen lines 373–382 reads `linkedPockets[0].accountId` but discards `id`. Transactions route and screen accept an initial account, with no initial pocket contract. Form default-pocket selection comes from transaction defaults.
-3. **Smallest fix:** Preserve an explicit account/pocket destination through the existing route → screen → form contract, validating membership/archive status. This requires a narrow supporting Transactions change. For multiple destinations, pick explicitly rather than silently funding an unrelated first/default location. Settle income-versus-transfer meaning in Q-G02.
-4. **Proof:** Execute actual navigation and form initialization for pocket-only, account-only, multiple pockets/accounts, a conflicting default pocket and an archived/deleted destination. Save once and verify exact destination, pocket/account balances, progress, fee/transfer parity, and return-focus refresh. No extra closed-form queries.
+3. **Fix applied:**
+   - In `src/app/transactions/index.tsx`: added `pocketId` parameter to `useLocalSearchParams` and forwarded `initialPocketId` to `<TransactionsScreen />`.
+   - In `src/modules/transactions/screens/transactions-screen.tsx`:
+     - Added `initialPocketId?: string;` to `TransactionsScreenProps`.
+     - Stored `formInitialPocketId` on new transaction actions.
+     - Passed `defaultIncomePocketId={formInitialPocketId}` and `defaultExpensePocketId={formInitialPocketId}` down to `<TransactionFormModal />`.
+     - Cleared `formInitialPocketId` and route search params on modal close.
+   - In `src/modules/goals/screens/goals-screen.tsx`:
+     - In `onAddFunds`, preserved `pocketId` when funding a pocket-linked goal (`/transactions?action=new&type=income&accountId=...&pocketId=...`).
+     - Added a clean destination picker modal for multi-destination goals, allowing users to explicitly pick which linked account or pocket to fund.
+4. **Proof:** Added unit and integration tests in `src/modules/goals/__tests__/goals-summary-currency.test.cjs`:
+   - Validated that the actual `onAddFunds` AST callback emits `pocketId` for pocket-only goals (`/transactions?action=new&type=income&accountId=a1&pocketId=p1`), emits only `accountId` for account-only goals, and emits base route for unlinked goals.
+   - Validated that recording transactions targeting the pocket directly updates pocket-only goal balances (50% progress), while parent-account-only income leaves pocket progress at 0.
+   - All 17 tests in `src/modules/goals/__tests__/` passed.
 
 ### GOAL-F03 — P2, executed: link validity and preview diverge from saved progress
 

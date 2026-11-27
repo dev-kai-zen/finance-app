@@ -224,6 +224,7 @@ export interface TransactionsScreenProps {
   initialExactCategory?: boolean;
   initialDatePreset?: string;
   initialAccountId?: string;
+  initialPocketId?: string;
   initialAction?: string;
   initialType?: string;
   initialFlow?: "inflow" | "outflow";
@@ -246,6 +247,7 @@ function TransactionsScreenContent({
   initialExactCategory,
   initialDatePreset,
   initialAccountId,
+  initialPocketId,
   initialAction,
   initialType,
   initialFlow,
@@ -608,6 +610,9 @@ function TransactionsScreenContent({
   const [formInitialAccountId, setFormInitialAccountId] = useState<
     string | null
   >(null);
+  const [formInitialPocketId, setFormInitialPocketId] = useState<
+    string | null
+  >(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -630,12 +635,13 @@ function TransactionsScreenContent({
 
   useEffect(() => {
     if (initialAction === "new") {
-      const actionKey = `${initialAction}-${initialType ?? "expense"}-${initialAccountId ?? ""}`;
+      const actionKey = `${initialAction}-${initialType ?? "expense"}-${initialAccountId ?? ""}-${initialPocketId ?? ""}`;
       if (handledActionRef.current !== actionKey) {
         handledActionRef.current = actionKey;
         setIsEditingTransaction(false);
         setPrefilledTransaction(null);
         setFormInitialAccountId(initialAccountId ?? null);
+        setFormInitialPocketId(initialPocketId ?? null);
         setFormInitialType(
           initialType === "income"
             ? "income"
@@ -648,6 +654,7 @@ function TransactionsScreenContent({
           action: undefined,
           type: undefined,
           source: undefined,
+          pocketId: undefined,
         });
       }
     } else if (initialAction === "trash") {
@@ -1633,11 +1640,13 @@ function TransactionsScreenContent({
           setIsEditingTransaction(false);
           setFormInitialType(undefined);
           setFormInitialAccountId(null);
+          setFormInitialPocketId(null);
           setOnChatEditSaved(null);
           router.setParams({
             action: undefined,
             type: undefined,
             source: undefined,
+            pocketId: undefined,
           });
           if (shouldReturnToChat) {
             setTimeout(() => {
@@ -1648,6 +1657,8 @@ function TransactionsScreenContent({
         initialType={formInitialType}
         defaultExpenseAccountId={formInitialAccountId}
         defaultIncomeAccountId={formInitialAccountId}
+        defaultExpensePocketId={formInitialPocketId}
+        defaultIncomePocketId={formInitialPocketId}
         onSaveTransaction={handleRecordTransaction}
         onSaveTransfer={handleRecordTransfer}
         onSavePreset={savePreset}

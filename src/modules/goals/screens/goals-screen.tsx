@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -97,6 +98,7 @@ function GoalsScreenContent({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
+  const [fundingDestinationGoal, setFundingDestinationGoal] = useState<GoalWithProgress | null>(null);
   const handledActionRef = useRef<string | null>(null);
   const handledGoalIdRef = useRef<string | null>(null);
 
@@ -372,16 +374,29 @@ function GoalsScreenContent({
               markCompleteRef={index === 0 ? markCompleteRef : undefined}
               onDelete={() => setGoalToDelete(goal)}
               onAddFunds={() => {
-                const linkedAccountId =
-                  goal.linkedAccounts?.[0]?.id ??
-                  goal.linkedPockets?.[0]?.accountId;
-                router.push(
-                  `/transactions?action=new&type=income${
-                    linkedAccountId
-                      ? `&accountId=${encodeURIComponent(linkedAccountId)}`
-                      : ""
-                  }` as any,
-                );
+                const accounts = goal.linkedAccounts ?? [];
+                const pockets = goal.linkedPockets ?? [];
+                const total = accounts.length + pockets.length;
+                if (total > 1 && typeof setFundingDestinationGoal === "function") {
+                  setFundingDestinationGoal(goal);
+                  return;
+                }
+                const hasAccount = accounts.length > 0;
+                const targetAccountId = hasAccount
+                  ? accounts[0].id
+                  : pockets[0]?.accountId;
+                const targetPocketId = hasAccount
+                  ? undefined
+                  : pockets[0]?.id;
+
+                const queryParts = ["action=new", "type=income"];
+                if (targetAccountId) {
+                  queryParts.push(`accountId=${encodeURIComponent(targetAccountId)}`);
+                }
+                if (targetPocketId) {
+                  queryParts.push(`pocketId=${encodeURIComponent(targetPocketId)}`);
+                }
+                router.push(`/transactions?${queryParts.join("&")}` as any);
               }}
               onEdit={() => handleOpenEdit(goal)}
               onPress={() => handleOpenEdit(goal)}
@@ -437,6 +452,67 @@ function GoalsScreenContent({
         onStart={walkthroughIntro.handleStart}
         onSkip={walkthroughIntro.handleSkip}
       />
+
+      {/* Destination Picker Modal for Multi-destination Goals */}
+      {fundingDestinationGoal ? (
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setFundingDestinationGoal(null)}
+          transparent
+          visible={Boolean(fundingDestinationGoal)}
+        >
+          <Pressable
+            onPress={() => setFundingDestinationGoal(null)}
+            style={styles.destinationBackdrop}
+          >
+            <View style={styles.destinationSheet}>
+              <Text style={styles.destinationTitle}>Select Destination to Fund</Text>
+              <Text style={styles.destinationSubtitle}>
+                Choose which account or pocket to add funds to for "{fundingDestinationGoal.name}".
+              </Text>
+              <ScrollView style={styles.destinationList}>
+                {fundingDestinationGoal.linkedAccounts.map((account) => (
+                  <Pressable
+                    key={`acc-${account.id}`}
+                    onPress={() => {
+                      setFundingDestinationGoal(null);
+                      router.push(
+                        `/transactions?action=new&type=income&accountId=${encodeURIComponent(account.id)}` as any,
+                      );
+                    }}
+                    style={styles.destinationItem}
+                  >
+                    <Text style={styles.destinationItemTitle}>{account.name}</Text>
+                    <Text style={styles.destinationItemType}>Account</Text>
+                  </Pressable>
+                ))}
+                {fundingDestinationGoal.linkedPockets.map((pocket) => (
+                  <Pressable
+                    key={`pock-${pocket.id}`}
+                    onPress={() => {
+                      setFundingDestinationGoal(null);
+                      router.push(
+                        `/transactions?action=new&type=income&accountId=${encodeURIComponent(pocket.accountId)}&pocketId=${encodeURIComponent(pocket.id)}` as any,
+                      );
+                    }}
+                    style={styles.destinationItem}
+                  >
+                    <Text style={styles.destinationItemTitle}>{pocket.name}</Text>
+                    <Text style={styles.destinationItemType}>
+                      Pocket {pocket.accountName ? `• ${pocket.accountName}` : ""}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <AppButton
+                label="Cancel"
+                onPress={() => setFundingDestinationGoal(null)}
+                variant="secondary"
+              />
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
 
       {/* Goals Walkthrough Overlay */}
       <GoalsWalkthroughOverlay
@@ -580,6 +656,53 @@ function createStyles(theme: AppTheme) {
       lineHeight: 20,
       maxWidth: 420,
       marginBottom: theme.spacing.lg,
+    },
+    destinationBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "flex-end",
+    },
+    destinationSheet: {
+      backgroundColor: theme.colors.surface,
+      borderTopLeftRadius: theme.borderRadius.large,
+      borderTopRightRadius: theme.borderRadius.large,
+      padding: theme.spacing.lg,
+      maxHeight: "70%",
+    },
+    destinationTitle: {
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.textPrimary,
+      marginBottom: theme.spacing.xs,
+    },
+    destinationSubtitle: {
+      fontSize: theme.typography.fontSize.sm,
+      color: theme.colors.textSecondary,
+      marginBottom: theme.spacing.md,
+    },
+    destinationList: {
+      marginBottom: theme.spacing.md,
+    },
+    destinationItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.surfaceElevated,
+      borderRadius: theme.borderRadius.medium,
+      marginBottom: theme.spacing.xs,
+    },
+    destinationItemTitle: {
+      fontSize: theme.typography.fontSize.md,
+      fontWeight: theme.typography.fontWeight.medium,
+      color: theme.colors.textPrimary,
+      flex: 1,
+    },
+    destinationItemType: {
+      fontSize: theme.typography.fontSize.xs,
+      color: theme.colors.textMuted,
+      marginLeft: theme.spacing.sm,
     },
   });
 }

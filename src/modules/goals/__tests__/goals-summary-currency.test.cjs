@@ -366,3 +366,112 @@ test("goals-summary: empty goals returns 0 totals with user default currency", (
   assert.equal(result.summary.overallProgressPercentage, 0);
   assert.equal(result.summary.totalGoalsCount, 0);
 });
+
+test("goals-funding (GOAL-F02): actual onAddFunds callback preserves pocketId when funding pocket-linked goals", () => {
+  const vm = require("node:vm");
+  const screenSource = fs.readFileSync(path.join(root, "modules/goals/screens/goals-screen.tsx"), "utf8");
+  const ast = ts.createSourceFile("goals-screen.tsx", screenSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let callbackText = null;
+
+  function visit(node) {
+    if (ts.isJsxAttribute(node) && node.name.getText(ast) === "onAddFunds") {
+      callbackText = node.initializer.expression.getText(ast);
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+
+  assert.ok(callbackText, "onAddFunds callback attribute found in goals-screen.tsx");
+
+  const transpiled = ts.transpileModule("(" + callbackText + ")()", {
+    compilerOptions: { target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+
+  // 1. Pocket-only goal: emits both accountId and pocketId
+  let pushedHref = null;
+  vm.runInNewContext(transpiled, {
+    goal: {
+      linkedAccounts: [],
+      linkedPockets: [{ id: "p1", accountId: "a1" }],
+    },
+    router: {
+      push: (href) => {
+        pushedHref = href;
+      },
+    },
+  });
+  assert.equal(pushedHref, "/transactions?action=new&type=income&accountId=a1&pocketId=p1");
+
+  // 2. Account-only goal: emits only accountId (no pocketId)
+  pushedHref = null;
+  vm.runInNewContext(transpiled, {
+    goal: {
+      linkedAccounts: [{ id: "a2", name: "Savings" }],
+      linkedPockets: [],
+    },
+    router: {
+      push: (href) => {
+        pushedHref = href;
+      },
+    },
+  });
+  assert.equal(pushedHref, "/transactions?action=new&type=income&accountId=a2");
+
+  // 3. Unlinked goal: emits base action=new&type=income
+  pushedHref = null;
+  vm.runInNewContext(transpiled, {
+    goal: {
+      linkedAccounts: [],
+      linkedPockets: [],
+    },
+    router: {
+      push: (href) => {
+        pushedHref = href;
+      },
+    },
+  });
+  assert.equal(pushedHref, "/transactions?action=new&type=income");
+});
+
+test("goals-funding (GOAL-F02): funding pocket updates pocket-only goal balance, while parent account-only income does not", () => {
+  account("acc_parent", "PHP", 100000); // ₱1,000.00 opening
+  sqlite
+    .prepare("INSERT INTO pockets(id,account_id,name,created_at,updated_at) VALUES (?,?,?,0,0)")
+    .run("pocket_vacation", "acc_parent", "Vacation Pocket");
+
+  saveGoal({
+    name: "Vacation Trip",
+    currencyCode: "PHP",
+    targetAmountMinorUnits: 500000, // ₱5,000.00
+    accountIds: [],
+    pocketIds: ["pocket_vacation"],
+  });
+
+  // Verify initial 0 progress
+  let data = getGoalsWithProgress(database);
+  assert.equal(data.goals[0].currentAmountMinorUnits, 0);
+
+  // Income recorded to parent account WITHOUT pocket_id (old buggy behavior)
+  const now = Date.now();
+  sqlite
+    .prepare(
+      "INSERT INTO transactions(id,account_id,pocket_id,type,amount_minor_units,occurred_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+    )
+    .run("tx_acc_only", "acc_parent", null, "income", 100000, now, now, now);
+
+  // Goal progress remains 0 because pocket was not credited
+  data = getGoalsWithProgress(database);
+  assert.equal(data.goals[0].currentAmountMinorUnits, 0);
+
+  // Now record income targeting the pocket directly (new fixed behavior)
+  sqlite
+    .prepare(
+      "INSERT INTO transactions(id,account_id,pocket_id,type,amount_minor_units,occurred_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+    )
+    .run("tx_pocket", "acc_parent", "pocket_vacation", "income", 250000, now, now, now);
+
+  // Goal progress now reflects the ₱2,500.00 in the pocket!
+  data = getGoalsWithProgress(database);
+  assert.equal(data.goals[0].currentAmountMinorUnits, 250000);
+  assert.equal(data.goals[0].progressPercentage, 50);
+});
