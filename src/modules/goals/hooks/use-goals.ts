@@ -202,6 +202,10 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     return true;
   });
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     goals,
     filteredGoals,
@@ -210,6 +214,7 @@ export function useGoals(options?: { skipQuery?: boolean }) {
     setFilter,
     loading,
     error,
+    clearError,
     refresh,
     saveGoal: handleSaveGoal,
     deleteGoal: handleDeleteGoal,

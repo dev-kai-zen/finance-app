@@ -9,12 +9,13 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Target } from "lucide-react-native";
+import { AlertTriangle, Target } from "lucide-react-native";
 import {
   AppButton,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
+  PageErrorState,
   PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
@@ -78,6 +79,8 @@ function GoalsScreenContent({
     filter,
     setFilter,
     loading,
+    error,
+    clearError,
     saveGoal,
     deleteGoal,
     toggleStatus,
@@ -98,6 +101,9 @@ function GoalsScreenContent({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [fundingDestinationGoal, setFundingDestinationGoal] = useState<GoalWithProgress | null>(null);
   const handledActionRef = useRef<string | null>(null);
   const handledGoalIdRef = useRef<string | null>(null);
@@ -242,10 +248,29 @@ function GoalsScreenContent({
     setCongratulationsVisible(false);
   };
 
-  const handleConfirmDelete = () => {
-    if (goalToDelete) {
-      deleteGoal(goalToDelete.id);
+  const handleConfirmDelete = async () => {
+    if (!goalToDelete) return;
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      await deleteGoal(goalToDelete.id);
       setGoalToDelete(null);
+    } catch (err: any) {
+      setDeleteError(err?.message ?? "Failed to delete goal.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleToggleGoalStatus = async (
+    goalId: string,
+    newStatus: GoalStatus,
+  ) => {
+    try {
+      setActionError(null);
+      await toggleStatus(goalId, newStatus);
+    } catch (err: any) {
+      setActionError(err?.message ?? "Failed to update goal status.");
     }
   };
 
@@ -336,8 +361,34 @@ function GoalsScreenContent({
         })}
       </View>
 
+      {/* Action Error Banner */}
+      {actionError && (
+        <View style={styles.actionErrorBanner}>
+          <AlertTriangle color={theme.colors.danger} size={16} />
+          <Text numberOfLines={2} style={styles.actionErrorText}>
+            {actionError}
+          </Text>
+          <Pressable
+            accessibilityLabel="Dismiss error"
+            hitSlop={6}
+            onPress={() => setActionError(null)}
+            style={styles.actionErrorDismissBtn}
+          >
+            <Text style={styles.actionErrorDismissText}>Dismiss</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Main Content Area */}
-      {loading && goals.length === 0 ? (
+      {error && goals.length === 0 ? (
+        <PageErrorState
+          message={error}
+          onRetry={() => {
+            clearError();
+            refresh();
+          }}
+        />
+      ) : loading && goals.length === 0 ? (
         <PageLoadingState message="Loading goals..." variant="cards" />
       ) : filteredGoals.length === 0 ? (
         <View>
@@ -367,12 +418,34 @@ function GoalsScreenContent({
         </View>
       ) : (
         <View style={styles.goalsList}>
+          {error && goals.length > 0 && (
+            <View style={styles.cachedErrorBanner}>
+              <AlertTriangle color={theme.colors.warning} size={16} />
+              <Text numberOfLines={2} style={styles.cachedErrorText}>
+                {error}
+              </Text>
+              <Pressable
+                accessibilityLabel="Retry loading goals"
+                hitSlop={6}
+                onPress={() => {
+                  clearError();
+                  refresh();
+                }}
+                style={styles.cachedErrorRetryBtn}
+              >
+                <Text style={styles.cachedErrorRetryText}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
           {filteredGoals.map((goal, index) => (
             <GoalCard
               key={goal.id}
               goal={goal}
               markCompleteRef={index === 0 ? markCompleteRef : undefined}
-              onDelete={() => setGoalToDelete(goal)}
+              onDelete={() => {
+                setDeleteError(null);
+                setGoalToDelete(goal);
+              }}
               onAddFunds={() => {
                 const accounts = goal.linkedAccounts ?? [];
                 const pockets = goal.linkedPockets ?? [];
@@ -401,7 +474,7 @@ function GoalsScreenContent({
               onEdit={() => handleOpenEdit(goal)}
               onPress={() => handleOpenEdit(goal)}
               onToggleStatus={(newStatus: GoalStatus) =>
-                toggleStatus(goal.id, newStatus)
+                handleToggleGoalStatus(goal.id, newStatus)
               }
             />
           ))}
@@ -420,9 +493,16 @@ function GoalsScreenContent({
       <ConfirmModal
         cancelLabel="Keep Goal"
         confirmLabel="Delete Goal"
+        error={deleteError}
         message={`Are you sure you want to delete "${goalToDelete?.name}"? This action cannot be undone.`}
-        onCancel={() => setGoalToDelete(null)}
+        onCancel={() => {
+          if (!isDeleting) {
+            setGoalToDelete(null);
+            setDeleteError(null);
+          }
+        }}
         onConfirm={handleConfirmDelete}
+        pending={isDeleting}
         title="Delete Savings Goal"
         variant="destructive"
         visible={Boolean(goalToDelete)}
@@ -703,6 +783,64 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       color: theme.colors.textMuted,
       marginLeft: theme.spacing.sm,
+    },
+    cachedErrorBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: `${theme.colors.warning}15`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      borderColor: `${theme.colors.warning}35`,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+      gap: theme.spacing.sm,
+    },
+    cachedErrorText: {
+      flex: 1,
+      color: theme.colors.warning,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    cachedErrorRetryBtn: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.small,
+      backgroundColor: `${theme.colors.warning}25`,
+    },
+    cachedErrorRetryText: {
+      color: theme.colors.warning,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    actionErrorBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}15`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      borderColor: `${theme.colors.danger}35`,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+      gap: theme.spacing.sm,
+    },
+    actionErrorText: {
+      flex: 1,
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    actionErrorDismissBtn: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.small,
+      backgroundColor: `${theme.colors.danger}25`,
+    },
+    actionErrorDismissText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
 }

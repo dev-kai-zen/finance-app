@@ -244,12 +244,25 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Proved `subscribeToDatabaseReplacement` triggers refresh while focused.
    - All 7 tests in `goals-focus-events.test.cjs` passed.
 
-### GOAL-F05 — P2, executed hook + source-confirmed UI: failures are hidden or escape handlers
+### GOAL-F05 — P2, executed hook + source-confirmed UI: failures are hidden or escape handlers — RESOLVED
 
 1. **Problem:** A failed first read can appear as “No savings goals created”; failed cached read retains apparently current rows. Delete/status errors rethrow into unguarded press handlers. No actionable error/retry UI is shown. Form save does catch failures and retains its draft; preserve that behavior.
 2. **Cause:** Screen destructures `useGoals` without `error`. `handleConfirmDelete` and inline status callback do not catch; `ConfirmModal` receives neither error nor pending state. Hook's read `catch` sets error and deferred helper completes loading.
-3. **Smallest fix:** Use existing error/retry presentation and local confirmation/action feedback. Catch delete/status errors at their UI boundary, retain selected item/dialog on failure, and distinguish read from action errors where necessary. No global error provider.
-4. **Proof:** Inject first/cached read, delete, status and save failures through actual callbacks. Verify visible retry, no false empty/success, unchanged DB after failure, retained draft/dialog, cleared obsolete error, successful retry, and safe repeated taps. Native walkthrough overlay must not cover retry controls.
+3. **Fix applied:**
+   - In `src/modules/goals/hooks/use-goals.ts`:
+     - Exposed `error` and added `clearError: useCallback(() => setError(null), [])`.
+   - In `src/modules/goals/screens/goals-screen.tsx`:
+     - Destructured `error` and `clearError` from `useGoals()`.
+     - Rendered `<PageErrorState message={error} onRetry={...} />` when `error && goals.length === 0`, completely preventing query errors from masquerading as a false "No savings goals created" empty state.
+     - Rendered an actionable retry banner (`cachedErrorBanner`) when `error && goals.length > 0`, informing the user that fresh balances could not be retrieved while keeping cached rows readable.
+     - Added `isDeleting` and `deleteError` state connected directly to `<ConfirmModal pending={isDeleting} error={deleteError} />`.
+     - Guarded `handleConfirmDelete` with `try / catch / finally` so delete errors stay within the dialog, display the error message, and retain the target goal so the user can retry or cancel cleanly.
+     - Guarded status toggles with `handleToggleGoalStatus` wrapped in `try / catch`, rendering an actionable `actionErrorBanner` on failure instead of letting unhandled rejections escape into gesture handlers.
+4. **Proof:** Added unit tests in `src/modules/goals/__tests__/goals-error-handling.test.cjs`:
+   - Validated `useGoals` captures read errors and exposes `clearError`.
+   - Validated `deleteGoal` and `toggleStatus` failure propagation.
+   - Validated `GoalsScreen` AST and component contract (PageErrorState gating, ConfirmModal error/pending connection, guarded deletion and status toggles).
+   - All 4 tests in `goals-error-handling.test.cjs` passed.
 
 ### GOAL-F06 — P2, executed: cached reloads have no honest pending state
 
@@ -372,7 +385,7 @@ Preserve useful existing complexity: derived balances from Accounts, signed tran
 
 1. [x] Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations. (Resolved)
 2. [x] Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership. (Resolved)
-3. Address refresh, recovery and honest loading (GOAL-F04 resolved, GOAL-F05–F06 pending), then query/render bounding and native profiling (GOAL-F07).
+3. Address refresh, recovery and honest loading (GOAL-F04–F05 resolved, GOAL-F06 pending), then query/render bounding and native profiling (GOAL-F07).
 4. Settle completion/privacy/reminder policies; address GOAL-F08/F12, localization, touch and layout (GOAL-F09–F11).
 5. Re-run related suites with the budget harness issue separately resolved/tracked, typecheck, and capture native matrix/performance evidence before final sign-off.
 
