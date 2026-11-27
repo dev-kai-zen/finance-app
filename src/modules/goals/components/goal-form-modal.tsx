@@ -50,6 +50,7 @@ import {
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
+import { calculateLinkedFundsBalance } from "../utils/calculate-linked-balance";
 import type { GoalInput, GoalWithProgress } from "../types/goal.types";
 import { GoalAccountPickerModal } from "./goal-account-picker-modal";
 
@@ -236,16 +237,24 @@ function GoalFormModalContent({
   }, [pockets, selectedPocketIds]);
 
   const totalLinkedBalance = useMemo(() => {
-    const accSum = selectedAccounts.reduce(
-      (sum, a) => sum + Math.max(0, a.currentBalanceMinorUnits),
-      0,
+    return calculateLinkedFundsBalance({
+      goalCurrencyCode: currencyCode,
+      selectedAccounts,
+      selectedPockets,
+      accountMap: accountById,
+    });
+  }, [currencyCode, selectedAccounts, selectedPockets, accountById]);
+
+  const hasCurrencyMismatch = useMemo(() => {
+    const accMismatch = selectedAccounts.some(
+      (a) => a.currencyCode && a.currencyCode !== currencyCode,
     );
-    const pockSum = selectedPockets.reduce(
-      (sum, p) => sum + Math.max(0, p.currentBalanceMinorUnits),
-      0,
-    );
-    return accSum + pockSum;
-  }, [selectedAccounts, selectedPockets]);
+    const pockMismatch = selectedPockets.some((p) => {
+      const parent = accountById.get(p.accountId);
+      return parent?.currencyCode && parent.currencyCode !== currencyCode;
+    });
+    return accMismatch || pockMismatch;
+  }, [selectedAccounts, selectedPockets, currencyCode, accountById]);
 
   const selectedColorObj = hexColorsList.find(
     (c: HexColor) => c.id === hexColorsId,
@@ -486,46 +495,105 @@ function GoalFormModalContent({
                     </Text>
                   </View>
 
+                  {hasCurrencyMismatch && (
+                    <View style={styles.mismatchBanner}>
+                      <Text style={styles.mismatchBannerText}>
+                        Some linked funds have a different currency and do not contribute to this {currencyCode} goal.
+                      </Text>
+                    </View>
+                  )}
+
                   <View style={styles.accountChipsWrapper}>
-                    {selectedAccounts.map((account) => (
-                      <View key={`acc-${account.id}`} style={styles.accountChip}>
-                        <View style={styles.accountChipLeft}>
-                          <Landmark color={theme.colors.primary} size={14} />
-                          <Text numberOfLines={1} style={styles.accountChipName}>
-                            {account.name}
-                          </Text>
-                          <Text style={styles.accountChipBalance}>
-                            ({formatPrivacyAmount(
-                              formatCurrency(account.currentBalanceMinorUnits, account.currencyCode),
-                              isPrivate,
-                            )})
-                          </Text>
-                        </View>
-                        <Pressable
-                          accessibilityLabel={`Unlink ${account.name}`}
-                          hitSlop={6}
-                          onPress={() => removeAccount(account.id)}
-                          style={styles.accountChipRemove}
+                    {selectedAccounts.map((account) => {
+                      const isMismatch =
+                        Boolean(account.currencyCode) &&
+                        account.currencyCode !== currencyCode;
+                      return (
+                        <View
+                          key={`acc-${account.id}`}
+                          style={[
+                            styles.accountChip,
+                            isMismatch && styles.accountChipMismatched,
+                          ]}
                         >
-                          <X color={theme.colors.textMuted} size={14} />
-                        </Pressable>
-                      </View>
-                    ))}
+                          <View style={styles.accountChipLeft}>
+                            <Landmark
+                              color={
+                                isMismatch
+                                  ? theme.colors.warning
+                                  : theme.colors.primary
+                              }
+                              size={14}
+                            />
+                            <Text numberOfLines={1} style={styles.accountChipName}>
+                              {account.name}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.accountChipBalance,
+                                isMismatch && styles.accountChipBalanceMismatched,
+                              ]}
+                            >
+                              {isMismatch
+                                ? `(${account.currencyCode} • not counted)`
+                                : `(${formatPrivacyAmount(
+                                    formatCurrency(account.currentBalanceMinorUnits, account.currencyCode),
+                                    isPrivate,
+                                  )})`}
+                            </Text>
+                          </View>
+                          <Pressable
+                            accessibilityLabel={`Unlink ${account.name}`}
+                            hitSlop={6}
+                            onPress={() => removeAccount(account.id)}
+                            style={styles.accountChipRemove}
+                          >
+                            <X color={theme.colors.textMuted} size={14} />
+                          </Pressable>
+                        </View>
+                      );
+                    })}
 
                     {selectedPockets.map((pocket) => {
                       const parent = accountById.get(pocket.accountId);
+                      const isParentLinked = selectedAccountIds.includes(pocket.accountId);
+                      const isMismatch =
+                        Boolean(parent?.currencyCode) &&
+                        parent?.currencyCode !== currencyCode;
                       return (
-                        <View key={`pock-${pocket.id}`} style={styles.accountChip}>
+                        <View
+                          key={`pock-${pocket.id}`}
+                          style={[
+                            styles.accountChip,
+                            (isMismatch || isParentLinked) && styles.accountChipMismatched,
+                          ]}
+                        >
                           <View style={styles.accountChipLeft}>
-                            <WalletCards color={theme.colors.info} size={14} />
+                            <WalletCards
+                              color={
+                                isMismatch || isParentLinked
+                                  ? theme.colors.warning
+                                  : theme.colors.info
+                              }
+                              size={14}
+                            />
                             <Text numberOfLines={1} style={styles.accountChipName}>
                               {pocket.name}
                             </Text>
-                            <Text style={styles.accountChipBalance}>
-                              ({parent?.name ? `${parent.name} • ` : ""}{formatPrivacyAmount(
-                                formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP"),
-                                isPrivate,
-                              )})
+                            <Text
+                              style={[
+                                styles.accountChipBalance,
+                                (isMismatch || isParentLinked) && styles.accountChipBalanceMismatched,
+                              ]}
+                            >
+                              {isMismatch
+                                ? `(${parent?.currencyCode ?? "Other"} • not counted)`
+                                : isParentLinked
+                                  ? "(included in parent)"
+                                  : `(${parent?.name ? `${parent.name} • ` : ""}${formatPrivacyAmount(
+                                      formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP"),
+                                      isPrivate,
+                                    )})`}
                             </Text>
                           </View>
                           <Pressable
@@ -932,6 +1000,19 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
     },
+    mismatchBanner: {
+      backgroundColor: `${theme.colors.warning}15`,
+      borderRadius: theme.borderRadius.medium,
+      padding: theme.spacing.sm,
+      borderWidth: 1,
+      borderColor: `${theme.colors.warning}30`,
+      marginBottom: theme.spacing.xs,
+    },
+    mismatchBannerText: {
+      color: theme.colors.warning,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
     accountChipsWrapper: {
       gap: theme.spacing.xs,
     },
@@ -943,6 +1024,11 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.small,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 6,
+    },
+    accountChipMismatched: {
+      borderColor: `${theme.colors.warning}60`,
+      borderWidth: 1,
+      backgroundColor: `${theme.colors.warning}08`,
     },
     accountChipLeft: {
       flexDirection: "row",
@@ -959,6 +1045,9 @@ function createStyles(theme: AppTheme) {
     accountChipBalance: {
       color: theme.colors.textSecondary,
       fontSize: 11,
+    },
+    accountChipBalanceMismatched: {
+      color: theme.colors.warning,
     },
     accountChipRemove: {
       padding: 2,

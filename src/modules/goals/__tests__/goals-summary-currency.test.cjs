@@ -475,3 +475,87 @@ test("goals-funding (GOAL-F02): funding pocket updates pocket-only goal balance,
   assert.equal(data.goals[0].currentAmountMinorUnits, 250000);
   assert.equal(data.goals[0].progressPercentage, 50);
 });
+
+test("goals-validation (GOAL-F03): saveGoal rejects linking an account with mismatched currency", () => {
+  account("acc_usd_only", "USD", 10000);
+
+  assert.throws(
+    () => {
+      saveGoal(
+        {
+          name: "PHP Goal with USD Account",
+          currencyCode: "PHP",
+          targetAmountMinorUnits: 100000,
+          accountIds: ["acc_usd_only"],
+          pocketIds: [],
+        },
+        null,
+        database,
+      );
+    },
+    /Cannot link account "acc_usd_only" \(USD\) to a PHP goal/,
+  );
+});
+
+test("goals-validation (GOAL-F03): saveGoal rejects linking both an account and its sub-pocket", () => {
+  account("acc_parent_dup", "PHP", 100000);
+  sqlite
+    .prepare("INSERT INTO pockets(id,account_id,name,created_at,updated_at) VALUES (?,?,?,0,0)")
+    .run("pocket_child_dup", "acc_parent_dup", "Child Pocket");
+
+  assert.throws(
+    () => {
+      saveGoal(
+        {
+          name: "Conflicted Goal",
+          currencyCode: "PHP",
+          targetAmountMinorUnits: 200000,
+          accountIds: ["acc_parent_dup"],
+          pocketIds: ["pocket_child_dup"],
+        },
+        null,
+        database,
+      );
+    },
+    /Cannot link both account and its sub-pocket "Child Pocket" to the same goal/,
+  );
+});
+
+test("goals-parity (GOAL-F03): calculateLinkedFundsBalance provides exact parity between form preview and read progress", () => {
+  const { calculateLinkedFundsBalance } = require("@/modules/goals/utils/calculate-linked-balance");
+
+  // 1. Parent + child pocket: parent has 10,000, pocket has 4,000.
+  // Preview must equal 10,000 (deduplicating child pocket), not 14,000!
+  const parentChildPreview = calculateLinkedFundsBalance({
+    goalCurrencyCode: "PHP",
+    selectedAccounts: [{ id: "parent", currencyCode: "PHP", currentBalanceMinorUnits: 1000000 }],
+    selectedPockets: [{ id: "child", accountId: "parent", currentBalanceMinorUnits: 400000 }],
+    accountMap: new Map([["parent", { currencyCode: "PHP" }]]),
+  });
+  assert.equal(parentChildPreview, 1000000);
+
+  // 2. Currency drift: USD goal with a PHP account balance of 10,000.
+  // Preview must equal 0, matching read service progress!
+  const driftPreview = calculateLinkedFundsBalance({
+    goalCurrencyCode: "USD",
+    selectedAccounts: [{ id: "acc_php", currencyCode: "PHP", currentBalanceMinorUnits: 1000000 }],
+    selectedPockets: [],
+    accountMap: new Map([["acc_php", { currencyCode: "PHP" }]]),
+  });
+  assert.equal(driftPreview, 0);
+
+  // 3. Matching multiple accounts: PHP 1,000 + PHP 2,000 -> PHP 3,000
+  const matchingPreview = calculateLinkedFundsBalance({
+    goalCurrencyCode: "PHP",
+    selectedAccounts: [
+      { id: "a1", currencyCode: "PHP", currentBalanceMinorUnits: 100000 },
+      { id: "a2", currencyCode: "PHP", currentBalanceMinorUnits: 200000 },
+    ],
+    selectedPockets: [],
+    accountMap: new Map([
+      ["a1", { currencyCode: "PHP" }],
+      ["a2", { currencyCode: "PHP" }],
+    ]),
+  });
+  assert.equal(matchingPreview, 300000);
+});

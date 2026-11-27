@@ -29,6 +29,7 @@ import {
   type PocketListItem,
 } from "@/modules/accounts";
 import { formatCurrency } from "@/utils/currency";
+import { calculateLinkedFundsBalance } from "../utils/calculate-linked-balance";
 
 export interface GoalAccountPickerModalProps {
   visible: boolean;
@@ -203,23 +204,16 @@ export function GoalAccountPickerModal({
     const selectedAccSet = new Set(localSelectedAccountIds);
     const selectedPockSet = new Set(localSelectedPocketIds);
 
-    const accSum = accounts
-      .filter(
-        (a) =>
-          selectedAccSet.has(a.id) &&
-          (!currencyCode || a.currencyCode === currencyCode),
-      )
-      .reduce((sum, a) => sum + Math.max(0, a.currentBalanceMinorUnits), 0);
+    const selectedAccounts = accounts.filter((a) => selectedAccSet.has(a.id));
+    const selectedPockets = pockets.filter((p) => selectedPockSet.has(p.id));
+    const accountMap = new Map(accounts.map((a) => [a.id, a]));
 
-    const pockSum = pockets
-      .filter((p) => {
-        if (!selectedPockSet.has(p.id)) return false;
-        const parent = accounts.find((a) => a.id === p.accountId);
-        return !currencyCode || parent?.currencyCode === currencyCode;
-      })
-      .reduce((sum, p) => sum + Math.max(0, p.currentBalanceMinorUnits), 0);
-
-    return accSum + pockSum;
+    return calculateLinkedFundsBalance({
+      goalCurrencyCode: currencyCode,
+      selectedAccounts,
+      selectedPockets,
+      accountMap,
+    });
   }, [accounts, pockets, localSelectedAccountIds, localSelectedPocketIds, currencyCode]);
 
   const handleSave = () => {

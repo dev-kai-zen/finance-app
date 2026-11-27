@@ -19,6 +19,7 @@ import type {
   LinkedPocketItem,
 } from "../types/goal.types";
 import { calculateGoalProgress } from "./calculate-goal-progress.service";
+import { calculateLinkedFundsBalance } from "../utils/calculate-linked-balance";
 
 export interface GoalsDataResult {
   goals: GoalWithProgress[];
@@ -82,29 +83,12 @@ export function getGoalsWithProgress(
         };
       });
 
-    // Accounts sum: only include accounts matching the goal currency
-    const accountsSum = linkedAccounts.reduce((sum, acc) => {
-      const parentAcc = accountsById.get(acc.id);
-      if (goal.currencyCode && parentAcc?.currencyCode !== goal.currencyCode) {
-        return sum;
-      }
-      return sum + Math.max(0, acc.currentBalanceMinorUnits);
-    }, 0);
-
-    // Pockets sum: exclude pockets whose parent account is already in linkedAccounts to avoid double counting,
-    // and only include pockets matching the goal currency
-    const nonDuplicatedPockets = linkedPockets.filter(
-      (p) => !linkedAccountIdsSet.has(p.accountId),
-    );
-    const pocketsSum = nonDuplicatedPockets.reduce((sum, pocket) => {
-      const parentAcc = accountsById.get(pocket.accountId);
-      if (goal.currencyCode && parentAcc?.currencyCode !== goal.currencyCode) {
-        return sum;
-      }
-      return sum + Math.max(0, pocket.currentBalanceMinorUnits);
-    }, 0);
-
-    const currentBalance = accountsSum + pocketsSum;
+    const currentBalance = calculateLinkedFundsBalance({
+      goalCurrencyCode: goal.currencyCode,
+      selectedAccounts: linkedAccounts,
+      selectedPockets: linkedPockets,
+      accountMap: accountsById,
+    });
 
     const item = calculateGoalProgress({
       goal,

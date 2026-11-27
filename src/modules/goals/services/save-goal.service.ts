@@ -1,6 +1,10 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import type { NewGoalRecord } from "@/infrastructure/database/schema";
 import {
+  getAccountsWithBalances,
+  getPocketsWithBalances,
+} from "@/modules/accounts";
+import {
   findGoalById,
   insertGoal,
   newGoalRecordId,
@@ -37,6 +41,39 @@ export function saveGoal(
         ? [validated.pocketId]
         : [];
   const primaryPocketId = pocketIds[0] ?? null;
+
+  if (accountIds.length > 0 || pocketIds.length > 0) {
+    const accounts = getAccountsWithBalances(context);
+    const pockets = getPocketsWithBalances(context);
+    const accountsById = new Map(accounts.map((a) => [a.id, a]));
+    const accountIdsSet = new Set(accountIds);
+
+    for (const accId of accountIds) {
+      const acc = accountsById.get(accId);
+      if (acc && validated.currencyCode && acc.currencyCode !== validated.currencyCode) {
+        throw new Error(
+          `Cannot link account "${acc.name}" (${acc.currencyCode}) to a ${validated.currencyCode} goal.`,
+        );
+      }
+    }
+
+    for (const pockId of pocketIds) {
+      const pock = pockets.find((p) => p.id === pockId);
+      if (pock) {
+        if (accountIdsSet.has(pock.accountId)) {
+          throw new Error(
+            `Cannot link both account and its sub-pocket "${pock.name}" to the same goal.`,
+          );
+        }
+        const parent = accountsById.get(pock.accountId);
+        if (parent && validated.currencyCode && parent.currencyCode !== validated.currencyCode) {
+          throw new Error(
+            `Cannot link pocket "${pock.name}" (${parent.currencyCode}) to a ${validated.currencyCode} goal.`,
+          );
+        }
+      }
+    }
+  }
 
   if (existingId) {
     const existing = findGoalById(existingId, context);

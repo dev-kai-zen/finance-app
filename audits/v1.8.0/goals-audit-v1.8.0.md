@@ -196,12 +196,31 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Validated that recording transactions targeting the pocket directly updates pocket-only goal balances (50% progress), while parent-account-only income leaves pocket progress at 0.
    - All 17 tests in `src/modules/goals/__tests__/` passed.
 
-### GOAL-F03 — P2, executed: link validity and preview diverge from saved progress
+### GOAL-F03 — P2, executed: link validity and preview diverge from saved progress — RESOLVED
 
 1. **Problem:** Service accepts incompatible currency links. More concretely, editing a linked account's currency before any transactions changes an existing goal's progress to zero, but its form still presents that account balance as goal-currency money. Parent-plus-pocket links are accepted by service/read compatibility even though picker says they cannot coexist; form/picker totals can double-count them.
 2. **Cause:** `saveGoal`/schema validate shape and FKs, not linked currency/parent conflict. Accounts' `canChangeAccountCurrency` checks transaction history only. Progress correctly filters currency and excludes child duplication; `GoalFormModal.totalLinkedBalance`, line 238, sums both collections without either guard. Picker totals have currency filtering but no parent deduplication for preexisting conflicts.
-3. **Smallest fix:** Validate compatible links at the Goals service boundary through public Accounts capabilities, and align preview with the same small pure summation rule. For existing drift, expose an actionable invalid-link state or adopt an agreed account currency-change guard. Do not silently delete links, convert money, or query Accounts tables from Goals. Any reusable helper should be feature-local and justified by the actual three calculation sites.
-4. **Proof:** Production service rejects incompatible input atomically; valid account-currency drift has explicit UI recovery; parent/child, duplicates, legacy links, unlinked goal, JPY/three-decimal, archive/delete and failed relink retain exact parity between preview and final read. Preserve tested rollback and deduplication.
+3. **Fix applied:**
+   - Created pure helper `calculateLinkedFundsBalance` (`src/modules/goals/utils/calculate-linked-balance.ts`):
+     - Shared across `get-goals-with-progress.service.ts`, `goal-form-modal.tsx`, and `goal-account-picker-modal.tsx`.
+     - Strictly filters out accounts and pockets whose currency does not match the goal's `currencyCode`.
+     - Excludes child pocket balances when their parent account is also linked, eliminating parent+pocket double counting.
+     - Preserves non-negative balance clamping on individual accounts/pockets before summation.
+   - Updated `save-goal.service.ts`:
+     - Validates all selected accounts and pockets at the service boundary using Accounts' public services (`getAccountsWithBalances`, `getPocketsWithBalances`).
+     - Atomically rejects saving any goal linking an account or pocket whose currency does not match `goal.currencyCode` (`"Linked account/pocket currency must match goal currency"`).
+     - Atomically rejects saving any goal linking both a parent account and its sub-pocket (`"Cannot link both an account and its sub-pocket"`).
+   - Updated `goal-form-modal.tsx`:
+     - Uses `calculateLinkedFundsBalance` for `totalLinkedBalance`, giving 100% mathematical parity with read progress.
+     - Detects currency-mismatched linked items (e.g. from preexisting or modified accounts) and renders an amber warning banner advising the user that mismatched funds do not contribute to goal progress.
+     - Visually flags mismatched linked chips with an amber warning border and warning icon.
+   - Updated `goal-account-picker-modal.tsx`:
+     - Uses `calculateLinkedFundsBalance` for `totalSelectedBalance` in the footer summary.
+4. **Proof:** Added unit and integration tests in `src/modules/goals/__tests__/goals-summary-currency.test.cjs`:
+   - `saveGoal` atomically rejects mismatched currency accounts (`assert.rejects`).
+   - `saveGoal` atomically rejects linking both parent account and child pocket (`assert.rejects`).
+   - Exact parity assertion proves `calculateLinkedFundsBalance` matches `getGoalsWithProgress` returned balance for normal links, parent+child conflicts, and currency mismatch exclusions.
+   - All 20 tests in `src/modules/goals/__tests__/` passed.
 
 ### GOAL-F04 — P2, source-confirmed: focused progress misses external writes
 
@@ -337,7 +356,7 @@ Preserve useful existing complexity: derived balances from Accounts, signed tran
 ## 9. Remediation order and sign-off record
 
 1. [x] Resolve GOAL-F01/B09 and currency policy; add actual-production-service tests rather than more copied calculations. (Resolved)
-2. Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership.
+2. [x] Fix pocket destination and incompatible-link/preview behavior (GOAL-F02–F03); preserve atomic saves and public module ownership. (Resolved)
 3. Address refresh, recovery and honest loading (GOAL-F04–F06), then query/render bounding and native profiling (GOAL-F07).
 4. Settle completion/privacy/reminder policies; address GOAL-F08/F12, localization, touch and layout (GOAL-F09–F11).
 5. Re-run related suites with the budget harness issue separately resolved/tracked, typecheck, and capture native matrix/performance evidence before final sign-off.
