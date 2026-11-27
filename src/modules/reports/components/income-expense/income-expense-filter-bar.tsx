@@ -159,66 +159,72 @@ export function IncomeExpenseFilterBar({
               </Pressable>
             </View>
 
-            <View style={styles.optionList}>
-              {PERIOD_OPTIONS.map((opt) => {
-                const isSelected = opt.key === preset;
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => onSelectPreset(opt.key)}
-                    style={[
-                      styles.optionItem,
-                      isSelected && styles.selectedOptionItem,
-                    ]}
-                  >
-                    <View style={styles.radio}>
-                      {isSelected ? (
-                        <Check size={14} color="#FFFFFF" strokeWidth={3} />
-                      ) : null}
-                    </View>
-                    <View style={styles.optionTextWrap}>
-                      <Text
-                        style={[
-                          styles.optionTitle,
-                          isSelected && styles.selectedOptionTitle,
-                        ]}
-                      >
-                        {opt.label}
-                      </Text>
-                      <Text style={styles.optionDesc}>{opt.desc}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Custom Dates Controls */}
-            {preset === "custom" ? (
-              <View style={styles.customBox}>
-                <Text style={styles.customBoxLabel}>Custom Date Range:</Text>
-                <View style={styles.customRow}>
-                  <Pressable
-                    style={styles.dateChip}
-                    onPress={() => setDatePickerTarget("A")}
-                  >
-                    <Calendar size={13} color={styles.accentIcon.color} />
-                    <Text style={styles.dateChipText}>
-                      From: {formatShortDate(parseDateKeyToDate(customDateA))}
-                    </Text>
-                  </Pressable>
-                  <Text style={styles.vsText}>to</Text>
-                  <Pressable
-                    style={styles.dateChip}
-                    onPress={() => setDatePickerTarget("B")}
-                  >
-                    <Calendar size={13} color={styles.accentIcon.color} />
-                    <Text style={styles.dateChipText}>
-                      To: {formatShortDate(parseDateKeyToDate(customDateB))}
-                    </Text>
-                  </Pressable>
-                </View>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.optionList}>
+                {PERIOD_OPTIONS.map((opt) => {
+                  const isSelected = opt.key === preset;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => onSelectPreset(opt.key)}
+                      style={[
+                        styles.optionItem,
+                        isSelected && styles.selectedOptionItem,
+                      ]}
+                    >
+                      <View style={styles.radio}>
+                        {isSelected ? (
+                          <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                        ) : null}
+                      </View>
+                      <View style={styles.optionTextWrap}>
+                        <Text
+                          style={[
+                            styles.optionTitle,
+                            isSelected && styles.selectedOptionTitle,
+                          ]}
+                        >
+                          {opt.label}
+                        </Text>
+                        <Text style={styles.optionDesc}>{opt.desc}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
-            ) : null}
+
+              {/* Custom Dates Controls */}
+              {preset === "custom" ? (
+                <View style={styles.customBox}>
+                  <Text style={styles.customBoxLabel}>Custom Date Range:</Text>
+                  <View style={styles.customRow}>
+                    <Pressable
+                      style={styles.dateChip}
+                      onPress={() => setDatePickerTarget("A")}
+                    >
+                      <Calendar size={13} color={styles.accentIcon.color} />
+                      <Text style={styles.dateChipText}>
+                        From: {formatShortDate(parseDateKeyToDate(customDateA))}
+                      </Text>
+                    </Pressable>
+                    <Text style={styles.vsText}>to</Text>
+                    <Pressable
+                      style={styles.dateChip}
+                      onPress={() => setDatePickerTarget("B")}
+                    >
+                      <Calendar size={13} color={styles.accentIcon.color} />
+                      <Text style={styles.dateChipText}>
+                        To: {formatShortDate(parseDateKeyToDate(customDateB))}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
 
             <Pressable
               style={styles.applyButton}
@@ -337,6 +343,7 @@ function createStyles(theme: AppTheme) {
     sheet: {
       width: "100%",
       maxWidth: 440,
+      maxHeight: "85%",
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       padding: 20,
@@ -347,6 +354,9 @@ function createStyles(theme: AppTheme) {
       shadowOpacity: 0.15,
       shadowRadius: 12,
       elevation: 6,
+    },
+    modalScrollContent: {
+      paddingBottom: 4,
     },
     modalHeader: {
       flexDirection: "row",

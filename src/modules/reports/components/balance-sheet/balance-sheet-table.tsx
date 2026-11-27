@@ -473,7 +473,7 @@ function createStyles(theme: AppTheme) {
       minWidth: "100%",
     },
     tableWrapper: {
-      minWidth: 540,
+      minWidth: 570,
       width: "100%",
       backgroundColor: theme.colors.surface,
     },
@@ -487,7 +487,7 @@ function createStyles(theme: AppTheme) {
     },
     colNumeric: {
       flex: 1,
-      minWidth: 115,
+      minWidth: 125,
       alignItems: "flex-end",
       justifyContent: "center",
       paddingHorizontal: 8,

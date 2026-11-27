@@ -165,7 +165,7 @@ export function LabelsSummaryTable({
               {/* Label Info & Progress Bar */}
               <View style={styles.infoCol}>
                 <View style={styles.nameRow}>
-                  <Text numberOfLines={1} style={styles.labelName}>
+                  <Text numberOfLines={2} style={styles.labelName}>
                     {displayName}
                   </Text>
                   <Text style={styles.amountText}>

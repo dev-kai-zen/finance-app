@@ -45,7 +45,7 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[
               styles.cardValue,
               styles.inflowValue,
@@ -69,7 +69,7 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[
               styles.cardValue,
               styles.outflowValue,
@@ -93,7 +93,7 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[
               styles.cardValue,
               {
@@ -123,7 +123,7 @@ export function CashFlowSummaryCards({
               <PiggyBank size={14} color={styles.savingsIconColor.color} />
             </View>
           </View>
-          <Text numberOfLines={1} style={styles.cardValue}>
+          <Text numberOfLines={2} style={styles.cardValue}>
             {formatPrivacyAmount(`${savingsRatePercentage}%`, isPrivate)}
           </Text>
           <View style={styles.progressBarTrack}>

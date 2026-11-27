@@ -316,3 +316,127 @@ test("REP-F11: Complete localization across en, fil, es and touch ergonomics hit
     "IncomeExpenseFilterBar must provide hitSlop on close button",
   );
 });
+
+test("REP-F12 - Essential text containment and modal responsiveness", () => {
+  // Surface 1: Summary cards have numberOfLines={2} for amounts
+  const cashFlowSummarySource = fs.readFileSync(
+    path.resolve(__dirname, "../components/cash-flow/cash-flow-summary-cards.tsx"),
+    "utf8",
+  );
+  assert.equal(
+    cashFlowSummarySource.includes("numberOfLines={1}"),
+    false,
+    "CashFlowSummaryCards should not restrict amounts to 1 line",
+  );
+  assert.equal(
+    (cashFlowSummarySource.match(/numberOfLines=\{2\}/g) || []).length,
+    4,
+    "All 4 cards in CashFlowSummaryCards should have numberOfLines={2}",
+  );
+
+  const netWorthSummarySource = fs.readFileSync(
+    path.resolve(__dirname, "../components/net-worth/net-worth-summary-cards.tsx"),
+    "utf8",
+  );
+  assert.equal(
+    netWorthSummarySource.includes("numberOfLines={1}"),
+    false,
+    "NetWorthSummaryCards should not restrict amounts to 1 line",
+  );
+  assert.equal(
+    (netWorthSummarySource.match(/numberOfLines=\{2\}/g) || []).length,
+    4,
+    "All 4 cards in NetWorthSummaryCards should have numberOfLines={2}",
+  );
+
+  // Surface 2: Donut charts center overlay handles long text & shrinking
+  const categoryDonutSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/income-expense/category-donut-chart.tsx"),
+    "utf8",
+  );
+  assert.match(
+    categoryDonutSource,
+    /<Text\s+numberOfLines=\{2\}\s+style=\{styles\.centerCategoryName\}>/,
+    "CategoryDonutChart centerCategoryName must support 2 lines",
+  );
+  assert.match(
+    categoryDonutSource,
+    /adjustsFontSizeToFit\s+minimumFontScale=\{0\.75\}\s+style=\{styles\.centerAmount\}/,
+    "CategoryDonutChart centerAmount must adjust font size to fit with minimumFontScale 0.75",
+  );
+
+  const labelsDonutSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/labels-summary/labels-summary-donut-chart.tsx"),
+    "utf8",
+  );
+  assert.match(
+    labelsDonutSource,
+    /<Text\s+numberOfLines=\{2\}\s+style=\{styles\.centerLabelName\}>/,
+    "LabelsSummaryDonutChart centerLabelName must support 2 lines",
+  );
+  assert.match(
+    labelsDonutSource,
+    /adjustsFontSizeToFit\s+minimumFontScale=\{0\.75\}\s+style=\{styles\.centerAmount\}/,
+    "LabelsSummaryDonutChart centerAmount must adjust font size to fit with minimumFontScale 0.75",
+  );
+
+  // Surface 3: Category and label breakdown tables support 2-line item titles
+  const categoryTableSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/income-expense/category-breakdown-table.tsx"),
+    "utf8",
+  );
+  assert.match(
+    categoryTableSource,
+    /<Text\s+numberOfLines=\{2\}\s+style=\{styles\.categoryName\}>/,
+    "CategoryBreakdownTable categoryName must support 2 lines",
+  );
+
+  const labelsTableSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/labels-summary/labels-summary-table.tsx"),
+    "utf8",
+  );
+  assert.match(
+    labelsTableSource,
+    /<Text\s+numberOfLines=\{2\}\s+style=\{styles\.labelName\}>/,
+    "LabelsSummaryTable labelName must support 2 lines",
+  );
+
+  // Surface 4: Balance sheet numeric columns & table width
+  const balanceSheetTableSource = fs.readFileSync(
+    path.resolve(__dirname, "../components/balance-sheet/balance-sheet-table.tsx"),
+    "utf8",
+  );
+  assert.match(
+    balanceSheetTableSource,
+    /tableWrapper:\s*\{\s*minWidth:\s*570,/,
+    "BalanceSheetTable tableWrapper minWidth must be at least 570",
+  );
+  assert.match(
+    balanceSheetTableSource,
+    /colNumeric:\s*\{\s*flex:\s*1,\s*minWidth:\s*125,/,
+    "BalanceSheetTable colNumeric minWidth must be at least 125",
+  );
+
+  // Surface 5: Modal sheets have maxHeight and ScrollView
+  const modalSources = [
+    { name: "PresetPickerModal", path: "../components/balance-sheet/preset-picker-modal.tsx" },
+    { name: "ExpandCollapseModal", path: "../components/balance-sheet/expand-collapse-modal.tsx" },
+    { name: "IncomeExpenseFilterBar", path: "../components/income-expense/income-expense-filter-bar.tsx" },
+    { name: "CashFlowFilterBar", path: "../components/cash-flow/cash-flow-filter-bar.tsx" },
+    { name: "NetWorthFilterBar", path: "../components/net-worth/net-worth-filter-bar.tsx" },
+  ];
+
+  for (const modal of modalSources) {
+    const code = fs.readFileSync(path.resolve(__dirname, modal.path), "utf8");
+    assert.match(
+      code,
+      /maxHeight:\s*["']85%["']/,
+      `${modal.name} sheet must have maxHeight: "85%" for responsiveness`,
+    );
+    assert.match(
+      code,
+      /<ScrollView/,
+      `${modal.name} must wrap scrollable options in a ScrollView`,
+    );
+  }
+});

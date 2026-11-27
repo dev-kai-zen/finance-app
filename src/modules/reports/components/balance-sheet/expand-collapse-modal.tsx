@@ -2,6 +2,7 @@ import React from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -56,85 +57,90 @@ export function ExpandCollapseModal({
             </Pressable>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>EXPAND</Text>
-            <Pressable
-              style={styles.optionRow}
-              onPress={() => {
-                onExpandAll("pockets");
-                onClose();
-              }}
-            >
-              <View style={styles.iconWrap}>
-                <ChevronsDown size={18} color={styles.accentIcon.color} />
-              </View>
-              <View style={styles.textWrap}>
-                <Text style={styles.optionTitle}>Expand All (Down to Pockets)</Text>
-                <Text style={styles.optionSubtitle}>
-                  View all account types, accounts, and individual pockets
-                </Text>
-              </View>
-            </Pressable>
+          <ScrollView
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.section}>
+              <Text style={styles.sectionHeader}>EXPAND</Text>
+              <Pressable
+                style={styles.optionRow}
+                onPress={() => {
+                  onExpandAll("pockets");
+                  onClose();
+                }}
+              >
+                <View style={styles.iconWrap}>
+                  <ChevronsDown size={18} color={styles.accentIcon.color} />
+                </View>
+                <View style={styles.textWrap}>
+                  <Text style={styles.optionTitle}>Expand All (Down to Pockets)</Text>
+                  <Text style={styles.optionSubtitle}>
+                    View all account types, accounts, and individual pockets
+                  </Text>
+                </View>
+              </Pressable>
 
-            <Pressable
-              style={styles.optionRow}
-              onPress={() => {
-                onExpandAll("accounts");
-                onClose();
-              }}
-            >
-              <View style={styles.iconWrap}>
-                <FolderPlus size={18} color={styles.accentIcon.color} />
-              </View>
-              <View style={styles.textWrap}>
-                <Text style={styles.optionTitle}>Expand to Accounts</Text>
-                <Text style={styles.optionSubtitle}>
-                  Show accounts but keep pocket breakdown collapsed
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+              <Pressable
+                style={styles.optionRow}
+                onPress={() => {
+                  onExpandAll("accounts");
+                  onClose();
+                }}
+              >
+                <View style={styles.iconWrap}>
+                  <FolderPlus size={18} color={styles.accentIcon.color} />
+                </View>
+                <View style={styles.textWrap}>
+                  <Text style={styles.optionTitle}>Expand to Accounts</Text>
+                  <Text style={styles.optionSubtitle}>
+                    Show accounts but keep pocket breakdown collapsed
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>COLLAPSE</Text>
-            <Pressable
-              style={styles.optionRow}
-              onPress={() => {
-                onCollapseAll("types");
-                onClose();
-              }}
-            >
-              <View style={styles.iconWrap}>
-                <FolderMinus size={18} color={styles.mutedIcon.color} />
-              </View>
-              <View style={styles.textWrap}>
-                <Text style={styles.optionTitle}>Collapse to Account Types</Text>
-                <Text style={styles.optionSubtitle}>
-                  Show only high-level categories (e.g. Bank, Cash, Credit Card)
-                </Text>
-              </View>
-            </Pressable>
+            <View style={styles.section}>
+              <Text style={styles.sectionHeader}>COLLAPSE</Text>
+              <Pressable
+                style={styles.optionRow}
+                onPress={() => {
+                  onCollapseAll("types");
+                  onClose();
+                }}
+              >
+                <View style={styles.iconWrap}>
+                  <FolderMinus size={18} color={styles.mutedIcon.color} />
+                </View>
+                <View style={styles.textWrap}>
+                  <Text style={styles.optionTitle}>Collapse to Account Types</Text>
+                  <Text style={styles.optionSubtitle}>
+                    Show only high-level categories (e.g. Bank, Cash, Credit Card)
+                  </Text>
+                </View>
+              </Pressable>
 
-            <Pressable
-              style={styles.optionRow}
-              onPress={() => {
-                onCollapseAll("groups");
-                onClose();
-              }}
-            >
-              <View style={styles.iconWrap}>
-                <ChevronsUp size={18} color={styles.mutedIcon.color} />
-              </View>
-              <View style={styles.textWrap}>
-                <Text style={styles.optionTitle}>Collapse to Groups</Text>
-                <Text style={styles.optionSubtitle}>
-                  Summarize by Asset and Liability totals only
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+              <Pressable
+                style={styles.optionRow}
+                onPress={() => {
+                  onCollapseAll("groups");
+                  onClose();
+                }}
+              >
+                <View style={styles.iconWrap}>
+                  <ChevronsUp size={18} color={styles.mutedIcon.color} />
+                </View>
+                <View style={styles.textWrap}>
+                  <Text style={styles.optionTitle}>Collapse to Groups</Text>
+                  <Text style={styles.optionSubtitle}>
+                    Summarize by Asset and Liability totals only
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -153,6 +159,7 @@ function createStyles(theme: AppTheme) {
     sheet: {
       width: "100%",
       maxWidth: 440,
+      maxHeight: "85%",
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       padding: 20,
@@ -163,6 +170,9 @@ function createStyles(theme: AppTheme) {
       shadowOpacity: 0.15,
       shadowRadius: 12,
       elevation: 6,
+    },
+    scrollContent: {
+      paddingBottom: 4,
     },
     header: {
       flexDirection: "row",

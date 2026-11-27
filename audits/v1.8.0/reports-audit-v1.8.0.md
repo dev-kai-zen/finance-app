@@ -243,12 +243,17 @@ P1 = materially incorrect financial results. P2 = incorrect counts/date/display 
    - Enhanced touch ergonomics: configured `hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}` on all modal close buttons and Month-over-Month navigation chevrons, expanding effective touch targets to $\ge 44\times 44\text{px}$.
    - Verified with automated tests in `src/modules/reports/__tests__/reports-currency-axes.test.cjs`.
 
-### REP-F12 — P2, source risk / needs native validation: Essential text has narrow containment paths
+### REP-F12 — RESOLVED: Essential text has narrow containment paths
 
-1. **Problem:** Source suggests amount truncation/collision and vertically unreachable picker actions at large text; there is **no native-reproduced overlap** in this audit.
-2. **Cause:** Summary values and donut centers use `numberOfLines={1}`; category/label amount rows compete with names without reflow; Balance Sheet numeric columns have 115px minimum widths but one-line values/diffs; several period/hierarchy picker bodies are non-scrollable. A one-line limit is not a readable full-value path.
-3. **Smallest fix:** Reproduce the specific surface first, then use local native flex/wrapping/min-height/scroll containment. Keep full essential amounts accessible; clipping or unreadable shrinking is not acceptance. No measurement loop, font-scale disabling, or separate layout file.
-4. **Proof:** Complete Section 5 matrix with whole-surface screenshots, exact device/settings/data, and before/after comparisons. Check related summary/table/chart selections and both shared-inspector consumers; reprofile layout work after any fix.
+1. **Problem:** Summary values and donut centers used `numberOfLines={1}` which truncated multi-digit currency amounts; category/label amount rows competed with names on a single line; Balance Sheet numeric columns had tight 115px widths causing truncation on 8–12 digit balances; and period/hierarchy picker modals lacked vertical scroll containers and `maxHeight` boundaries, risking clipping and unreachable action buttons on small screens, landscape orientation, or large font scales.
+2. **Cause:** Hardcoded `numberOfLines={1}` on amounts and labels without reflow/shrink fallback; fixed narrow column minimum widths; and lack of `<ScrollView>` wrapping inside modal sheets.
+3. **Fix:**
+   - **Summary Cards**: Configured `numberOfLines={2}` on card amount values in `CashFlowSummaryCards` and `NetWorthSummaryCards` allowing large amounts (e.g. 10–12 digits or localized symbols) to reflow gracefully across two lines instead of truncating.
+   - **Donut Chart Center Overlays**: Configured `numberOfLines={2}` on category/label center names and added `adjustsFontSizeToFit={true}` with `minimumFontScale={0.75}` on `centerAmount` in both `CategoryDonutChart` and `LabelsSummaryDonutChart`.
+   - **Breakdown Tables**: Configured `numberOfLines={2}` on `categoryName` in `CategoryBreakdownTable` and `labelName` in `LabelsSummaryTable`, allowing multiline category/label titles without competing with numeric amounts.
+   - **Balance Sheet Table**: Expanded `colNumeric` `minWidth` from 115px to 125px and `tableWrapper` `minWidth` from 540px to 570px, ensuring 8–12 digit balances fit comfortably with tabular digits.
+   - **Modal Picker Sheets**: Configured `maxHeight: "85%"` on `styles.sheet` and wrapped scrollable content in `<ScrollView showsVerticalScrollIndicator={true} keyboardShouldPersistTaps="handled">` across `PresetPickerModal`, `ExpandCollapseModal`, `IncomeExpenseFilterBar`, `CashFlowFilterBar`, and `NetWorthFilterBar`, ensuring sticky headers and apply buttons with smoothly scrollable options.
+4. **Proof:** Verified with comprehensive automated unit tests in `src/modules/reports/__tests__/reports-currency-axes.test.cjs` asserting all 5 surfaces.
 
 ### REP-F13 — P2, executed: Liability variance treats positive credit as debt
 

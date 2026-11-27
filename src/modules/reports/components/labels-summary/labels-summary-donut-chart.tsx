@@ -108,12 +108,12 @@ export function LabelsSummaryDonutChart({
           <View style={styles.centerOverlay} pointerEvents="none">
             {selectedLabel ? (
               <>
-                <Text numberOfLines={1} style={styles.centerLabelName}>
+                <Text numberOfLines={2} style={styles.centerLabelName}>
                   {selectedLabel.labelId === "unlabeled"
                     ? "Unlabeled"
                     : `#${selectedLabel.labelName}`}
                 </Text>
-                <Text numberOfLines={1} style={styles.centerAmount}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                   {formatPrivacyAmount(
                     formatCurrency(selectedLabel.totalMinorUnits, currencyCode),
                     isPrivate,
@@ -128,7 +128,7 @@ export function LabelsSummaryDonutChart({
             ) : (
               <>
                 <Text style={styles.centerTitle}>{subtitle}</Text>
-                <Text numberOfLines={1} style={styles.centerAmount}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                   {formatPrivacyAmount(
                     formatCurrency(totalMinorUnits, currencyCode),
                     isPrivate,
@@ -218,12 +218,12 @@ export function LabelsSummaryDonutChart({
         <View style={styles.centerOverlay} pointerEvents="none">
           {selectedLabel ? (
             <>
-              <Text numberOfLines={1} style={styles.centerLabelName}>
+              <Text numberOfLines={2} style={styles.centerLabelName}>
                 {selectedLabel.labelId === "unlabeled"
                   ? "Unlabeled"
                   : `#${selectedLabel.labelName}`}
               </Text>
-              <Text numberOfLines={1} style={styles.centerAmount}>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                 {formatPrivacyAmount(
                   formatCurrency(selectedLabel.totalMinorUnits, currencyCode),
                   isPrivate,
@@ -240,7 +240,7 @@ export function LabelsSummaryDonutChart({
               <Text style={styles.centerTitle}>
                 TOTAL {mode.toUpperCase()}
               </Text>
-              <Text numberOfLines={1} style={styles.centerAmount}>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                 {formatPrivacyAmount(
                   formatCurrency(totalMinorUnits, currencyCode),
                   isPrivate,

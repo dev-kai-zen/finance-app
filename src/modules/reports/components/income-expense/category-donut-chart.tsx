@@ -110,10 +110,10 @@ export function CategoryDonutChart({
           <View style={styles.centerOverlay} pointerEvents="none">
             {selectedCategory ? (
               <>
-                <Text numberOfLines={1} style={styles.centerCategoryName}>
+                <Text numberOfLines={2} style={styles.centerCategoryName}>
                   {selectedCategory.categoryName}
                 </Text>
-                <Text numberOfLines={1} style={styles.centerAmount}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                   {formatPrivacyAmount(
                     formatCurrency(selectedCategory.totalMinorUnits, currencyCode),
                     isPrivate,
@@ -128,7 +128,7 @@ export function CategoryDonutChart({
             ) : (
               <>
                 <Text style={styles.centerTitle}>{subtitle}</Text>
-                <Text numberOfLines={1} style={styles.centerAmount}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                   {formatPrivacyAmount(
                     formatCurrency(totalMinorUnits, currencyCode),
                     isPrivate,
@@ -214,10 +214,10 @@ export function CategoryDonutChart({
         <View style={styles.centerOverlay} pointerEvents="none">
           {selectedCategory ? (
             <>
-              <Text numberOfLines={1} style={styles.centerCategoryName}>
+              <Text numberOfLines={2} style={styles.centerCategoryName}>
                 {selectedCategory.categoryName}
               </Text>
-              <Text numberOfLines={1} style={styles.centerAmount}>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                 {formatPrivacyAmount(
                   formatCurrency(selectedCategory.totalMinorUnits, currencyCode),
                   isPrivate,
@@ -234,7 +234,7 @@ export function CategoryDonutChart({
               <Text style={styles.centerTitle}>
                 TOTAL {mode.toUpperCase()}
               </Text>
-              <Text numberOfLines={1} style={styles.centerAmount}>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.centerAmount}>
                 {formatPrivacyAmount(
                   formatCurrency(totalMinorUnits, currencyCode),
                   isPrivate,

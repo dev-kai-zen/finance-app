@@ -45,7 +45,7 @@ export function NetWorthSummaryCards({
               <CircleDollarSign size={14} color={styles.primaryIconColor.color} />
             </View>
           </View>
-          <Text numberOfLines={1} style={styles.cardValue}>
+          <Text numberOfLines={2} style={styles.cardValue}>
             {formatPrivacyAmount(
               formatCurrency(currentNetWorthMinorUnits, currencyCode),
               isPrivate,
@@ -74,7 +74,7 @@ export function NetWorthSummaryCards({
             </View>
           </View>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[
               styles.cardValue,
               preferences.colorAmounts &&
@@ -107,7 +107,7 @@ export function NetWorthSummaryCards({
               <Award size={14} color={styles.peakIconColor.color} />
             </View>
           </View>
-          <Text numberOfLines={1} style={styles.cardValue}>
+          <Text numberOfLines={2} style={styles.cardValue}>
             {formatPrivacyAmount(
               formatCurrency(peakNetWorthMinorUnits, currencyCode),
               isPrivate,
@@ -124,7 +124,7 @@ export function NetWorthSummaryCards({
               <TrendingDown size={14} color={styles.lowestIconColor.color} />
             </View>
           </View>
-          <Text numberOfLines={1} style={styles.cardValue}>
+          <Text numberOfLines={2} style={styles.cardValue}>
             {formatPrivacyAmount(
               formatCurrency(lowestNetWorthMinorUnits, currencyCode),
               isPrivate,

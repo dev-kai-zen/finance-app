@@ -106,7 +106,7 @@ export function CategoryBreakdownTable({
               {/* Category Info & Progress Bar */}
               <View style={styles.infoCol}>
                 <View style={styles.nameRow}>
-                  <Text numberOfLines={1} style={styles.categoryName}>
+                  <Text numberOfLines={2} style={styles.categoryName}>
                     {item.categoryName}
                   </Text>
                   <Text style={styles.amountText}>

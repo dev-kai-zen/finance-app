@@ -13,6 +13,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-react-native";
+import { ScrollView } from "react-native";
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -123,98 +124,104 @@ export function PresetPickerModal({
               </Pressable>
             </View>
 
-            <View style={styles.presetList}>
-              {COMPARISON_PRESETS.map((item) => {
-                const isSelected = item.key === preset;
-                const info = getPresetInfo(item.key, item.label, item.description);
-                return (
-                  <Pressable
-                    key={item.key}
-                    style={[
-                      styles.presetItem,
-                      isSelected && styles.selectedPresetItem,
-                    ]}
-                    onPress={() => {
-                      onSelectPreset(item.key);
-                    }}
-                  >
-                    <View style={styles.radio}>
-                      {isSelected ? (
-                        <Check size={14} color="#FFFFFF" strokeWidth={3} />
-                      ) : null}
-                    </View>
-                    <View style={styles.presetTextWrap}>
-                      <Text
-                        style={[
-                          styles.presetLabel,
-                          isSelected && styles.selectedPresetLabel,
-                        ]}
-                      >
-                        {info.label}
-                      </Text>
-                      <Text style={styles.presetDescription}>
-                        {info.description}
-                      </Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Extra Controls based on selected preset */}
-            {preset === "mom" ? (
-              <View style={styles.subConfigBox}>
-                <Text style={styles.subConfigLabel}>Selected Month:</Text>
-                <View style={styles.monthNavigator}>
-                  <Pressable
-                    accessibilityLabel={t("reports.common.previousMonth")}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    onPress={handlePrevMonth}
-                    style={styles.navArrow}
-                  >
-                    <ChevronLeft size={18} color={styles.accentColor.color} />
-                  </Pressable>
-                  <Text style={styles.monthDisplay}>
-                    {formatMonthYear(momYear, momMonth)}
-                  </Text>
-                  <Pressable
-                    accessibilityLabel={t("reports.common.nextMonth")}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    onPress={handleNextMonth}
-                    style={styles.navArrow}
-                  >
-                    <ChevronRight size={18} color={styles.accentColor.color} />
-                  </Pressable>
-                </View>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.presetList}>
+                {COMPARISON_PRESETS.map((item) => {
+                  const isSelected = item.key === preset;
+                  const info = getPresetInfo(item.key, item.label, item.description);
+                  return (
+                    <Pressable
+                      key={item.key}
+                      style={[
+                        styles.presetItem,
+                        isSelected && styles.selectedPresetItem,
+                      ]}
+                      onPress={() => {
+                        onSelectPreset(item.key);
+                      }}
+                    >
+                      <View style={styles.radio}>
+                        {isSelected ? (
+                          <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                        ) : null}
+                      </View>
+                      <View style={styles.presetTextWrap}>
+                        <Text
+                          style={[
+                            styles.presetLabel,
+                            isSelected && styles.selectedPresetLabel,
+                          ]}
+                        >
+                          {info.label}
+                        </Text>
+                        <Text style={styles.presetDescription}>
+                          {info.description}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
-            ) : null}
 
-            {preset === "custom" ? (
-              <View style={styles.subConfigBox}>
-                <Text style={styles.subConfigLabel}>Custom Dates:</Text>
-                <View style={styles.customDateRow}>
-                  <Pressable
-                    style={styles.dateChip}
-                    onPress={() => setDatePickerTarget("A")}
-                  >
-                    <Calendar size={14} color={styles.accentColor.color} />
-                    <Text style={styles.dateChipText}>
-                      Date A: {formatShortDate(parseDateKeyToDate(customDateA))}
+              {/* Extra Controls based on selected preset */}
+              {preset === "mom" ? (
+                <View style={styles.subConfigBox}>
+                  <Text style={styles.subConfigLabel}>Selected Month:</Text>
+                  <View style={styles.monthNavigator}>
+                    <Pressable
+                      accessibilityLabel={t("reports.common.previousMonth")}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      onPress={handlePrevMonth}
+                      style={styles.navArrow}
+                    >
+                      <ChevronLeft size={18} color={styles.accentColor.color} />
+                    </Pressable>
+                    <Text style={styles.monthDisplay}>
+                      {formatMonthYear(momYear, momMonth)}
                     </Text>
-                  </Pressable>
-                  <Text style={styles.vsText}>vs</Text>
-                  <Pressable
-                    style={styles.dateChip}
-                    onPress={() => setDatePickerTarget("B")}
-                  >
-                    <Calendar size={14} color={styles.accentColor.color} />
-                    <Text style={styles.dateChipText}>
-                      Date B: {formatShortDate(parseDateKeyToDate(customDateB))}
-                    </Text>
-                  </Pressable>
+                    <Pressable
+                      accessibilityLabel={t("reports.common.nextMonth")}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      onPress={handleNextMonth}
+                      style={styles.navArrow}
+                    >
+                      <ChevronRight size={18} color={styles.accentColor.color} />
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
-            ) : null}
+              ) : null}
+
+              {preset === "custom" ? (
+                <View style={styles.subConfigBox}>
+                  <Text style={styles.subConfigLabel}>Custom Dates:</Text>
+                  <View style={styles.customDateRow}>
+                    <Pressable
+                      style={styles.dateChip}
+                      onPress={() => setDatePickerTarget("A")}
+                    >
+                      <Calendar size={14} color={styles.accentColor.color} />
+                      <Text style={styles.dateChipText}>
+                        Date A: {formatShortDate(parseDateKeyToDate(customDateA))}
+                      </Text>
+                    </Pressable>
+                    <Text style={styles.vsText}>vs</Text>
+                    <Pressable
+                      style={styles.dateChip}
+                      onPress={() => setDatePickerTarget("B")}
+                    >
+                      <Calendar size={14} color={styles.accentColor.color} />
+                      <Text style={styles.dateChipText}>
+                        Date B: {formatShortDate(parseDateKeyToDate(customDateB))}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
 
             <Pressable
               style={styles.applyButton}
@@ -263,6 +270,7 @@ function createStyles(theme: AppTheme) {
     sheet: {
       width: "100%",
       maxWidth: 480,
+      maxHeight: "85%",
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       padding: 20,
@@ -273,6 +281,9 @@ function createStyles(theme: AppTheme) {
       shadowOpacity: 0.15,
       shadowRadius: 12,
       elevation: 6,
+    },
+    scrollContent: {
+      paddingBottom: 4,
     },
     header: {
       flexDirection: "row",
