@@ -22,6 +22,7 @@ import {
 import { AppButton, IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   accountColor,
   isSystemOthersAccountTypeId,
@@ -62,6 +63,7 @@ function GoalAccountPickerModalContent({
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelectedAccountIds, setLocalSelectedAccountIds] =
@@ -243,17 +245,37 @@ function GoalAccountPickerModalContent({
     const accCount = localSelectedAccountIds.length;
     const pockCount = localSelectedPocketIds.length;
 
+    const accLabel =
+      accCount === 1
+        ? t("goals.card.accountLabelOne")
+        : t("goals.card.accountLabelMany");
+    const pockLabel =
+      pockCount === 1
+        ? t("goals.card.pocketLabelOne")
+        : t("goals.card.pocketLabelMany");
+
     if (accCount > 0 && pockCount > 0) {
-      return `${accCount} ${accCount === 1 ? "account" : "accounts"}, ${pockCount} ${pockCount === 1 ? "pocket" : "pockets"}`;
+      return t("goals.picker.summaryAccountsPockets", {
+        accCount,
+        accLabel,
+        pockCount,
+        pockLabel,
+      });
     }
     if (accCount > 0) {
-      return `${accCount} ${accCount === 1 ? "account" : "accounts"}`;
+      return t("goals.picker.summarySingleType", {
+        count: accCount,
+        label: accLabel,
+      });
     }
     if (pockCount > 0) {
-      return `${pockCount} ${pockCount === 1 ? "pocket" : "pockets"}`;
+      return t("goals.picker.summarySingleType", {
+        count: pockCount,
+        label: pockLabel,
+      });
     }
-    return "0 funds";
-  }, [localSelectedAccountIds, localSelectedPocketIds]);
+    return t("goals.picker.zeroFunds");
+  }, [localSelectedAccountIds, localSelectedPocketIds, t]);
 
   return (
     <Modal
@@ -272,13 +294,13 @@ function GoalAccountPickerModalContent({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTextCol}>
-              <Text style={styles.headerTitle}>Link Accounts & Pockets</Text>
+              <Text style={styles.headerTitle}>{t("goals.picker.title")}</Text>
               <Text style={styles.headerSubtitle}>
-                Select accounts or specific pockets to link to this goal
+                {t("goals.picker.subtitle")}
               </Text>
             </View>
             <TouchableOpacity
-              accessibilityLabel="Close"
+              accessibilityLabel={t("goals.picker.close")}
               accessibilityRole="button"
               onPress={onClose}
               style={styles.closeBtn}
@@ -299,7 +321,7 @@ function GoalAccountPickerModalContent({
               autoCorrect={false}
               clearButtonMode="while-editing"
               onChangeText={setSearchQuery}
-              placeholder="Search account, pocket, or type..."
+              placeholder={t("goals.picker.searchPlaceholder")}
               placeholderTextColor={theme.colors.textMuted}
               style={styles.searchInput}
               value={searchQuery}
@@ -319,13 +341,13 @@ function GoalAccountPickerModalContent({
             {hasExcludedCurrencyAccounts && currencyCode && (
               <View style={styles.currencyFilterBanner}>
                 <Text style={styles.currencyFilterText}>
-                  Showing only {currencyCode} accounts. Accounts in other currencies cannot be linked to this goal.
+                  {t("goals.picker.currencyFilterNotice", { currency: currencyCode })}
                 </Text>
               </View>
             )}
             <View style={styles.ruleBanner}>
               <Text style={styles.ruleText}>
-                An account and its own pockets cannot be selected together to prevent double-counting.
+                {t("goals.picker.doubleCountRule")}
               </Text>
             </View>
             <View style={styles.toolbarActions}>
@@ -333,13 +355,13 @@ function GoalAccountPickerModalContent({
                 onPress={handleSelectAllAccounts}
                 style={styles.toolbarButton}
               >
-                <Text style={styles.toolbarButtonText}>Select All Accounts</Text>
+                <Text style={styles.toolbarButtonText}>{t("goals.picker.selectAll")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleClearAll}
                 style={styles.toolbarButton}
               >
-                <Text style={styles.toolbarButtonText}>Clear All</Text>
+                <Text style={styles.toolbarButtonText}>{t("goals.picker.clearAll")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -353,11 +375,11 @@ function GoalAccountPickerModalContent({
           >
             {groupedAccounts.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateTitle}>No accounts found</Text>
+                <Text style={styles.emptyStateTitle}>{t("goals.picker.noResults")}</Text>
                 <Text style={styles.emptyStateDesc}>
                   {searchQuery
-                    ? `No accounts matching "${searchQuery}"`
-                    : "No available accounts to choose from"}
+                    ? t("goals.picker.noResultsMatching", { query: searchQuery })
+                    : t("goals.picker.noAvailableAccounts")}
                 </Text>
               </View>
             ) : (
@@ -476,8 +498,8 @@ function GoalAccountPickerModalContent({
                                   ]}
                                 >
                                   {isAccountDisabled
-                                    ? `Selected pockets active`
-                                    : `${account.accountType?.accountGroup === "liability" ? "Liability" : "Asset"} | ${account.accountType?.name ?? "Account"}`}
+                                    ? t("goals.picker.selectedPocketsActive")
+                                    : `${account.accountType?.accountGroup === "liability" ? t("goals.picker.liability") : t("goals.picker.asset")} | ${account.accountType?.name ?? t("goals.picker.defaultAccountType")}`}
                                 </Text>
                               </View>
                             </View>
@@ -582,7 +604,9 @@ function GoalAccountPickerModalContent({
                                           <Text
                                             style={styles.pocketDisabledText}
                                           >
-                                            Included in {account.name}
+                                            {t("goals.picker.includedInParent", {
+                                              name: account.name,
+                                            })}
                                           </Text>
                                         )}
                                       </View>
@@ -627,9 +651,13 @@ function GoalAccountPickerModalContent({
             <View style={styles.footerSummary}>
               <View>
                 <Text style={styles.footerSelectedCount}>
-                  {selectionSummaryText} selected
+                  {t("goals.picker.selectedCountSummary", {
+                    summary: selectionSummaryText,
+                  })}
                 </Text>
-                <Text style={styles.footerTotalLabel}>Combined Balance:</Text>
+                <Text style={styles.footerTotalLabel}>
+                  {t("goals.picker.combinedBalance")}
+                </Text>
               </View>
               <Text style={styles.footerTotalAmount}>
                 {formatCurrency(totalSelectedBalance, currencyCode || "PHP")}
@@ -637,7 +665,7 @@ function GoalAccountPickerModalContent({
             </View>
 
             <AppButton
-              label="Confirm Linked Funds"
+              label={t("goals.picker.linkSelected")}
               onPress={handleSave}
               variant="primary"
             />

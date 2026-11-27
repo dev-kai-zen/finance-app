@@ -92,7 +92,7 @@ function GoalFormModalContent({
   initialGoal = null,
 }: GoalFormModalProps) {
   const theme = useAppTheme();
-  const { t } = useLocalization();
+  const { t, locale } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const { accounts, pockets } = useAccounts();
@@ -287,11 +287,11 @@ function GoalFormModalContent({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setErrorMessage("Please enter a goal title.");
+      setErrorMessage(t("goals.validation.titleRequired"));
       return;
     }
     if (targetAmountMinorUnits <= 0) {
-      setErrorMessage("Target amount must be greater than zero.");
+      setErrorMessage(t("goals.validation.amountPositive"));
       return;
     }
 
@@ -318,7 +318,7 @@ function GoalFormModalContent({
         onClose();
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || "Failed to save goal.");
+      setErrorMessage(err?.message || t("goals.validation.saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -384,8 +384,8 @@ function GoalFormModalContent({
         }}
         pending={submitting}
         saveButtonRef={saveRef}
-        saveLabel={initialGoal ? "Update goal" : "Create goal"}
-        title={initialGoal ? "Edit Goal" : "New Savings Goal"}
+        saveLabel={t("goals.form.save")}
+        title={initialGoal ? t("goals.form.titleEdit") : t("goals.form.titleCreate")}
         titleAlign="left"
         visible={visible}
         isDirty={isDirty}
@@ -419,12 +419,12 @@ function GoalFormModalContent({
           {/* Goal Title */}
           <WalkthroughTarget id="goalFormTitle">
             <View style={styles.formField}>
-              <Text style={styles.label}>Goal Title</Text>
+              <Text style={styles.label}>{t("goals.form.nameLabel")}</Text>
               <TextInput
                 onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setName}
                 onFocus={() => setFocusedFieldType("normal")}
-                placeholder="e.g. Emergency Fund, Japan Trip"
+                placeholder={t("goals.form.namePlaceholder")}
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.input}
                 value={name}
@@ -435,14 +435,14 @@ function GoalFormModalContent({
           {/* Optional Notes */}
           <WalkthroughTarget id="goalFormNotes">
             <View style={styles.formField}>
-              <Text style={styles.label}>Note</Text>
+              <Text style={styles.label}>{t("goals.form.notesLabel")}</Text>
               <TextInput
                 multiline
                 numberOfLines={3}
                 onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setNote}
                 onFocus={() => setFocusedFieldType("description")}
-                placeholder="Add note..."
+                placeholder={t("goals.form.notesPlaceholder")}
                 placeholderTextColor={theme.colors.textMuted}
                 style={[styles.input, styles.textArea]}
                 value={note}
@@ -456,7 +456,7 @@ function GoalFormModalContent({
               <AmountCalculatorField
                 amountMinorUnits={targetAmountMinorUnits}
                 currencyCode={currencyCode}
-                label="Target Amount"
+                label={t("goals.form.targetAmountLabel")}
                 onOpenCalculator={() => setIsCalculatorOpen(true)}
                 onPressCurrency={() => setIsCurrencyPickerOpen(true)}
                 showSignToggle={false}
@@ -468,7 +468,7 @@ function GoalFormModalContent({
           <WalkthroughTarget id="goalFormLinked">
             <View style={styles.formField}>
               <View style={styles.labelRow}>
-                <Text style={styles.label}>Linked Accounts & Pockets</Text>
+                <Text style={styles.label}>{t("goals.form.linkedFundsLabel")}</Text>
                 <HelpIconButton
                   accessibilityHint="Shows how linked accounts and pockets work"
                   accessibilityLabel="Linked accounts and pockets help"
@@ -482,10 +482,21 @@ function GoalFormModalContent({
                   <View style={styles.accountsCardHeader}>
                     <Text style={styles.accountsCardHeaderTitle}>
                       {selectedAccounts.length > 0 && selectedPockets.length > 0
-                        ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"}, ${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`
+                        ? t("goals.card.linkedSummary", {
+                            accountsCount: selectedAccounts.length,
+                            accountsLabel:
+                              selectedAccounts.length === 1
+                                ? t("goals.card.accountLabelOne")
+                                : t("goals.card.accountLabelMany"),
+                            pocketsCount: selectedPockets.length,
+                            pocketsLabel:
+                              selectedPockets.length === 1
+                                ? t("goals.card.pocketLabelOne")
+                                : t("goals.card.pocketLabelMany"),
+                          })
                         : selectedAccounts.length > 0
-                          ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"} linked`
-                          : `${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`}
+                          ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? t("goals.card.accountLabelOne") : t("goals.card.accountLabelMany")}`
+                          : `${selectedPockets.length} ${selectedPockets.length === 1 ? t("goals.card.pocketLabelOne") : t("goals.card.pocketLabelMany")}`}
                     </Text>
                     <Text style={styles.accountsCardHeaderBalance}>
                       {formatPrivacyAmount(
@@ -498,7 +509,7 @@ function GoalFormModalContent({
                   {hasCurrencyMismatch && (
                     <View style={styles.mismatchBanner}>
                       <Text style={styles.mismatchBannerText}>
-                        Some linked funds have a different currency and do not contribute to this {currencyCode} goal.
+                        {t("goals.form.currencyMismatchWarning")}
                       </Text>
                     </View>
                   )}
@@ -535,7 +546,7 @@ function GoalFormModalContent({
                               ]}
                             >
                               {isMismatch
-                                ? `(${account.currencyCode} • not counted)`
+                                ? `(${account.currencyCode} • ${t("goals.form.notCounted")})`
                                 : `(${formatPrivacyAmount(
                                     formatCurrency(account.currentBalanceMinorUnits, account.currencyCode),
                                     isPrivate,
@@ -587,9 +598,9 @@ function GoalFormModalContent({
                               ]}
                             >
                               {isMismatch
-                                ? `(${parent?.currencyCode ?? "Other"} • not counted)`
+                                ? `(${parent?.currencyCode ?? "Other"} • ${t("goals.form.notCounted")})`
                                 : isParentLinked
-                                  ? "(included in parent)"
+                                  ? `(${t("goals.form.includedInParentShort")})`
                                   : `(${parent?.name ? `${parent.name} • ` : ""}${formatPrivacyAmount(
                                       formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP"),
                                       isPrivate,
@@ -615,7 +626,7 @@ function GoalFormModalContent({
                   >
                     <Plus color={theme.colors.primary} size={16} />
                     <Text style={styles.manageAccountsText}>
-                      Add / Change Linked Funds
+                      {t("goals.form.linkFundsButton")}
                     </Text>
                   </Pressable>
                 </View>
@@ -628,7 +639,7 @@ function GoalFormModalContent({
                     <Landmark color={theme.colors.primary} size={18} />
                     <View>
                       <Text style={styles.pickerMainText}>
-                        Link Accounts & Pockets
+                        {t("goals.form.linkedFundsLabel")}
                       </Text>
                     </View>
                   </View>
@@ -642,7 +653,7 @@ function GoalFormModalContent({
           <WalkthroughTarget id="goalFormDate">
             <View style={styles.formField}>
               <View style={styles.labelRow}>
-                <Text style={styles.label}>Target Date (Deadline)</Text>
+                <Text style={styles.label}>{t("goals.form.targetDateLabel")}</Text>
                 <HelpIconButton
                   accessibilityHint="Shows how the target deadline is used"
                   accessibilityLabel="Target deadline help"
@@ -658,8 +669,12 @@ function GoalFormModalContent({
                     <Calendar color={theme.colors.primary} size={18} />
                     <Text style={styles.pickerMainText}>
                       {targetDate
-                        ? targetDate.toLocaleDateString()
-                        : "No deadline set"}
+                        ? targetDate.toLocaleDateString(locale, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : t("goals.form.selectDate")}
                     </Text>
                   </View>
                   <ChevronRight color={theme.colors.textSecondary} size={18} />
@@ -669,7 +684,7 @@ function GoalFormModalContent({
                     onPress={() => setTargetDate(null)}
                     style={styles.clearDateButton}
                   >
-                    <Text style={styles.clearDateText}>Clear</Text>
+                    <Text style={styles.clearDateText}>{t("goals.form.clearDate")}</Text>
                   </Pressable>
                 )}
               </View>
@@ -678,7 +693,7 @@ function GoalFormModalContent({
 
           {/* Icon & Color Selection */}
           <View style={styles.formField}>
-            <Text style={styles.label}>Icon & Appearance</Text>
+            <Text style={styles.label}>{t("goals.form.appearanceLabel")}</Text>
             <View style={styles.appearanceCard}>
               <WalkthroughTarget id="goalFormIcon">
                 <Pressable
@@ -717,7 +732,7 @@ function GoalFormModalContent({
                         { color: theme.colors.primary },
                       ]}
                     >
-                      Change Icon
+                      {t("goals.form.changeIcon")}
                     </Text>
                   </View>
                 </Pressable>
@@ -725,9 +740,11 @@ function GoalFormModalContent({
 
               <WalkthroughTarget id="goalFormColor">
                 <View style={styles.colorBlock}>
-                  <Text style={styles.colorPaletteTitle}>Accent Color</Text>
+                  <Text style={styles.colorPaletteTitle}>
+                    {t("goals.form.accentColor")}
+                  </Text>
                   <Text style={styles.colorHelperText}>
-                    Choose a palette color or add your own.
+                    {t("goals.form.choosePaletteColor")}
                   </Text>
                   <View style={styles.colorPalette}>
                     {hexColorsList.map((entry: HexColor) => {
@@ -757,7 +774,7 @@ function GoalFormModalContent({
                       );
                     })}
                     <Pressable
-                      accessibilityLabel="Add custom color"
+                      accessibilityLabel={t("goals.form.addCustomColor")}
                       accessibilityRole="button"
                       onPress={() => setIsColorFormOpen(true)}
                       style={({ pressed }) => [
@@ -799,7 +816,7 @@ function GoalFormModalContent({
             setTargetAmountMinorUnits(minorUnits);
             setIsCalculatorOpen(false);
           }}
-          title="Target Amount"
+          title={t("goals.form.targetAmountLabel")}
           visible={isCalculatorOpen}
         />
 
@@ -839,7 +856,7 @@ function GoalFormModalContent({
             setIsDatePickerOpen(false);
           }}
           selectedDate={targetDate ? toDateString(targetDate) : undefined}
-          title="Target Completion Date"
+          title={t("goals.form.targetDateModalTitle")}
           visible={isDatePickerOpen}
         />
 
@@ -863,17 +880,17 @@ function GoalFormModalContent({
         <InfoModal
           message={
             helpTopic === "linkedFunds"
-              ? "Link accounts and/or pockets. Their combined live balances track progress towards this goal."
+              ? t("goals.form.helpLinkedMessage")
               : helpTopic === "targetDeadline"
-                ? "Used to calculate required monthly savings pace."
+                ? t("goals.form.helpDeadlineMessage")
                 : ""
           }
           onClose={() => setHelpTopic(null)}
           title={
             helpTopic === "linkedFunds"
-              ? "Linked Accounts & Pockets"
+              ? t("goals.form.helpLinkedTitle")
               : helpTopic === "targetDeadline"
-                ? "Target Date (Deadline)"
+                ? t("goals.form.helpDeadlineTitle")
                 : ""
           }
           visible={helpTopic !== null}

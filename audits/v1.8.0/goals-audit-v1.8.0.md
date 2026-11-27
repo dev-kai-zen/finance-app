@@ -331,12 +331,33 @@ All findings below remain **open**. Directions are proposed, not implemented. Ea
    - Validated `scheduleGoalReminders` excludes reached/completed goals from deadline reminders.
    - All 50 tests across Goals and Notifications suites passed and `npx tsc --noEmit` passed with 0 errors.
 
-### GOAL-F09 — P2, source-confirmed: core feature remains English with device-locale dates
+### GOAL-F09 — P2, source-confirmed: core feature remains English with device-locale dates — RESOLVED
 
 1. **Problem:** Changing app language leaves filters, summary, card status/actions, form fields/errors and fund-picker copy in English. Deadline formatting follows device locale instead of selected app locale. Walkthrough translations alone do not cover the feature.
 2. **Cause:** `FILTER_TABS`, components and schema contain literal English. `useLocalization` in screen/form is mainly used for walkthrough/Pro copy; summary/card/picker have no translation hook. Dates call `toLocaleDateString()` without app locale.
-3. **Smallest fix:** Add feature keys to all `en.ts`, `fil.ts`, `es.ts` and use existing locale-aware date/validation patterns. Preserve field limits and user-entered text. Avoid a global locale rewrite.
-4. **Proof:** Actual rendered strings/key parity and local-day dates in all three languages, zero/one/multiple members, completed/paused/deadline, validation, accessibility labels and errors. Repeat the unified native text matrix after translation, not just before it.
+3. **Fix applied:**
+   - In `src/infrastructure/localization/translations/`:
+     - Added comprehensive `goals: { ... }` namespace with 100% key and parameter parity across English (`en.ts`), Filipino (`fil.ts`), and Spanish (`es.ts`).
+     - Sub-catalogs cover: `filters` (All, In Progress, Completed), `summary` (total target, saved, remaining, status counters), `card` (labels, progress, deadline, to-go, actions, accessibility), `empty` (titles, subtitles, create CTA), `delete` (dialog title, confirm, cancel, message), `form` (labels, placeholders, appearance, notes, help popups, warnings), `picker` (header, search, double-counting rules, selected summary, empty states, asset/liability grouping), `destination` (funding modal strings), `state` (loading, updating, retry, errors, FAB label), and `validation` (title, notes, amount, currency matching, parent-child exclusion, save failure).
+   - In `src/modules/goals/components/goal-card.tsx`:
+     - Injected `useLocalization()` to extract `t` and `locale`.
+     - Localized all status text, dynamic progress percentages, remaining shortfall strings, and accessibility labels.
+     - Localized deadline date formatting using `goal.targetDate.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" })`, ensuring Spanish and Filipino months display in the app's chosen language rather than the device OS locale.
+   - In `src/modules/goals/components/goal-summary-header.tsx`:
+     - Injected `useLocalization()` and bound all hero metrics, labels, progress percentage badges, and mini-cards to `t("goals.summary.*")`.
+   - In `src/modules/goals/screens/goals-screen.tsx`:
+     - Memoized `filterTabs` via `useMemo(() => [...], [t])` to keep reference stability while translating filter tab labels dynamically.
+     - Localized empty states, error banners, delete confirmation dialog, and destination picker.
+   - In `src/modules/goals/components/goal-form-modal.tsx`:
+     - Injected `locale` into date picker preview and localized form field labels, notes placeholders, help popups, currency mismatch warnings, and validation error messages.
+   - In `src/modules/goals/components/goal-account-picker-modal.tsx`:
+     - Localized modal header, subtitle, search placeholder, toolbar actions, conflict/currency notice banners, account type indicators (Asset / Liability), parent inclusion hints, empty results copy, and footer summary.
+4. **Proof:** Added unit tests in `src/modules/goals/__tests__/goals-localization.test.cjs`:
+   - Recursively asserted exact key parity (100% match) across `en.ts`, `fil.ts`, and `es.ts` with no missing or extra keys, ensuring no empty translation strings.
+   - Asserted matching interpolation parameter tokens (`%{name}`, `%{count}`, `%{currency}`, `%{percent}`, etc.) across all three languages.
+   - Validated locale-aware date formatting across `en-US`, `fil-PH`, and `es-ES`.
+   - Validated component source contracts: verified that all 5 goals components/screens consume `useLocalization` and translate core feature strings.
+   - All 46 tests across `src/modules/goals/__tests__/` passed and `npx tsc --noEmit` verified complete type safety.
 
 ### GOAL-F10 — P2, source-confirmed: touch and keyboard dismissal miss required guarantees
 

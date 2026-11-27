@@ -18,6 +18,7 @@ import {
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
@@ -45,6 +46,7 @@ export const GoalCard = memo(function GoalCard({
 }: GoalCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t, locale } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const resolveEntityColor = useResolveEntityColor();
   const { isPrivate } = usePrivacyMode();
@@ -64,7 +66,7 @@ export const GoalCard = memo(function GoalCard({
 
   return (
     <Pressable
-      accessibilityLabel={`Goal ${goal.name}`}
+      accessibilityLabel={t("goals.card.accessibilityGoal", { name: goal.name })}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
@@ -97,7 +99,7 @@ export const GoalCard = memo(function GoalCard({
               {isCompleted && (
                 <View style={styles.completedBadge}>
                   <Sparkles color={theme.colors.success} size={12} />
-                  <Text style={styles.completedBadgeText}>Reached!</Text>
+                  <Text style={styles.completedBadgeText}>{t("goals.card.reached")}</Text>
                 </View>
               )}
             </View>
@@ -114,10 +116,18 @@ export const GoalCard = memo(function GoalCard({
                   <View style={styles.accountChip}>
                     <Landmark color={theme.colors.textSecondary} size={12} />
                     <Text numberOfLines={1} style={styles.accountChipText}>
-                      {goal.linkedAccounts.length}{" "}
-                      {goal.linkedAccounts.length === 1 ? "account" : "accounts"},{" "}
-                      {goal.linkedPockets.length}{" "}
-                      {goal.linkedPockets.length === 1 ? "pocket" : "pockets"}
+                      {t("goals.card.linkedSummary", {
+                        accountsCount: goal.linkedAccounts.length,
+                        accountsLabel:
+                          goal.linkedAccounts.length === 1
+                            ? t("goals.card.accountLabelOne")
+                            : t("goals.card.accountLabelMany"),
+                        pocketsCount: goal.linkedPockets.length,
+                        pocketsLabel:
+                          goal.linkedPockets.length === 1
+                            ? t("goals.card.pocketLabelOne")
+                            : t("goals.card.pocketLabelMany"),
+                      })}
                     </Text>
                   </View>
                 );
@@ -130,7 +140,10 @@ export const GoalCard = memo(function GoalCard({
                     <Text numberOfLines={1} style={styles.accountChipText}>
                       {goal.linkedAccounts.length === 1
                         ? goal.linkedAccounts[0].name
-                        : `${goal.linkedAccounts.length} accounts: ${goal.linkedAccounts.map((a) => a.name).join(", ")}`}
+                        : t("goals.card.accountsCountMultiple", {
+                            count: goal.linkedAccounts.length,
+                            names: goal.linkedAccounts.map((a) => a.name).join(", "),
+                          })}
                     </Text>
                   </View>
                 );
@@ -142,14 +155,22 @@ export const GoalCard = memo(function GoalCard({
                     <WalletCards color={theme.colors.info} size={12} />
                     <Text numberOfLines={1} style={styles.accountChipText}>
                       {goal.linkedPockets.length === 1
-                        ? `${goal.linkedPockets[0].name}${goal.linkedPockets[0].accountName ? ` (${goal.linkedPockets[0].accountName})` : ""}`
-                        : `${goal.linkedPockets.length} pockets: ${goal.linkedPockets.map((p) => p.name).join(", ")}`}
+                        ? goal.linkedPockets[0].accountName
+                          ? t("goals.card.pocketsCountSingleWithAccount", {
+                              name: goal.linkedPockets[0].name,
+                              accountName: goal.linkedPockets[0].accountName,
+                            })
+                          : goal.linkedPockets[0].name
+                        : t("goals.card.pocketsCountMultiple", {
+                            count: goal.linkedPockets.length,
+                            names: goal.linkedPockets.map((p) => p.name).join(", "),
+                          })}
                     </Text>
                   </View>
                 );
               }
 
-              return <Text style={styles.unlinkedText}>No linked funds</Text>;
+              return <Text style={styles.unlinkedText}>{t("goals.card.noLinkedFunds")}</Text>;
             })()}
           </View>
         </View>
@@ -157,7 +178,7 @@ export const GoalCard = memo(function GoalCard({
         {/* Quick Edit / Actions */}
         <View style={styles.headerActions}>
           <Pressable
-            accessibilityLabel="Edit goal"
+            accessibilityLabel={t("goals.card.editGoal")}
             hitSlop={8}
             onPress={onEdit}
             style={styles.iconButton}
@@ -165,7 +186,7 @@ export const GoalCard = memo(function GoalCard({
             <Pencil color={theme.colors.textSecondary} size={16} />
           </Pressable>
           <Pressable
-            accessibilityLabel="Delete goal"
+            accessibilityLabel={t("goals.card.deleteGoal")}
             hitSlop={8}
             onPress={onDelete}
             style={styles.iconButton}
@@ -179,7 +200,7 @@ export const GoalCard = memo(function GoalCard({
       <View style={styles.progressSection}>
         <View style={styles.amountRow}>
           <View>
-            <Text style={styles.savedLabel}>Current Balance</Text>
+            <Text style={styles.savedLabel}>{t("goals.card.currentBalance")}</Text>
             <Text
               style={[
                 styles.savedAmount,
@@ -194,7 +215,7 @@ export const GoalCard = memo(function GoalCard({
             </Text>
           </View>
           <View style={styles.targetCol}>
-            <Text style={styles.targetLabel}>Target</Text>
+            <Text style={styles.targetLabel}>{t("goals.card.target")}</Text>
             <Text style={styles.targetAmount}>
               {formatPrivacyAmount(
                 formatCurrency(goal.targetAmountMinorUnits, goal.currencyCode),
@@ -218,13 +239,20 @@ export const GoalCard = memo(function GoalCard({
 
         <View style={styles.progressMetaRow}>
           <Text style={styles.progressPercentageText}>
-            {isPrivate ? "••% completed" : `${clampedProgress}% completed`}
+            {isPrivate
+              ? "••%"
+              : t("goals.card.percentCompleted", { percent: clampedProgress })}
           </Text>
           {!isCompleted && (
             <Text style={styles.remainingText}>
               {isPrivate
-                ? "•••••• to go"
-                : `${formatCurrency(goal.remainingMinorUnits, goal.currencyCode)} to go`}
+                ? "••••••"
+                : t("goals.card.toGo", {
+                    amount: formatCurrency(
+                      goal.remainingMinorUnits,
+                      goal.currencyCode,
+                    ),
+                  })}
             </Text>
           )}
         </View>
@@ -238,15 +266,27 @@ export const GoalCard = memo(function GoalCard({
               <View style={styles.deadlineWarning}>
                 <AlertTriangle color={theme.colors.danger} size={14} />
                 <Text style={styles.deadlineWarningText}>
-                  Past target date: {goal.targetDate.toLocaleDateString()}
+                  {t("goals.card.pastDeadline", {
+                    date: goal.targetDate.toLocaleDateString(locale, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
+                  })}
                 </Text>
               </View>
             ) : (
               <View style={styles.deadlineNumber}>
                 <Calendar color={theme.colors.textSecondary} size={14} />
                 <Text style={styles.deadlineText}>
-                  Target: {goal.targetDate.toLocaleDateString()} (
-                  {goal.daysRemaining} days left)
+                  {t("goals.card.targetWithDays", {
+                    date: goal.targetDate.toLocaleDateString(locale, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
+                    days: goal.daysRemaining ?? 0,
+                  })}
                 </Text>
               </View>
             )}
@@ -259,14 +299,14 @@ export const GoalCard = memo(function GoalCard({
             !goal.isPastDeadline && (
               <View style={styles.pacePill}>
                 <Text style={styles.pacePillText}>
-                  💡 Save{" "}
                   {isPrivate
-                    ? "••••••"
-                    : formatCurrency(
-                        goal.pacePerMonthMinorUnits,
-                        goal.currencyCode,
-                      )}
-                  /mo to reach on time
+                    ? "💡 Save ••••••"
+                    : t("goals.card.paceGuidance", {
+                        pace: formatCurrency(
+                          goal.pacePerMonthMinorUnits,
+                          goal.currencyCode,
+                        ),
+                      })}
                 </Text>
               </View>
             )}
@@ -290,40 +330,40 @@ export const GoalCard = memo(function GoalCard({
               style={styles.addFundsButton}
             >
               <Plus color={theme.colors.primary} size={13} />
-              <Text style={styles.addFundsButtonText}>Add Funds</Text>
+              <Text style={styles.addFundsButtonText}>{t("goals.card.addFunds")}</Text>
             </Pressable>
           ) : null}
           {isCompleted ? (
             goal.currentAmountMinorUnits >= goal.targetAmountMinorUnits ? (
               <Pressable
-                accessibilityLabel={`Increase target for ${goal.name}`}
+                accessibilityLabel={t("goals.card.accessibilityIncreaseTarget", { name: goal.name })}
                 accessibilityRole="button"
                 onPress={onEdit}
                 style={styles.reopenButton}
               >
                 <Pencil color={theme.colors.textSecondary} size={14} />
-                <Text style={styles.reopenButtonText}>Increase Target</Text>
+                <Text style={styles.reopenButtonText}>{t("goals.card.increaseTarget")}</Text>
               </Pressable>
             ) : (
               <Pressable
-                accessibilityLabel={`Mark ${goal.name} as in progress`}
+                accessibilityLabel={t("goals.card.accessibilityMarkInProgress", { name: goal.name })}
                 accessibilityRole="button"
                 onPress={() => onToggleStatus("in_progress")}
                 style={styles.reopenButton}
               >
                 <RotateCcw color={theme.colors.textSecondary} size={14} />
-                <Text style={styles.reopenButtonText}>Mark as In Progress</Text>
+                <Text style={styles.reopenButtonText}>{t("goals.card.markAsInProgress")}</Text>
               </Pressable>
             )
           ) : (
             <Pressable
-              accessibilityLabel={`Mark ${goal.name} as completed`}
+              accessibilityLabel={t("goals.card.accessibilityMarkCompleted", { name: goal.name })}
               accessibilityRole="button"
               onPress={() => onToggleStatus("completed")}
               style={styles.completeButton}
             >
               <Check color={theme.colors.success} size={14} />
-              <Text style={styles.completeButtonText}>Mark as Completed</Text>
+              <Text style={styles.completeButtonText}>{t("goals.card.markAsCompleted")}</Text>
             </Pressable>
           )}
         </View>
@@ -336,10 +376,10 @@ export const GoalCard = memo(function GoalCard({
             ]}
           >
             {isCompleted
-              ? "Completed"
+              ? t("goals.card.statusCompleted")
               : goal.status === "paused"
-                ? "Paused"
-                : "Active"}
+                ? t("goals.card.statusPaused")
+                : t("goals.card.statusActive")}
           </Text>
         </View>
       </View>

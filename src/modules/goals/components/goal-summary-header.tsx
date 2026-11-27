@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { CheckCircle2, Target, TrendingUp } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -21,6 +22,7 @@ export function GoalSummaryHeader({
 }: GoalSummaryHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
 
@@ -49,7 +51,7 @@ export function GoalSummaryHeader({
       <View collapsable={false} ref={totalTargetRef} style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View>
-            <Text style={styles.heroSubheading}>TOTAL TARGET</Text>
+            <Text style={styles.heroSubheading}>{t("goals.summary.totalTarget")}</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.heroTargetAmount}>
               {formatPrivacyAmount(formatCurrency(totalTargetMinorUnits, activeCurrency), isPrivate)}
             </Text>
@@ -81,7 +83,7 @@ export function GoalSummaryHeader({
         {/* Saved & Remaining Stats */}
         <View style={styles.heroBottomRow}>
           <View>
-            <Text style={styles.statLabel}>Saved so far</Text>
+            <Text style={styles.statLabel}>{t("goals.summary.savedSoFar")}</Text>
             <Text
               style={[
                 styles.statValueSaved,
@@ -94,7 +96,7 @@ export function GoalSummaryHeader({
             </Text>
           </View>
           <View style={styles.alignRight}>
-            <Text style={styles.statLabel}>Remaining shortfall</Text>
+            <Text style={styles.statLabel}>{t("goals.summary.remainingShortfall")}</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.statValueRemaining}>
               {formatPrivacyAmount(formatCurrency(remaining, activeCurrency), isPrivate)}
             </Text>
@@ -116,7 +118,7 @@ export function GoalSummaryHeader({
             </View>
             <Text style={styles.miniCount}>{activeGoalsCount}</Text>
           </View>
-          <Text style={styles.miniLabel}>In Progress</Text>
+          <Text style={styles.miniLabel}>{t("goals.summary.inProgress")}</Text>
         </View>
 
         <View style={styles.statMiniCard}>
@@ -131,7 +133,7 @@ export function GoalSummaryHeader({
             </View>
             <Text style={styles.miniCount}>{completedGoalsCount}</Text>
           </View>
-          <Text style={styles.miniLabel}>Completed</Text>
+          <Text style={styles.miniLabel}>{t("goals.summary.completed")}</Text>
         </View>
 
         <View style={styles.statMiniCard}>
@@ -146,7 +148,7 @@ export function GoalSummaryHeader({
             </View>
             <Text style={styles.miniCount}>{totalGoalsCount}</Text>
           </View>
-          <Text style={styles.miniLabel}>Total Goals</Text>
+          <Text style={styles.miniLabel}>{t("goals.summary.totalGoals")}</Text>
         </View>
       </View>
     </View>

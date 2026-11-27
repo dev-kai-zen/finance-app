@@ -105,7 +105,7 @@ test("GOAL-F08 (UI Contract): GoalCard action selection eliminates no-op loop on
 
   // Verify that GoalCard does not blindly show "Mark as In Progress" whenever isCompleted is true
   assert.ok(
-    cardSource.includes("Increase Target"),
+    cardSource.includes("increaseTarget") || cardSource.includes("Increase Target"),
     "GoalCard must render 'Increase Target' for reached goals",
   );
   assert.ok(
@@ -122,18 +122,18 @@ test("GOAL-F08 (UI Contract): GoalCard action selection eliminates no-op loop on
   function visit(node) {
     if (ts.isJsxElement(node)) {
       const text = node.getText(sf);
-      if (text.startsWith("<Pressable") && text.includes("Increase Target")) {
+      if (text.startsWith("<Pressable") && (text.includes("increaseTarget") || text.includes("Increase Target"))) {
         foundIncreaseTargetPressable = true;
         assert.ok(text.includes("onPress={onEdit}"), "Increase Target must invoke onEdit");
       }
-      if (text.startsWith("<Pressable") && text.includes("Mark as In Progress")) {
+      if (text.startsWith("<Pressable") && (text.includes("markAsInProgress") || text.includes("Mark as In Progress"))) {
         foundMarkAsInProgressPressable = true;
         assert.ok(
           text.includes('onToggleStatus("in_progress")'),
           "Mark as In Progress must toggle status to in_progress",
         );
       }
-      if (text.startsWith("<Pressable") && text.includes("Mark as Completed")) {
+      if (text.startsWith("<Pressable") && (text.includes("markAsCompleted") || text.includes("Mark as Completed"))) {
         foundMarkAsCompletedPressable = true;
         assert.ok(
           text.includes('onToggleStatus("completed")'),

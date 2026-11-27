@@ -153,6 +153,15 @@ function GoalsScreenContent({
   } = useGoals();
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
 
+  const filterTabs = useMemo<Array<{ key: GoalFilter; label: string }>>(
+    () => [
+      { key: "all", label: t("goals.filters.all") },
+      { key: "in_progress", label: t("goals.filters.inProgress") },
+      { key: "completed", label: t("goals.filters.completed") },
+    ],
+    [t],
+  );
+
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
@@ -326,7 +335,7 @@ function GoalsScreenContent({
       await deleteGoal(goalToDelete.id);
       setGoalToDelete(null);
     } catch (err: any) {
-      setDeleteError(err?.message ?? "Failed to delete goal.");
+      setDeleteError(err?.message ?? t("goals.state.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -338,10 +347,10 @@ function GoalsScreenContent({
         setActionError(null);
         await toggleStatus(goalId, newStatus);
       } catch (err: any) {
-        setActionError(err?.message ?? "Failed to update goal status.");
+        setActionError(err?.message ?? t("goals.state.updateFailed"));
       }
     },
-    [toggleStatus],
+    [toggleStatus, t],
   );
 
   const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
@@ -359,7 +368,7 @@ function GoalsScreenContent({
         }
         floatingAction={
           <FloatingActionButton
-            accessibilityLabel="Add New Goal"
+            accessibilityLabel={t("goals.state.addGoalFab")}
             fabRef={fabRef}
             onPress={handleOpenCreate}
             style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
@@ -379,7 +388,7 @@ function GoalsScreenContent({
         ref={statusFiltersRef}
         style={styles.filterTabsRow}
       >
-        {FILTER_TABS.map((tab) => {
+        {filterTabs.map((tab) => {
           const isSelected = filter === tab.key;
           const count =
             tab.key === "all"
@@ -436,12 +445,12 @@ function GoalsScreenContent({
             {actionError}
           </Text>
           <Pressable
-            accessibilityLabel="Dismiss error"
+            accessibilityLabel={t("goals.state.dismiss")}
             hitSlop={6}
             onPress={() => setActionError(null)}
             style={styles.actionErrorDismissBtn}
           >
-            <Text style={styles.actionErrorDismissText}>Dismiss</Text>
+            <Text style={styles.actionErrorDismissText}>{t("goals.state.dismiss")}</Text>
           </Pressable>
         </View>
       )}
@@ -456,7 +465,7 @@ function GoalsScreenContent({
           }}
         />
       ) : loading && goals.length === 0 ? (
-        <PageLoadingState message="Loading goals..." variant="cards" />
+        <PageLoadingState message={t("goals.state.loading")} variant="cards" />
       ) : filteredGoals.length === 0 ? (
         <View>
           <View style={styles.emptyStateContainer}>
@@ -465,19 +474,19 @@ function GoalsScreenContent({
             </View>
             <Text style={styles.emptyTitle}>
               {filter === "completed"
-                ? "No completed goals yet"
+                ? t("goals.empty.titleCompleted")
                 : filter === "in_progress"
-                  ? "No active goals in progress"
-                  : "No savings goals created"}
+                  ? t("goals.empty.titleInProgress")
+                  : t("goals.empty.titleAll")}
             </Text>
             <Text style={styles.emptySubtitle}>
               {filter === "all"
-                ? "Create your first goal, link it to an account, and monitor your savings journey with live balances and deadlines using the + button."
-                : "Adjust your filter or create a new goal to track your progress."}
+                ? t("goals.empty.subtitleAll")
+                : t("goals.empty.subtitleFiltered")}
             </Text>
             <View style={styles.emptyCtaWrap}>
               <AppButton
-                label={"+ Create First Goal"}
+                label={t("goals.empty.createFirst")}
                 onPress={handleOpenCreate}
               />
             </View>
@@ -487,11 +496,11 @@ function GoalsScreenContent({
         <View style={styles.goalsList}>
           {isPending && !isPullRefreshing && goals.length > 0 && (
             <View
-              accessibilityLabel="Updating goals"
+              accessibilityLabel={t("goals.state.updating")}
               style={styles.subtleUpdatingRow}
             >
               <ActivityIndicator color={theme.colors.primary} size="small" />
-              <Text style={styles.subtleUpdatingText}>Updating goals...</Text>
+              <Text style={styles.subtleUpdatingText}>{t("goals.state.updating")}</Text>
             </View>
           )}
           {error && goals.length > 0 && (
@@ -501,7 +510,7 @@ function GoalsScreenContent({
                 {error}
               </Text>
               <Pressable
-                accessibilityLabel="Retry loading goals"
+                accessibilityLabel={t("goals.state.retry")}
                 hitSlop={6}
                 onPress={() => {
                   clearError();
@@ -509,7 +518,7 @@ function GoalsScreenContent({
                 }}
                 style={styles.cachedErrorRetryBtn}
               >
-                <Text style={styles.cachedErrorRetryText}>Retry</Text>
+                <Text style={styles.cachedErrorRetryText}>{t("goals.state.retry")}</Text>
               </Pressable>
             </View>
           )}
@@ -538,10 +547,10 @@ function GoalsScreenContent({
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        cancelLabel="Keep Goal"
-        confirmLabel="Delete Goal"
+        cancelLabel={t("goals.delete.cancel")}
+        confirmLabel={t("goals.delete.confirm")}
         error={deleteError}
-        message={`Are you sure you want to delete "${goalToDelete?.name}"? This action cannot be undone.`}
+        message={t("goals.delete.message", { name: goalToDelete?.name ?? "" })}
         onCancel={() => {
           if (!isDeleting) {
             setGoalToDelete(null);
@@ -550,7 +559,7 @@ function GoalsScreenContent({
         }}
         onConfirm={handleConfirmDelete}
         pending={isDeleting}
-        title="Delete Savings Goal"
+        title={t("goals.delete.title")}
         variant="destructive"
         visible={Boolean(goalToDelete)}
       />
@@ -593,9 +602,9 @@ function GoalsScreenContent({
             style={styles.destinationBackdrop}
           >
             <View style={styles.destinationSheet}>
-              <Text style={styles.destinationTitle}>Select Destination to Fund</Text>
+              <Text style={styles.destinationTitle}>{t("goals.destination.title")}</Text>
               <Text style={styles.destinationSubtitle}>
-                Choose which account or pocket to add funds to for "{fundingDestinationGoal.name}".
+                {t("goals.destination.subtitle", { name: fundingDestinationGoal.name })}
               </Text>
               <ScrollView style={styles.destinationList}>
                 {fundingDestinationGoal.linkedAccounts.map((account) => (
@@ -610,7 +619,7 @@ function GoalsScreenContent({
                     style={styles.destinationItem}
                   >
                     <Text style={styles.destinationItemTitle}>{account.name}</Text>
-                    <Text style={styles.destinationItemType}>Account</Text>
+                    <Text style={styles.destinationItemType}>{t("goals.destination.accountType")}</Text>
                   </Pressable>
                 ))}
                 {fundingDestinationGoal.linkedPockets.map((pocket) => (
@@ -626,13 +635,13 @@ function GoalsScreenContent({
                   >
                     <Text style={styles.destinationItemTitle}>{pocket.name}</Text>
                     <Text style={styles.destinationItemType}>
-                      Pocket {pocket.accountName ? `• ${pocket.accountName}` : ""}
+                      {t("goals.destination.pocketType")} {pocket.accountName ? `• ${pocket.accountName}` : ""}
                     </Text>
                   </Pressable>
                 ))}
               </ScrollView>
               <AppButton
-                label="Cancel"
+                label={t("goals.destination.cancel")}
                 onPress={() => setFundingDestinationGoal(null)}
                 variant="secondary"
               />

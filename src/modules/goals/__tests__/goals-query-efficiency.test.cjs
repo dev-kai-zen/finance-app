@@ -244,6 +244,11 @@ test("GoalAccountPickerModal early-returns null when visible=false without execu
       X: () => null,
     },
     "@/components": { AppButton: () => null, IconHelper: () => null },
+    "@/infrastructure/localization": {
+      useLocalization: () => {
+        throw new Error("useLocalization must not be called when visible is false");
+      },
+    },
     "@/hooks/use-app-theme": {
       useAppTheme: () => {
         throw new Error("useAppTheme must not be called when visible is false");
